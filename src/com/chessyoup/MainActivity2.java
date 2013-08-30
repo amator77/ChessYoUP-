@@ -639,7 +639,11 @@ public class MainActivity2 extends BaseGameActivity implements
 		switchToScreen(R.id.screen_game);
 		Log.d(TAG," inv id :"+mIncomingInvitationId);		
 		this.ctrl.newGame(iAmWhite ? new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
-		this.ctrl.startGame();		
+		this.ctrl.startGame();
+		if( !iAmWhite ){
+			ChessBoardPlay cb = (ChessBoardPlay) findViewById(R.id.chessboard);
+			cb.setFlipped(true);
+		}
 	}
 
 	// indicates the player scored one point
