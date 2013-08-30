@@ -68,7 +68,6 @@ public abstract class ChessBoard extends View {
             this.sq = sq;
             this.number = number;
         }
-        @Override
         public int compareTo(SquareDecoration another) {
             int M0 = 100000;
             int n = number;
@@ -209,7 +208,6 @@ public abstract class ChessBoard extends View {
 //          System.out.printf("delay:%d\n", delay);
             if (delay < 1) delay = 1;
             handlerTimer.postDelayed(new Runnable() {
-                @Override
                 public void run() {
                     invalidate();
                 }

@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
@@ -122,7 +125,9 @@ public class MainActivity2 extends BaseGameActivity implements
 	// If non-null, this is the id of the invitation we received via the
 	// invitation listener
 	String mIncomingInvitationId = null;
-
+	
+	boolean iAmWhite = false;
+	
 	// Message buffer for sending messages
 	byte[] mMsgBuf = new byte[2];
 
@@ -332,6 +337,7 @@ public class MainActivity2 extends BaseGameActivity implements
 
 		// create the room
 		Log.d(TAG, "Creating room...");
+		iAmWhite = true;
 		RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(this);
 		rtmConfigBuilder.addPlayersToInvite(invitees);
 		rtmConfigBuilder.setMessageReceivedListener(this);
@@ -367,6 +373,7 @@ public class MainActivity2 extends BaseGameActivity implements
 	// Accept the given invitation.
 	void acceptInviteToRoom(String invId) {
 		// accept the invitation
+		iAmWhite = false;
 		Log.d(TAG, "Accepting invitation: " + invId);
 		RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(this);
 		roomConfigBuilder.setInvitationIdToAccept(invId)
@@ -630,9 +637,9 @@ public class MainActivity2 extends BaseGameActivity implements
 		updateScoreDisplay();
 		broadcastScore(false);
 		switchToScreen(R.id.screen_game);
-		this.ctrl.newGame(mIncomingInvitationId != null ? new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
-		this.ctrl.startGame();
-		
+		Log.d(TAG," inv id :"+mIncomingInvitationId);		
+		this.ctrl.newGame(iAmWhite ? new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
+		this.ctrl.startGame();		
 	}
 
 	// indicates the player scored one point
@@ -669,41 +676,34 @@ public class MainActivity2 extends BaseGameActivity implements
 	public void onRealTimeMessageReceived(RealTimeMessage rtm) {
 		byte[] buf = rtm.getMessageData();
 		String sender = rtm.getSenderParticipantId();
-		Log.d(TAG, "Message received: " + (char) buf[0] + "/" + (int) buf[1]);
-
-		if (buf[0] == 'F' || buf[0] == 'U') {
-			// score update.
-			int existingScore = mParticipantScore.containsKey(sender) ? mParticipantScore
-					.get(sender) : 0;
-			int thisScore = (int) buf[1];
-			if (thisScore > existingScore) {
-				// this check is necessary because packets may arrive out of
-				// order, so we
-				// should only ever consider the highest score we received, as
-				// we know in our
-				// game there is no way to lose points. If there was a way to
-				// lose points,
-				// we'd have to add a "serial number" to the packet.
-				mParticipantScore.put(sender, thisScore);
-			}
-
-			// update the scores on the screen
-			updatePeerScoresDisplay();
-
-			// if it's a final score, mark this participant as having finished
-			// the game
-			if ((char) buf[0] == 'F') {
-				mFinishedParticipants.add(rtm.getSenderParticipantId());
-			}
-		} else if (buf[0] == 'S') {
-			// someone else started to play -- so dismiss the waiting room and
-			// get right to it!
-			Log.d(TAG, "Starting game because we got a start message.");
-			dismissWaitingRoom();
-			startGame(true);
+		String move = null;
+		
+		Log.d(TAG,"onRealTimeMessageReceived :"+rtm.toString()+" , "+rtm.getSenderParticipantId()+" , "+new String(rtm.getMessageData()));
+		
+		
+		try {
+			JSONObject json = new JSONObject(new String(rtm.getMessageData()));
+			move = json.getString("move");								
+		} catch (JSONException e) {			
+			e.printStackTrace();
+			return;
 		}
+		
+		Log.d(TAG, "Move received: " + move);
+		
+		ctrl.makeRemoteMove(move);
 	}
-
+	
+	boolean isRoomOwnerWhite(){
+		String remoteId = mParticipants.get(0).getParticipantId();
+		Log.d(TAG," My id :"+mMyId);
+		Log.d(TAG," Remove id :"+remoteId);
+		
+		Log.d(TAG,mParticipants.toString());
+		
+		return true;
+	}
+	
 	// Broadcast my score to everybody else.
 	void broadcastScore(boolean finalScore) {
 		if (!mMultiplayer)
@@ -1195,8 +1195,16 @@ public class MainActivity2 extends BaseGameActivity implements
 	}
 
 	private void sendMoveToRemote(String moveToUCIString) {
-		// TODO Auto-generated method stub
-
+		JSONObject json = new JSONObject();
+		try {
+			json.put("move", moveToUCIString);
+			
+			getGamesClient().sendReliableRealTimeMessage(null,json.toString().getBytes() ,
+					mRoomId, mParticipants.get(0).getParticipantId());
+						
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void installListeners() {
@@ -1209,14 +1217,9 @@ public class MainActivity2 extends BaseGameActivity implements
 					private float scrollY = 0;
 
 					@Override
-					public boolean onDown(MotionEvent e) {
-						if (!true) {
-							handleClick(e);
-							return true;
-						}
-						scrollX = 0;
-						scrollY = 0;
-						return false;
+					public boolean onDown(MotionEvent e) {						
+						handleClick(e);
+						return true;						
 					}
 
 					@Override
@@ -1227,18 +1230,14 @@ public class MainActivity2 extends BaseGameActivity implements
 					}
 
 					@Override
-					public boolean onSingleTapUp(MotionEvent e) {
-						if (!true)
-							return false;
+					public boolean onSingleTapUp(MotionEvent e) {						
 						cb.cancelLongPress();
 						handleClick(e);
 						return true;
 					}
 
 					@Override
-					public boolean onDoubleTapEvent(MotionEvent e) {
-						if (!true)
-							return false;
+					public boolean onDoubleTapEvent(MotionEvent e) {						
 						if (e.getAction() == MotionEvent.ACTION_UP)
 							handleClick(e);
 						return true;
@@ -1246,10 +1245,15 @@ public class MainActivity2 extends BaseGameActivity implements
 
 					private final void handleClick(MotionEvent e) {
 						if (true) {
+							
 							int sq = cb.eventToSquare(e);
 							Move m = cb.mousePressed(sq);
+							Log.d(TAG,"handleClick"+sq);
+							
 							if (m != null) {
+								Log.d(TAG,"Move :"+m);
 								if (true) {
+									Log.d(TAG,"Local turn  :"+ctrl.getGame().getGameState() +" , "+ctrl.getGame().currPos().whiteMove);
 									ctrl.makeLocalMove(m);
 									sendMoveToRemote(TextIO.moveToUCIString(m));
 								}
@@ -1260,6 +1264,7 @@ public class MainActivity2 extends BaseGameActivity implements
 		
 		cb.setOnTouchListener(new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
+				Log.d(TAG,"onTouch");
 				return gd.onTouchEvent(event);
 			}
 		});
