@@ -1203,8 +1203,12 @@ public class MainActivity2 extends BaseGameActivity implements
 		try {
 			json.put("move", moveToUCIString);
 			
-			getGamesClient().sendReliableRealTimeMessage(null,json.toString().getBytes() ,
-					mRoomId, mParticipants.get(0).getParticipantId());
+			for( Participant p : mParticipants  ){
+				if( !p.getParticipantId().equals(mMyId) ){
+					getGamesClient().sendReliableRealTimeMessage(null,json.toString().getBytes() ,
+							mRoomId, p.getParticipantId());
+				}
+			}						
 						
 		} catch (JSONException e) {
 			e.printStackTrace();
