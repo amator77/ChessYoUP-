@@ -176,9 +176,15 @@ public class ChessGameClient implements RealTimeMessageReceivedListener , RoomUp
 		Log.d(TAG, "onRoomConnecting :: "+room);	
 	}
 
-	public void waitingForRemotePlayer(Activity context) {						
-		Intent i =  gameClient.getRealTimeWaitingRoomIntent(room,2);
-		context.startActivityForResult(i, RC_WAITING_ROOM);
+	public void waitingForRemotePlayer(Activity context) {
+		
+		
+		
+		if( this.room != null ){
+			System.out.println("muie");
+			Intent i =  gameClient.getRealTimeWaitingRoomIntent(room,2);
+			context.startActivityForResult(i, RC_WAITING_ROOM);
+		}
 	}
 
 	public void invitePlayer(ArrayList<String> invitees) {

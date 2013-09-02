@@ -61,7 +61,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationR
 	public void onActivityResult(int requestCode, int responseCode,
 			Intent intent) {
 		super.onActivityResult(requestCode, responseCode, intent);
-
+		Log.d(TAG, "onActivityResult :: "+"requestCode :"+requestCode+" , responseCode :"+responseCode+" , "+intent);
+		
 		switch (requestCode) {
 		case RC_SELECT_PLAYERS:
 			handleSelectPlayersResult(responseCode, intent);
