@@ -12,12 +12,12 @@ import com.chessyoup.R;
 import com.chessyoup.game.ChessGameClient;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
-import com.google.android.gms.games.multiplayer.realtime.Room;
+import com.google.android.gms.games.multiplayer.Invitation;
+import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
-import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
-public class ChessYoUpActivity extends BaseGameActivity  {
+public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationReceivedListener {
 
 	private static final String TAG = "ChessYoUpActivity";
 
@@ -30,7 +30,7 @@ public class ChessYoUpActivity extends BaseGameActivity  {
 	private final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
 			R.id.screen_sign_in, R.id.screen_wait };
 	private int mCurScreen = -1;
-
+		
 	private String mIncomingInvitationId = null;
 
 	private boolean mWaitRoomDismissedFromCode;
@@ -39,8 +39,8 @@ public class ChessYoUpActivity extends BaseGameActivity  {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		ChessGameClient.init(getGamesClient(),this.getApplicationContext());
-		beginUserInitiatedSignIn();
+		ChessGameClient.init(getGamesClient(),this.getApplicationContext());								
+		beginUserInitiatedSignIn();		
 	}
 
 	@Override
@@ -51,10 +51,10 @@ public class ChessYoUpActivity extends BaseGameActivity  {
 	@Override
 	public void onSignInSucceeded() {
 		Log.d(TAG, "onSignInSucceeded");
+		getGamesClient().registerInvitationListener(this);
 		Intent intent = getGamesClient().getSelectPlayersIntent(1, 2);
 		switchToScreen(R.id.screen_wait);
 		startActivityForResult(intent, RC_SELECT_PLAYERS);
-		;
 	}
 
 	@Override
@@ -119,10 +119,21 @@ public class ChessYoUpActivity extends BaseGameActivity  {
 	}
 
 	private void handleInvitationInboxResult(int responseCode, Intent intent) {
-		Log.d(TAG, "broadcastStart");
+		Log.d(TAG, "handleInvitationInboxResult :: "+responseCode+" , "+intent);
+		
+		if (responseCode != Activity.RESULT_OK) {
+			Log.w(TAG, "*** invitation inbox UI cancelled, " + responseCode);			
+			return;
+		}
 
+		Log.d(TAG, "Invitation inbox UI succeeded.");
+		Invitation inv = intent.getExtras().getParcelable(
+				GamesClient.EXTRA_INVITATION);
+		
+		// Accept the given invitation.		
+		ChessGameClient.getChessClient().acceptInvitation(inv);		
 	}
-
+		
 	private void handleSelectPlayersResult(int responseCode, Intent intent) {
 		Log.d(TAG, "handleSelectPlayersResult ::" + responseCode + " , "
 				+ intent);
@@ -159,4 +170,10 @@ public class ChessYoUpActivity extends BaseGameActivity  {
 		findViewById(R.id.invitation_popup).setVisibility(
 				showInvPopup ? View.VISIBLE : View.GONE);
 	}
+
+	@Override
+	public void onInvitationReceived(Invitation invitation) {
+		Log.d(TAG, "onInvitationReceived ::"+invitation);
+		startActivityForResult(getGamesClient().getInvitationInboxIntent(), RC_INVITATION_INBOX);
+	}		
 }

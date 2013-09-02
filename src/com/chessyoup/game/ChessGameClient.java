@@ -8,9 +8,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.chessyoup.R;
 import com.chessyoup.model.Move;
 import com.chessyoup.ui.ChessTableActivity;
 import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
 import com.google.android.gms.games.multiplayer.realtime.Room;
@@ -82,13 +84,19 @@ public class ChessGameClient implements RealTimeMessageReceivedListener , RoomUp
 		this.room = room;
 						
 		Intent chessTableIntent = new Intent(this.context, ChessTableActivity.class);
+		chessTableIntent.putExtra("owner", true);
 		chessTableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);				
 		this.context.startActivity(chessTableIntent);					
 	}		
 	
 	@Override
 	public void onJoinedRoom(int statusCode, Room room) {
-		Log.d(TAG, "onJoinedRoom :: status code :"+statusCode+" , "+room);		
+		Log.d(TAG, "onJoinedRoom :: status code :"+statusCode+" , "+room);	
+		this.room = room;		
+		Intent chessTableIntent = new Intent(this.context, ChessTableActivity.class);
+		chessTableIntent.putExtra("owner", false);
+		chessTableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);				
+		this.context.startActivity(chessTableIntent);
 	}
 
 	@Override
@@ -191,5 +199,15 @@ public class ChessGameClient implements RealTimeMessageReceivedListener , RoomUp
 	public void setChessGameClientListener(
 			ChessGameClientListener chessGameClientListener) {
 		this.chessGameClientListener = chessGameClientListener;
-	}		
+	}
+
+	public void acceptInvitation(Invitation inv) {
+		// TODO Auto-generated method stub
+		RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(this);
+		roomConfigBuilder.setInvitationIdToAccept(inv.getInvitationId())
+				.setMessageReceivedListener(this)
+				.setRoomStatusUpdateListener(this);
+		
+		gameClient.joinRoom(roomConfigBuilder.build());		
+	}
 }
