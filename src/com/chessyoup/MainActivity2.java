@@ -187,19 +187,14 @@ public class MainActivity2 extends BaseGameActivity implements
 			acceptInviteToRoom(getInvitationId());
 			return;
 		}
-		switchToMainScreen();
+		switchToMainScreen();		
 	}
 
 	@Override
 	public void onClick(View v) {
 		Intent intent;
 
-		switch (v.getId()) {
-		case R.id.button_single_player:
-		case R.id.button_single_player_2:
-			resetGameVars();
-			startGame(false);
-			break;
+		switch (v.getId()) {		
 		case R.id.button_sign_in:
 			// user wants to sign in
 			if (!verifyPlaceholderIdsReplaced()) {
@@ -231,11 +226,7 @@ public class MainActivity2 extends BaseGameActivity implements
 			// (the one we got through the OnInvitationReceivedListener).
 			acceptInviteToRoom(mIncomingInvitationId);
 			mIncomingInvitationId = null;
-			break;
-		case R.id.button_quick_game:
-			// user wants to play against a random opponent right now
-			startQuickGame();
-			break;
+			break;		
 		}
 	}
 
@@ -763,10 +754,10 @@ public class MainActivity2 extends BaseGameActivity implements
 	// This array lists everything that's clickable, so we can install click
 	// event handlers.
 	final static int[] CLICKABLES = { R.id.button_accept_popup_invitation,
-			R.id.button_invite_players, R.id.button_quick_game,
+			R.id.button_invite_players,
 			R.id.button_see_invitations, R.id.button_sign_in,
-			R.id.button_sign_out, R.id.button_single_player,
-			R.id.button_single_player_2 };
+			R.id.button_sign_out,
+			};
 
 	// This array lists all the individual screens our game has.
 	final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
