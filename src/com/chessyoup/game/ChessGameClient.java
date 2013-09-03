@@ -46,7 +46,15 @@ public class ChessGameClient implements RealTimeMessageReceivedListener,
 	private Room room;
 
 	private ChessGameClientListener chessGameClientListener;
-
+	
+	private InviteCallback inviteCallback;
+	
+    public interface InviteCallback {        
+        void onCreateRoomFailed();
+        
+        void onCreateRoomSucceeded(Room room);
+    }
+	
 	public ChessGameClient(GamesClient gameClient, Context context) {
 		this.context = context;
 		this.gameClient = gameClient;
@@ -187,16 +195,23 @@ public class ChessGameClient implements RealTimeMessageReceivedListener,
 
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
+			if( this.inviteCallback != null ){
+				this.inviteCallback.onCreateRoomFailed();
+			}
 			return;
 		}
 
 		this.room = room;
 
-		Intent chessTableIntent = new Intent(this.context,
-				ChessTableActivity.class);
-		chessTableIntent.putExtra("owner", true);
-		chessTableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		this.context.startActivity(chessTableIntent);
+//		Intent chessTableIntent = new Intent(this.context,
+//				ChessTableActivity.class);
+//		chessTableIntent.putExtra("owner", true);
+//		chessTableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//		this.context.startActivity(chessTableIntent);
+		
+		if( this.inviteCallback != null ){
+			this.inviteCallback.onCreateRoomSucceeded(room);
+		}
 	}
 
 	@Override
@@ -288,7 +303,7 @@ public class ChessGameClient implements RealTimeMessageReceivedListener,
 		Log.d(TAG, "onRoomConnecting :: " + room);
 	}
 
-	public void invitePlayer(ArrayList<String> invitees) {
+	public void invitePlayer(ArrayList<String> invitees , InviteCallback inviteCallback) {
 		Log.d(TAG, "Creating room...for :"+invitees.toString());		
 		RoomConfig.Builder rtmConfigBuilder = RoomConfig
 				.builder(ChessGameClient.getChessClient());
@@ -297,7 +312,8 @@ public class ChessGameClient implements RealTimeMessageReceivedListener,
 				.getChessClient());
 		rtmConfigBuilder.setRoomStatusUpdateListener(ChessGameClient
 				.getChessClient());
-		gameClient.createRoom(rtmConfigBuilder.build());
+		this.inviteCallback = inviteCallback;
+		gameClient.createRoom(rtmConfigBuilder.build());		
 		Log.d(TAG, "Room created, waiting for it to be ready...");
 	}
 	 

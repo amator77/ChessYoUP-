@@ -14,6 +14,7 @@ import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
+import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
 public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationReceivedListener {
@@ -80,7 +81,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationR
 				// player wants to start playing
 				Log.d(TAG,
 						"Starting game because user requested via waiting room UI.");
-
+				
+				Intent chessTableIntent = new Intent(this,ChessTableActivity.class);
+				chessTableIntent.putExtra("owner", true);
+//				chessTableIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(chessTableIntent);
+				
 				// let other players know we're starting.
 				broadcastStart();
 
@@ -146,10 +152,40 @@ public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationR
 		final ArrayList<String> invitees = intent.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
 		Log.d(TAG, "Invitee: " + invitees.toString());
 		
-		switchToScreen(R.id.screen_wait);	
-		ChessGameClient.getChessClient().invitePlayer(invitees);				
+						
+		switchToScreen(R.id.screen_wait);
+		ChessGameClient.InviteCallback inviteCallback = new ChessGameClient.InviteCallback() {
+			
+			@Override
+			public void onCreateRoomSucceeded(Room room) {
+				showWaitingRoom(room);				
+			}
+			
+			@Override
+			public void onCreateRoomFailed() {
+				// TODO Auto-generated method stub
+				
+			}
+		};
+		
+		ChessGameClient.getChessClient().invitePlayer(invitees , inviteCallback);			
 	}
+	
+	// Show the waiting room UI to track the progress of other players as they
+	// enter the
+	// room and get connected.
+	void showWaitingRoom(Room room) {
+		mWaitRoomDismissedFromCode = false;
+		
+		// minimum number of players required for our game
+		final int MIN_PLAYERS = 2;
+		Intent i = getGamesClient().getRealTimeWaitingRoomIntent(room,
+				MIN_PLAYERS);
 
+		// show waiting room UI
+		startActivityForResult(i, RC_WAITING_ROOM);
+	}
+	
 	private void switchToScreen(int screenId) {
 		// make the requested screen visible; hide all others.
 		for (int id : SCREENS) {
