@@ -72,11 +72,5 @@
     </LinearLayout>
 
     <!-- GAMEPLAY SCREEN -->
-    <LinearLayout android:id="@+id/screen_game" style="@style/GameScreen">
-        <view
-        android:id="@+id/chessboard"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"        
-        class="com.chessyoup.game.view.ChessBoardPlay" />
-    </LinearLayout>
+    <include layout="@layout/chessboard"/>    
 </FrameLayout>

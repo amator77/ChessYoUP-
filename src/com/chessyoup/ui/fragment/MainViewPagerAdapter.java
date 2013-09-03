@@ -1,4 +1,4 @@
-package com.chessyoup.ui;
+package com.chessyoup.ui.fragment;
 
 import java.util.ArrayList;
 import java.util.List;

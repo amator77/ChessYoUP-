@@ -11,6 +11,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -27,6 +29,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.chessyoup.R;
@@ -43,6 +46,9 @@ import com.chessyoup.model.TextIO;
 import com.chessyoup.model.pgn.PGNOptions;
 import com.chessyoup.model.pgn.PgnToken;
 import com.chessyoup.model.pgn.PgnTokenReceiver;
+import com.chessyoup.ui.fragment.FragmenChat;
+import com.chessyoup.ui.fragment.FragmentGame;
+import com.chessyoup.ui.fragment.MainViewPagerAdapter;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -99,7 +105,29 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;
+	
+	private FragmentGame fGame;
 
+	private FragmenChat fChat;
+	
+	private ViewPager gameViewPager;
+	
+	private ImageButton abortButton;
+
+	private ImageButton resignButton;
+
+	private ImageButton drawButton;
+
+	private ImageButton exitButton;
+
+	private ImageButton rematchButton;
+
+	private boolean drawRequested;
+
+	private boolean abortRequested;
+	
+	private PgnScreenText gameTextListener;
+	
 	// *********************************************************************
 	// *********************************************************************
 	// GameHelperListener methods
@@ -146,8 +174,27 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		enableDebugLog(true, TAG);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		this.ctrl = new ChessboardController(this, new PgnScreenText(
-				new PGNOptions()), new PGNOptions());
+				
+		this.abortButton = (ImageButton) findViewById(R.id.abortGameButton);
+		this.resignButton = (ImageButton) findViewById(R.id.resignGameButton);
+		this.drawButton = (ImageButton) findViewById(R.id.drawGameButton);
+		this.exitButton = (ImageButton) findViewById(R.id.exitGameButton);
+		this.rematchButton = (ImageButton) findViewById(R.id.rematchGameButton);
+
+		this.gameViewPager = (ViewPager) this
+				.findViewById(R.id.chessBoardViewPager);
+		this.fChat = new FragmenChat();
+		this.fGame = new FragmentGame();
+		MainViewPagerAdapter fAdapter = new MainViewPagerAdapter(getSupportFragmentManager());
+		fAdapter.addFragment(this.fGame);
+		fAdapter.addFragment(this.fChat);
+		this.gameViewPager.setAdapter(fAdapter);
+		this.gameViewPager.setCurrentItem(1);
+		this.gameViewPager.setCurrentItem(0);
+		
+		PGNOptions pgOptions = new PGNOptions();
+		this.gameTextListener = new PgnScreenText(pgOptions);
+		this.ctrl = new ChessboardController(this, this.gameTextListener, pgOptions);
 		this.installListeners();
 	}
 
@@ -499,8 +546,22 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void moveListUpdated() {
-		// TODO Auto-generated method stub
+		
+		runOnUiThread(new Runnable() {
 
+			@Override
+			public void run() {
+				fGame.moveListView.setText(gameTextListener.getSpannableData());
+				Layout layout = fGame.moveListView.getLayout();
+				if (layout != null) {
+					int currPos = gameTextListener.getCurrPos();
+					int line = layout.getLineForOffset(currPos);
+					int y = (int) ((line - 1.5) * fGame.moveListView
+							.getLineHeight());
+					fGame.moveListScroll.scrollTo(0, y);
+				}
+			}
+		});
 	}
 
 	@Override
