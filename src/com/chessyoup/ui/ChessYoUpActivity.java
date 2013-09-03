@@ -14,7 +14,6 @@ import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
-import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.example.games.basegameutils.BaseGameActivity;
 
 public class ChessYoUpActivity extends BaseGameActivity implements OnInvitationReceivedListener {

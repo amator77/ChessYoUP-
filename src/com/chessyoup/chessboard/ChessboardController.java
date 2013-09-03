@@ -37,7 +37,11 @@ public class ChessboardController {
 	private boolean guiPaused = false;
 
 	private Move promoteMove;
+	
+	private boolean drawRequested;
 
+	private boolean abortRequested;
+	
 	public ChessboardController(ChessboardUIInterface gui,
 			PgnTokenReceiver gameTextListener, PGNOptions options) {
 		this.gui = gui;
@@ -529,6 +533,22 @@ public class ChessboardController {
 		updateGUI();
 		System.out.println( "game state :"+ game.getGameState() + " after command :"+cmd);
 	}
+			
+	public boolean isDrawRequested() {
+		return drawRequested;
+	}
+
+	public void setDrawRequested(boolean drawRequested) {
+		this.drawRequested = drawRequested;
+	}
+
+	public boolean isAbortRequested() {
+		return abortRequested;
+	}
+
+	public void setAbortRequested(boolean abortRequested) {
+		this.abortRequested = abortRequested;
+	}
 
 	private final void setPlayerNames(Game game) {
 		if (game != null) {
@@ -665,6 +685,7 @@ public class ChessboardController {
 			return true;
 		return false;
 	}
-
+	
+	
 	
 }
