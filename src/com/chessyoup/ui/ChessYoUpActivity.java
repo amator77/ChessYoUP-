@@ -105,13 +105,13 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;
-	
+
 	private FragmentGame fGame;
 
 	private FragmenChat fChat;
-	
+
 	private ViewPager gameViewPager;
-	
+
 	private ImageButton abortButton;
 
 	private ImageButton resignButton;
@@ -125,9 +125,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private boolean drawRequested;
 
 	private boolean abortRequested;
-	
+
 	private PgnScreenText gameTextListener;
-	
+
 	// *********************************************************************
 	// *********************************************************************
 	// GameHelperListener methods
@@ -161,12 +161,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 
 		switchToMainScreen();
-		
-		
+
 		Log.d(TAG, getGamesClient().getCurrentGame().toString());
 		Log.d(TAG, getGamesClient().getCurrentPlayer().toString());
-		
-		
+
 	}
 
 	// *********************************************************************
@@ -180,7 +178,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		enableDebugLog(true, TAG);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-				
+
 		this.abortButton = (ImageButton) findViewById(R.id.abortGameButton);
 		this.resignButton = (ImageButton) findViewById(R.id.resignGameButton);
 		this.drawButton = (ImageButton) findViewById(R.id.drawGameButton);
@@ -191,16 +189,18 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				.findViewById(R.id.chessBoardViewPager);
 		this.fChat = new FragmenChat();
 		this.fGame = new FragmentGame();
-		MainViewPagerAdapter fAdapter = new MainViewPagerAdapter(getSupportFragmentManager());
+		MainViewPagerAdapter fAdapter = new MainViewPagerAdapter(
+				getSupportFragmentManager());
 		fAdapter.addFragment(this.fGame);
 		fAdapter.addFragment(this.fChat);
 		this.gameViewPager.setAdapter(fAdapter);
 		this.gameViewPager.setCurrentItem(1);
 		this.gameViewPager.setCurrentItem(0);
-		
+
 		PGNOptions pgOptions = new PGNOptions();
 		this.gameTextListener = new PgnScreenText(pgOptions);
-		this.ctrl = new ChessboardController(this, this.gameTextListener, pgOptions);
+		this.ctrl = new ChessboardController(this, this.gameTextListener,
+				pgOptions);
 		this.installListeners();
 	}
 
@@ -552,19 +552,23 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void moveListUpdated() {
-		
+
 		runOnUiThread(new Runnable() {
 
 			@Override
 			public void run() {
-				fGame.moveListView.setText(gameTextListener.getSpannableData());
-				Layout layout = fGame.moveListView.getLayout();
-				if (layout != null) {
-					int currPos = gameTextListener.getCurrPos();
-					int line = layout.getLineForOffset(currPos);
-					int y = (int) ((line - 1.5) * fGame.moveListView
-							.getLineHeight());
-					fGame.moveListScroll.scrollTo(0, y);
+				if (gameTextListener != null
+						&& gameTextListener.getSpannableData() != null) {
+					fGame.moveListView.setText(gameTextListener
+							.getSpannableData());
+					Layout layout = fGame.moveListView.getLayout();
+					if (layout != null) {
+						int currPos = gameTextListener.getCurrPos();
+						int line = layout.getLineForOffset(currPos);
+						int y = (int) ((line - 1.5) * fGame.moveListView
+								.getLineHeight());
+						fGame.moveListScroll.scrollTo(0, y);
+					}
 				}
 			}
 		});
