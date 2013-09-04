@@ -557,7 +557,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			@Override
 			public void run() {
-				if (gameTextListener != null
+				if ( fGame != null && fGame.moveListView != null && gameTextListener != null
 						&& gameTextListener.getSpannableData() != null) {
 					fGame.moveListView.setText(gameTextListener
 							.getSpannableData());
