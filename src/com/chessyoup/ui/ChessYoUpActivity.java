@@ -2,7 +2,9 @@ package com.chessyoup.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,14 +76,17 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	// Room ID where the currently active game is taking place; null if we're
 	// not playing.
-	private String mRoomId = null;
-
-	// The participants in the currently active game
-	private ArrayList<Participant> mParticipants = null;
+	private Room mRoom = null;
 
 	// My participant ID in the currently active game
 	private String mMyId = null;
 
+	// Remote participant ID in the currently active game
+	private String mRemoteId = null;
+	
+	// Remote participant ID in the currently active game
+	private String mLastWhitePlayerId = null;
+			
 	// If non-null, this is the id of the invitation we received via the
 	// invitation listener
 	private String mIncomingInvitationId = null;
@@ -275,8 +280,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				// let other players know we're starting.
 				broadcastStart();
 
-				// start the game!
-				startGame();
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				// player actively indicated that they want to leave the room
 				leaveRoom();
@@ -365,14 +368,22 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	public void onConnectedToRoom(Room room) {
 		Log.d(TAG, "onConnectedToRoom.");
 
-		// get room ID, participants and my ID:
-		mRoomId = room.getRoomId();
-		mParticipants = room.getParticipants();
 		mMyId = room.getParticipantId(getGamesClient().getCurrentPlayerId());
 
+		// get room ID, participants and my ID:
+		mRoom = room;
+
+		for (Participant p : room.getParticipants()) {
+			if (!p.getParticipantId().equals(mMyId)) {
+				mRemoteId = p.getParticipantId();
+				break;
+			}
+		}
+
 		// print out the list of participants (for debug purposes)
-		Log.d(TAG, "Room ID: " + mRoomId);
+		Log.d(TAG, "Room ID: " + room.getRoomId());
 		Log.d(TAG, "My ID " + mMyId);
+		Log.d(TAG, "Remote ID " + mRemoteId);
 		Log.d(TAG, "<< CONNECTED TO ROOM>>");
 	}
 
@@ -380,7 +391,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// screen.
 	@Override
 	public void onDisconnectedFromRoom(Room room) {
-		mRoomId = null;
+		mRoom = null;
 		showGameError();
 	}
 
@@ -503,11 +514,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	// Called when we receive a real-time message from the network.
 	@Override
-	public void onRealTimeMessageReceived(RealTimeMessage rtm) {
-		byte[] buf = rtm.getMessageData();
-		String sender = rtm.getSenderParticipantId();
-		String move = null;
-
+	public void onRealTimeMessageReceived(RealTimeMessage rtm) {		
 		Log.d(TAG,
 				"onRealTimeMessageReceived :" + rtm.toString() + " , "
 						+ rtm.getSenderParticipantId() + " , "
@@ -515,15 +522,20 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 		try {
 			JSONObject json = new JSONObject(new String(rtm.getMessageData()));
-			move = json.getString("move");
+			Map<String, String> payload = new HashMap<String, String>();
+			Iterator it = json.keys();
+			
+			while(it.hasNext()){
+				String key = it.next().toString();								
+				payload.put(key, json.get(key).toString());				
+			}
+			
+			this.handleIncomingGameCommand(payload.get("cmd") ,payload );
+									
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return;
-		}
-
-		Log.d(TAG, "Move received: " + move);
-
-		ctrl.makeRemoteMove(move);
+		}		
 	}
 
 	// *********************************************************************
@@ -557,7 +569,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			@Override
 			public void run() {
-				if ( fGame != null && fGame.moveListView != null && gameTextListener != null
+				if (fGame != null && fGame.moveListView != null
+						&& gameTextListener != null
 						&& gameTextListener.getSpannableData() != null) {
 					fGame.moveListView.setText(gameTextListener
 							.getSpannableData());
@@ -637,21 +650,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 
 	private void sendMoveToRemote(String moveToUCIString) {
-		JSONObject json = new JSONObject();
-		try {
-			json.put("move", moveToUCIString);
-
-			for (Participant p : mParticipants) {
-				if (!p.getParticipantId().equals(mMyId)) {
-					getGamesClient().sendReliableRealTimeMessage(null,
-							json.toString().getBytes(), mRoomId,
-							p.getParticipantId());
-				}
-			}
-
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
+		Map<String, String> payload = new HashMap<String, String>();
+		payload.put("mv", moveToUCIString);
+		sendGameCommand("move", payload);				
 	}
 
 	private void installListeners() {
@@ -836,15 +837,15 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	// Start the gameplay phase of the game.
-	private void startGame() {
-		updateScoreDisplay();
+	private void startGame(String whitePlayerId,String blackPlayerId) {
+
 		switchToScreen(R.id.screen_game);
-		Log.d(TAG, " inv id :" + mIncomingInvitationId);
-		this.ctrl.newGame(iAmWhite ? new ChessboardMode(
+		
+		this.ctrl.newGame(mMyId.equals(whitePlayerId) ? new ChessboardMode(
 				ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(
 				ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
 		this.ctrl.startGame();
-		if (!iAmWhite) {
+		if ( !mMyId.equals(whitePlayerId)) {
 			ChessBoardPlay cb = (ChessBoardPlay) findViewById(R.id.chessboard);
 			cb.setFlipped(true);
 		}
@@ -854,9 +855,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void leaveRoom() {
 		Log.d(TAG, "Leaving room.");
 		stopKeepingScreenOn();
-		if (mRoomId != null) {
-			getGamesClient().leaveRoom(this, mRoomId);
-			mRoomId = null;
+		if (mRoom != null) {
+			getGamesClient().leaveRoom(this, mRoom.getRoomId());
+			mRoom = null;
 			switchToScreen(R.id.screen_wait);
 		} else {
 			switchToMainScreen();
@@ -887,24 +888,80 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void updateRoom(Room room) {
-		mParticipants = room.getParticipants();
+		
+		for(Participant p : room.getParticipants()){
+			if( !p.getParticipantId().equals(mMyId) ){
+				mRemoteId = p.getParticipantId();
+			}
+		}
+				
 		updatePeerScoresDisplay();
 	}
 
 	// Broadcast a message indicating that we're starting to play. Everyone else
 	// will react
 	// by dismissing their waiting room UIs and starting to play too.
-	private void broadcastStart() {
-		for (Participant p : mParticipants) {
-			if (p.getParticipantId().equals(mMyId))
-				continue;
-			if (p.getStatus() != Participant.STATUS_JOINED)
-				continue;
+	private void broadcastStart() {			
+		String wp = getNextWhitePlayer();
+		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
+		Map<String, String> payload = new HashMap<String, String>();
+		payload.put("wp", wp);
+		payload.put("bp", bp);
+		this.sendGameCommand("start", payload);
+		
+		// start the game!
+		startGame(wp,bp);
+	}
+
+	private void sendGameCommand(String cmd, Map<String, String> payload) {
+		JSONObject json = new JSONObject();
+
+		try {
+			json.put("cmd", cmd);
+
+			if (payload != null) {
+				for (String key : payload.keySet()) {
+					json.put(key, payload.get(key));
+				}
+			}
+
 			getGamesClient().sendReliableRealTimeMessage(null,
-					"start".getBytes(), mRoomId, p.getParticipantId());
+					json.toString().getBytes(), mRoom.getRoomId(),
+					mRemoteId);
+
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
 	}
 
+	private void handleIncomingGameCommand(String command , Map<String,String> payload) {
+		Log.d(TAG, "handleIncomingGameCommand :"+payload);
+		
+		if( command.equals("start")){
+			dismissWaitingRoom();
+			startGame(payload.get("wp"),payload.get("bp"));
+		}
+		else if( command.equals("move")){
+			this.ctrl.makeRemoteMove(payload.get("mv"));
+		}
+	}
+	
+	private String getNextWhitePlayer(){
+		if( this.mLastWhitePlayerId == null ){
+			return mMyId;
+		}
+		else{
+			if( this.mLastWhitePlayerId.equals(mMyId) ){
+				this.mLastWhitePlayerId = mRemoteId;
+				return mRemoteId;
+			}
+			else{
+				this.mLastWhitePlayerId = mMyId;
+				return mMyId;
+			}
+		}
+	}
+	
 	/*
 	 * UI SECTION. Methods that implement the game's UI.
 	 */
