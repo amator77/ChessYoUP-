@@ -22,27 +22,35 @@
 
     <!-- SIGN-IN SCREEN -->
     <LinearLayout android:id="@+id/screen_sign_in" style="@style/LLScreen">
-        <TextView style="@style/GameTitle" />
         
-         <ImageView
+        <ImageView
 	        android:id="@+id/imageView1"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:layout_alignParentLeft="true"
 	        android:layout_centerVertical="true"
 	        android:contentDescription="backgroud"
-	        android:src="@drawable/knight" />
+	        android:src="@drawable/chess_icon" />
         
+        <TextView style="@style/GameTitle" />
+                         
         <com.google.android.gms.common.SignInButton android:id="@+id/button_sign_in"
             style="@style/SignInButton" />
     </LinearLayout>
 
     <!-- MAIN SCREEN -->
     <LinearLayout android:id="@+id/screen_main" style="@style/LLScreen">
+        <ImageView
+	        android:id="@+id/imageView2"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentLeft="true"
+	        android:layout_centerVertical="true"
+	        android:contentDescription="backgroud"
+	        android:src="@drawable/chess_icon" />
+        
         <TextView style="@style/GameTitle" />
-               
-        <TextView style="@style/MainScreenButtonBlurb"
-            android:text="@string/quick_game_explanation" />
+                       
         <Button android:id="@+id/button_invite_players"
             style="@style/MainScreenButton"
             android:text="@string/invite_players" />

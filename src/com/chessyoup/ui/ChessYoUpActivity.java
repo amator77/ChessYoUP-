@@ -67,7 +67,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		RoomStatusUpdateListener, RoomUpdateListener,
 		OnInvitationReceivedListener, ChessboardUIInterface {
 
-	private final static String TAG = "MainActivity2";
+	private final static String TAG = "ChessYoUpActivity";
 	private final static int RC_SELECT_PLAYERS = 10000;
 	private final static int RC_INVITATION_INBOX = 10001;
 	private final static int RC_WAITING_ROOM = 10002;
@@ -161,6 +161,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 
 		switchToMainScreen();
+		
+		
+		Log.d(TAG, getGamesClient().getCurrentGame().toString());
+		Log.d(TAG, getGamesClient().getCurrentPlayer().toString());
+		
+		
 	}
 
 	// *********************************************************************
