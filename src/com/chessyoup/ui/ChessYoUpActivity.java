@@ -48,6 +48,7 @@ import com.chessyoup.model.TextIO;
 import com.chessyoup.model.pgn.PGNOptions;
 import com.chessyoup.model.pgn.PgnToken;
 import com.chessyoup.model.pgn.PgnTokenReceiver;
+import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
 import com.chessyoup.ui.fragment.FragmenChat;
 import com.chessyoup.ui.fragment.FragmentGame;
 import com.chessyoup.ui.fragment.MainViewPagerAdapter;
@@ -67,71 +68,41 @@ import com.google.example.games.basegameutils.BaseGameActivity;
 public class ChessYoUpActivity extends BaseGameActivity implements
 		View.OnClickListener, RealTimeMessageReceivedListener,
 		RoomStatusUpdateListener, RoomUpdateListener,
-		OnInvitationReceivedListener, ChessboardUIInterface {
+		OnInvitationReceivedListener , ChessTableUIListener{
 
 	private final static String TAG = "ChessYoUpActivity";
+	
 	private final static int RC_SELECT_PLAYERS = 10000;
+	
 	private final static int RC_INVITATION_INBOX = 10001;
+	
 	private final static int RC_WAITING_ROOM = 10002;
-
-	// Room ID where the currently active game is taking place; null if we're
-	// not playing.
+	
+	private ChessTableUI chessTableUI;
+		
 	private Room mRoom = null;
 
-	// My participant ID in the currently active game
 	private String mMyId = null;
 
-	// Remote participant ID in the currently active game
 	private String mRemoteId = null;
 	
-	// Remote participant ID in the currently active game
 	private String mLastWhitePlayerId = null;
-			
-	// If non-null, this is the id of the invitation we received via the
-	// invitation listener
+				
 	private String mIncomingInvitationId = null;
-
-	private boolean iAmWhite = false;
-
-	// flag indicating whether we're dismissing the waiting room because the
-	// game is starting
+	
 	private boolean mWaitRoomDismissedFromCode = false;
-
-	// chessboard controller
-	private ChessboardController ctrl;
-
+	
 	private final static int[] CLICKABLES = {
 			R.id.button_accept_popup_invitation, R.id.button_invite_players,
 			R.id.button_see_invitations, R.id.button_sign_in,
 			R.id.button_sign_out, };
 
-	// This array lists all the individual screens our game has.
 	private final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;
-
-	private FragmentGame fGame;
-
-	private FragmenChat fChat;
-
-	private ViewPager gameViewPager;
-
-	private ImageButton abortButton;
-
-	private ImageButton resignButton;
-
-	private ImageButton drawButton;
-
-	private ImageButton exitButton;
-
-	private ImageButton rematchButton;
-
-	private boolean drawRequested;
-
-	private boolean abortRequested;
-
-	private PgnScreenText gameTextListener;
+	
+	
 
 	// *********************************************************************
 	// *********************************************************************
@@ -165,11 +136,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			return;
 		}
 
-		switchToMainScreen();
-
-		Log.d(TAG, getGamesClient().getCurrentGame().toString());
-		Log.d(TAG, getGamesClient().getCurrentPlayer().toString());
-
+		switchToMainScreen();		
 	}
 
 	// *********************************************************************
@@ -183,30 +150,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		enableDebugLog(true, TAG);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
-		this.abortButton = (ImageButton) findViewById(R.id.abortGameButton);
-		this.resignButton = (ImageButton) findViewById(R.id.resignGameButton);
-		this.drawButton = (ImageButton) findViewById(R.id.drawGameButton);
-		this.exitButton = (ImageButton) findViewById(R.id.exitGameButton);
-		this.rematchButton = (ImageButton) findViewById(R.id.rematchGameButton);
-
-		this.gameViewPager = (ViewPager) this
-				.findViewById(R.id.chessBoardViewPager);
-		this.fChat = new FragmenChat();
-		this.fGame = new FragmentGame();
-		MainViewPagerAdapter fAdapter = new MainViewPagerAdapter(
-				getSupportFragmentManager());
-		fAdapter.addFragment(this.fGame);
-		fAdapter.addFragment(this.fChat);
-		this.gameViewPager.setAdapter(fAdapter);
-		this.gameViewPager.setCurrentItem(1);
-		this.gameViewPager.setCurrentItem(0);
-
-		PGNOptions pgOptions = new PGNOptions();
-		this.gameTextListener = new PgnScreenText(pgOptions);
-		this.ctrl = new ChessboardController(this, this.gameTextListener,
-				pgOptions);
-		this.installListeners();
+		this.chessTableUI = new ChessTableUI(this);
+		
+		for (int id : CLICKABLES) {
+			findViewById(id).setOnClickListener(this);
+		}
 	}
 
 	@Override
@@ -540,191 +488,59 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	// *********************************************************************
 	// *********************************************************************
-	// ChessboardUIInterface methods
+	// ChessTableUIListener methods
 	// *********************************************************************
 	// *********************************************************************
 
 	@Override
-	public String blackPlayerName() {
-
-		return null;
+	public void onChat(String chatMessage) {
+		Map<String, String> payload = new HashMap<String, String>();
+		payload.put("m", chatMessage);
+		sendGameCommand("chat", payload);		
 	}
 
 	@Override
-	public boolean discardVariations() {
+	public void onMove(String move) {
+		Map<String, String> payload = new HashMap<String, String>();
+		payload.put("mv", move);
+		sendGameCommand("move", payload);								
+	}
+
+	@Override
+	public void onDrawRequested() {
 		// TODO Auto-generated method stub
-		return false;
+		
 	}
 
 	@Override
-	public void localMoveMade(Move arg0) {
+	public void onResign() {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
-	public void moveListUpdated() {
-
-		runOnUiThread(new Runnable() {
-
-			@Override
-			public void run() {
-				if (fGame != null && fGame.moveListView != null
-						&& gameTextListener != null
-						&& gameTextListener.getSpannableData() != null) {
-					fGame.moveListView.setText(gameTextListener
-							.getSpannableData());
-					Layout layout = fGame.moveListView.getLayout();
-					if (layout != null) {
-						int currPos = gameTextListener.getCurrPos();
-						int line = layout.getLineForOffset(currPos);
-						int y = (int) ((line - 1.5) * fGame.moveListView
-								.getLineHeight());
-						fGame.moveListScroll.scrollTo(0, y);
-					}
-				}
-			}
-		});
-	}
-
-	@Override
-	public void reportInvalidMove(Move arg0) {
+	public void onAbortRequested() {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
-	public void requestPromotePiece() {
+	public void onRematchRequested() {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 	@Override
-	public void runOnUIThread(Runnable arg0) {
+	public void onExit() {
 		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void setAnimMove(Position arg0, Move arg1, boolean arg2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void setPosition(Position arg0, String arg1, ArrayList<Move> arg2) {
-		// TODO Auto-generated method stub
-		final ChessBoardPlay cb = (ChessBoardPlay) findViewById(R.id.chessboard);
-		Log.d(TAG, "set position " + arg0.toString());
-		cb.setPosition(arg0);
-	}
-
-	@Override
-	public void setRemainingTime(long arg0, long arg1, long arg2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void setSelection(int arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void setStatus(ChessboardStatus arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public String whitePlayerName() {
-		// TODO Auto-generated method stub
-		return null;
+		
 	}
 
 	// *********************************************************************
 	// *********************************************************************
 	// Private section
 	// *********************************************************************
-	// *********************************************************************
-
-	private void sendMoveToRemote(String moveToUCIString) {
-		Map<String, String> payload = new HashMap<String, String>();
-		payload.put("mv", moveToUCIString);
-		sendGameCommand("move", payload);				
-	}
-
-	private void installListeners() {
-		for (int id : CLICKABLES) {
-			findViewById(id).setOnClickListener(this);
-		}
-
-		final ChessBoardPlay cb = (ChessBoardPlay) findViewById(R.id.chessboard);
-
-		final GestureDetector gd = new GestureDetector(this,
-				new GestureDetector.SimpleOnGestureListener() {
-					private float scrollX = 0;
-					private float scrollY = 0;
-
-					@Override
-					public boolean onDown(MotionEvent e) {
-						handleClick(e);
-						return true;
-					}
-
-					@Override
-					public boolean onScroll(MotionEvent e1, MotionEvent e2,
-							float distanceX, float distanceY) {
-
-						return true;
-					}
-
-					@Override
-					public boolean onSingleTapUp(MotionEvent e) {
-						cb.cancelLongPress();
-						handleClick(e);
-						return true;
-					}
-
-					@Override
-					public boolean onDoubleTapEvent(MotionEvent e) {
-						if (e.getAction() == MotionEvent.ACTION_UP)
-							handleClick(e);
-						return true;
-					}
-
-					private final void handleClick(MotionEvent e) {
-						if (true) {
-
-							int sq = cb.eventToSquare(e);
-							Move m = cb.mousePressed(sq);
-							Log.d(TAG, "handleClick" + sq);
-
-							if (m != null) {
-								Log.d(TAG, "Move :" + m);
-								if (true) {
-									Log.d(TAG,
-											"Local turn  :"
-													+ ctrl.getGame()
-															.getGameState()
-													+ " , "
-													+ ctrl.getGame().currPos().whiteMove);
-									ctrl.makeLocalMove(m);
-									sendMoveToRemote(TextIO.moveToUCIString(m));
-								}
-							}
-						}
-					}
-				});
-
-		cb.setOnTouchListener(new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				Log.d(TAG, "onTouch");
-				return gd.onTouchEvent(event);
-			}
-		});
-	}
+	// *********************************************************************	
 
 	private void startQuickGame() {
 		// quick-start a game with 1 randomly selected opponent
@@ -772,8 +588,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 
 		// create the room
-		Log.d(TAG, "Creating room...");
-		iAmWhite = true;
+		Log.d(TAG, "Creating room...");		
 		RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(this);
 		rtmConfigBuilder.addPlayersToInvite(invitees);
 		rtmConfigBuilder.setMessageReceivedListener(this);
@@ -808,8 +623,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	// Accept the given invitation.
 	private void acceptInviteToRoom(String invId) {
-		// accept the invitation
-		iAmWhite = false;
+		// accept the invitation		
 		Log.d(TAG, "Accepting invitation: " + invId);
 		RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(this);
 		roomConfigBuilder.setInvitationIdToAccept(invId)
@@ -841,14 +655,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 		switchToScreen(R.id.screen_game);
 		
-		this.ctrl.newGame(mMyId.equals(whitePlayerId) ? new ChessboardMode(
+		this.chessTableUI.getCtrl().newGame(mMyId.equals(whitePlayerId) ? new ChessboardMode(
 				ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(
 				ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
-		this.ctrl.startGame();
-		if ( !mMyId.equals(whitePlayerId)) {
-			ChessBoardPlay cb = (ChessBoardPlay) findViewById(R.id.chessboard);
-			cb.setFlipped(true);
-		}
+		this.chessTableUI.getCtrl().startGame();
+		this.chessTableUI.flipBoard(!mMyId.equals(whitePlayerId));		
 	}
 
 	// Leave the room.
@@ -893,9 +704,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			if( !p.getParticipantId().equals(mMyId) ){
 				mRemoteId = p.getParticipantId();
 			}
-		}
-				
-		updatePeerScoresDisplay();
+		}						
 	}
 
 	// Broadcast a message indicating that we're starting to play. Everyone else
@@ -942,7 +751,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			startGame(payload.get("wp"),payload.get("bp"));
 		}
 		else if( command.equals("move")){
-			this.ctrl.makeRemoteMove(payload.get("mv"));
+			this.chessTableUI.getCtrl().makeRemoteMove(payload.get("mv"));
+		}
+		else if( command.equals("chat")){
+			this.chessTableUI.appendChatMesssage(payload.get("m"));
 		}
 	}
 	
@@ -995,24 +807,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
-	// updates the label that shows my score
-	void updateScoreDisplay() {
-
-	}
-
-	// formats a score as a three-digit number
-	String formatScore(int i) {
-		if (i < 0)
-			i = 0;
-		String s = String.valueOf(i);
-		return s.length() == 1 ? "00" + s : s.length() == 2 ? "0" + s : s;
-	}
-
-	// updates the screen with the scores from our peers
-	void updatePeerScoresDisplay() {
-
-	}
-
 	/*
 	 * MISC SECTION. Miscellaneous methods.
 	 */
@@ -1052,251 +846,5 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// Clears the flag that keeps the screen on.
 	private void stopKeepingScreenOn() {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-	}
-
-	static class PgnScreenText implements PgnTokenReceiver {
-		private SpannableStringBuilder sb = new SpannableStringBuilder();
-		private int prevType = PgnToken.EOF;
-		int nestLevel = 0;
-		boolean col0 = true;
-		Node currNode = null;
-		final static int indentStep = 15;
-		int currPos = 0, endPos = 0;
-		boolean upToDate = false;
-		PGNOptions options;
-
-		private static class NodeInfo {
-			int l0, l1;
-
-			NodeInfo(int ls, int le) {
-				l0 = ls;
-				l1 = le;
-			}
-		}
-
-		HashMap<Node, NodeInfo> nodeToCharPos;
-
-		PgnScreenText(PGNOptions options) {
-			nodeToCharPos = new HashMap<Node, NodeInfo>();
-			this.options = options;
-		}
-
-		public final SpannableStringBuilder getSpannableData() {
-			return sb;
-		}
-
-		public final int getCurrPos() {
-			return currPos;
-		}
-
-		public boolean isUpToDate() {
-			return upToDate;
-		}
-
-		int paraStart = 0;
-		int paraIndent = 0;
-		boolean paraBold = false;
-
-		private final void newLine() {
-			newLine(false);
-		}
-
-		private final void newLine(boolean eof) {
-			if (!col0) {
-				if (paraIndent > 0) {
-					int paraEnd = sb.length();
-					int indent = paraIndent * indentStep;
-					sb.setSpan(new LeadingMarginSpan.Standard(indent),
-							paraStart, paraEnd,
-							Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-				}
-				if (paraBold) {
-					int paraEnd = sb.length();
-					sb.setSpan(new StyleSpan(Typeface.BOLD), paraStart,
-							paraEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-				}
-				if (!eof)
-					sb.append('\n');
-				paraStart = sb.length();
-				paraIndent = nestLevel;
-				paraBold = false;
-			}
-			col0 = true;
-		}
-
-		boolean pendingNewLine = false;
-
-		/** Makes moves in the move list clickable. */
-		private final static class MoveLink extends ClickableSpan {
-			private Node node;
-
-			MoveLink(Node n) {
-				node = n;
-			}
-
-			@Override
-			public void onClick(View widget) {
-				// if (ctrl != null)
-				// ctrl.goNode(node);
-			}
-
-			@Override
-			public void updateDrawState(TextPaint ds) {
-			}
-		}
-
-		public void processToken(Node node, int type, String token) {
-
-			if (token == null) {
-				return;
-			}
-
-			if ((prevType == PgnToken.RIGHT_BRACKET)
-					&& (type != PgnToken.LEFT_BRACKET)) {
-				if (options.view.headers) {
-					col0 = false;
-					newLine();
-				} else {
-					sb.clear();
-					paraBold = false;
-				}
-			}
-			if (pendingNewLine) {
-				if (type != PgnToken.RIGHT_PAREN) {
-					newLine();
-					pendingNewLine = false;
-				}
-			}
-			switch (type) {
-			case PgnToken.STRING:
-				sb.append(" \"");
-				sb.append(token);
-				sb.append('"');
-				break;
-			case PgnToken.INTEGER:
-				if ((prevType != PgnToken.LEFT_PAREN)
-						&& (prevType != PgnToken.RIGHT_BRACKET) && !col0)
-					sb.append(' ');
-				sb.append(token);
-				col0 = false;
-				break;
-			case PgnToken.PERIOD:
-				sb.append('.');
-				col0 = false;
-				break;
-			case PgnToken.ASTERISK:
-				sb.append(" *");
-				col0 = false;
-				break;
-			case PgnToken.LEFT_BRACKET:
-				sb.append('[');
-				col0 = false;
-				break;
-			case PgnToken.RIGHT_BRACKET:
-				sb.append("]\n");
-				col0 = false;
-				break;
-			case PgnToken.LEFT_PAREN:
-				nestLevel++;
-				if (col0)
-					paraIndent++;
-				newLine();
-				sb.append('(');
-				col0 = false;
-				break;
-			case PgnToken.RIGHT_PAREN:
-				sb.append(')');
-				nestLevel--;
-				pendingNewLine = true;
-				break;
-			case PgnToken.NAG:
-				sb.append(Node.nagStr(Integer.parseInt(token)));
-				col0 = false;
-				break;
-			case PgnToken.SYMBOL: {
-				if ((prevType != PgnToken.RIGHT_BRACKET)
-						&& (prevType != PgnToken.LEFT_BRACKET) && !col0)
-					sb.append(' ');
-				int l0 = sb.length();
-				sb.append(token);
-				int l1 = sb.length();
-				nodeToCharPos.put(node, new NodeInfo(l0, l1));
-				sb.setSpan(new MoveLink(node), l0, l1,
-						Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-				if (endPos < l0)
-					endPos = l0;
-				col0 = false;
-				if (nestLevel == 0)
-					paraBold = true;
-				break;
-			}
-			case PgnToken.COMMENT:
-				if (prevType == PgnToken.RIGHT_BRACKET) {
-				} else if (nestLevel == 0) {
-					nestLevel++;
-					newLine();
-					nestLevel--;
-				} else {
-					if ((prevType != PgnToken.LEFT_PAREN) && !col0) {
-						sb.append(' ');
-					}
-				}
-				int l0 = sb.length();
-				sb.append(token.replaceAll("[ \t\r\n]+", " ").trim());
-				int l1 = sb.length();
-				int color = ColorTheme.instance().getColor(
-						ColorTheme.PGN_COMMENT);
-				sb.setSpan(new ForegroundColorSpan(color), l0, l1,
-						Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-				col0 = false;
-				if (nestLevel == 0)
-					newLine();
-				break;
-			case PgnToken.EOF:
-				newLine(true);
-				upToDate = true;
-				break;
-			}
-			prevType = type;
-		}
-
-		@Override
-		public void clear() {
-			sb.clear();
-			prevType = PgnToken.EOF;
-			nestLevel = 0;
-			col0 = true;
-			currNode = null;
-			currPos = 0;
-			endPos = 0;
-			nodeToCharPos.clear();
-			paraStart = 0;
-			paraIndent = 0;
-			paraBold = false;
-			pendingNewLine = false;
-
-			upToDate = false;
-		}
-
-		BackgroundColorSpan bgSpan = new BackgroundColorSpan(0xff888888);
-
-		@Override
-		public void setCurrent(Node node) {
-			sb.removeSpan(bgSpan);
-			NodeInfo ni = nodeToCharPos.get(node);
-			if ((ni == null) && (node != null) && (node.getParent() != null))
-				ni = nodeToCharPos.get(node.getParent());
-			if (ni != null) {
-				int color = ColorTheme.instance().getColor(
-						ColorTheme.CURRENT_MOVE);
-				bgSpan = new BackgroundColorSpan(color);
-				sb.setSpan(bgSpan, ni.l0, ni.l1,
-						Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-				currPos = ni.l0;
-			} else {
-				currPos = 0;
-			}
-			currNode = node;
-		}
-	}
+	}	
 }
