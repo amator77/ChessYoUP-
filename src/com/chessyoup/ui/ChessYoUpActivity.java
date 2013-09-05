@@ -96,12 +96,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 		switch (v.getId()) {
 		case R.id.button_sign_in:
-			// user wants to sign in
-			if (!verifyPlaceholderIdsReplaced()) {
-				showAlert("Error",
-						"Sample not set up correctly. Please see README.");
-				return;
-			}
 			beginUserInitiatedSignIn();
 			break;
 		case R.id.button_sign_out:
@@ -109,21 +103,16 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			switchToScreen(R.id.screen_sign_in);
 			break;
 		case R.id.button_invite_players:
-			// show list of invitable players
 			intent = getGamesClient().getSelectPlayersIntent(1, 3);
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_SELECT_PLAYERS);
 			break;
 		case R.id.button_see_invitations:
-			// show list of pending invitations
 			intent = getGamesClient().getInvitationInboxIntent();
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_INVITATION_INBOX);
 			break;
 		case R.id.button_accept_popup_invitation:
-			// user wants to accept the invitation shown on the invitation
-			// popup
-			// (the one we got through the OnInvitationReceivedListener).
 			acceptInviteToRoom(mIncomingInvitationId);
 			mIncomingInvitationId = null;
 			break;
@@ -137,41 +126,21 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 		switch (requestCode) {
 		case RC_SELECT_PLAYERS:
-			// we got the result from the "select players" UI -- ready to create
-			// the room
 			handleSelectPlayersResult(responseCode, intent);
 			break;
 		case RC_INVITATION_INBOX:
-			// we got the result from the "select invitation" UI (invitation
-			// inbox). We're
-			// ready to accept the selected invitation:
 			handleInvitationInboxResult(responseCode, intent);
 			break;
 		case RC_WAITING_ROOM:
-			// ignore result if we dismissed the waiting room from code:
 			if (mWaitRoomDismissedFromCode)
 				break;
-
-			// we got the result from the "waiting room" UI.
-			if (responseCode == Activity.RESULT_OK) {
-				// player wants to start playing
-				Log.d(TAG,
-						"Starting game because user requested via waiting room UI.");
-
-				// let other players know we're starting.
+ 
+			if (responseCode == Activity.RESULT_OK) { 
+				Log.d(TAG, "Starting game because user requested via waiting room UI.");
 				broadcastStart();
-
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
-				// player actively indicated that they want to leave the room
 				leaveRoom();
-			} else if (responseCode == Activity.RESULT_CANCELED) {
-				/*
-				 * Dialog was cancelled (user pressed back key, for instance).
-				 * In our game, this means leaving the room too. In more
-				 * elaborate games,this could mean something else (like
-				 * minimizing the waiting room UI but continue in the handshake
-				 * process).
-				 */
+			} else if (responseCode == Activity.RESULT_CANCELED) {				
 				leaveRoom();
 			}
 
@@ -183,13 +152,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onStop() {
 		Log.d(TAG, "**** got onStop");
-
-		// if we're in a room, leave it.
 		leaveRoom();
-
-		// stop trying to keep the screen on
 		stopKeepingScreenOn();
-
 		switchToScreen(R.id.screen_wait);
 		super.onStop();
 	}
@@ -218,8 +182,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		return super.onKeyDown(keyCode, e);
 	}
 	
-	
-	
+		
 
 	// *********************************************************************
 	// *********************************************************************
@@ -227,21 +190,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	/**
-	 * Called by the base class (BaseGameActivity) when sign-in has failed. For
-	 * example, because the user hasn't authenticated yet. We react to this by
-	 * showing the sign-in button.
-	 */
 	@Override
 	public void onSignInFailed() {
 		Log.d(TAG, "Sign-in failed.");
 		switchToScreen(R.id.screen_sign_in);
 	}
 
-	/**
-	 * Called by the base class (BaseGameActivity) when sign-in succeeded. We
-	 * react by going to our main screen.
-	 */
 	@Override
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
@@ -261,13 +215,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// OnInvitationReceivedListener methods
 	// *********************************************************************
 
-	// Called when we get an invitation to play a game. We react by showing that
-	// to the user.
 	@Override
 	public void onInvitationReceived(Invitation invitation) {
-		// We got an invitation to play a game! So, store it in
-		// mIncomingInvitationId
-		// and show the popup on the screen.
 		mIncomingInvitationId = invitation.getInvitationId();
 		((TextView) findViewById(R.id.incoming_invitation_text))
 				.setText(invitation.getInviter().getDisplayName() + " "
@@ -281,9 +230,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	// Called when we are connected to the room. We're not ready to play yet!
-	// (maybe not everybody
-	// is connected yet).
 	@Override
 	public void onConnectedToRoom(Room room) {
 		Log.d(TAG, "onConnectedToRoom.");
@@ -307,8 +253,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		Log.d(TAG, "<< CONNECTED TO ROOM>>");
 	}
 
-	// Called when we get disconnected from the room. We return to the main
-	// screen.
 	@Override
 	public void onDisconnectedFromRoom(Room room) {
 		mRoom = null;
@@ -369,7 +313,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	// Called when room has been created
 	@Override
 	public void onRoomCreated(int statusCode, Room room) {
 		Log.d(TAG, "onRoomCreated(" + statusCode + ", " + room + ")");
@@ -383,7 +326,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		showWaitingRoom(room);
 	}
 
-	// Called when room is fully connected.
 	@Override
 	public void onRoomConnected(int statusCode, Room room) {
 		Log.d(TAG, "onRoomConnected(" + statusCode + ", " + room + ")");
@@ -407,14 +349,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		// show the waiting room UI
 		showWaitingRoom(room);
 	}
-
-	// Called when we've successfully left the room (this happens a result of
-	// voluntarily leaving
-	// via a call to leaveRoom(). If we get disconnected, we get
-	// onDisconnectedFromRoom()).
+	
 	@Override
 	public void onLeftRoom(int statusCode, String roomId) {
-		// we have left the room; return to main screen.
 		Log.d(TAG, "onLeftRoom, code " + statusCode);
 		switchToMainScreen();
 	}
@@ -425,7 +362,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	// Called when we receive a real-time message from the network.
 	@Override
 	public void onRealTimeMessageReceived(RealTimeMessage rtm) {		
 		Log.d(TAG,
@@ -739,14 +675,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 	}
 	
-	/*
-	 * UI SECTION. Methods that implement the game's UI.
-	 */
-
-	// This array lists everything that's clickable, so we can install click
-	// event handlers.
-
-	void switchToScreen(int screenId) {
+	private void switchToScreen(int screenId) {
 		// make the requested screen visible; hide all others.
 		for (int id : SCREENS) {
 			findViewById(id).setVisibility(
@@ -760,7 +689,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			// no invitation, so no popup
 			showInvPopup = false;
 		} else {
-			// if in multiplayer, only show invitation on main screen
 			showInvPopup = (mCurScreen == R.id.screen_main);
 		}
 
@@ -768,47 +696,15 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				showInvPopup ? View.VISIBLE : View.GONE);
 	}
 
-	void switchToMainScreen() {
+	private void switchToMainScreen() {
 		switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
-	/*
-	 * MISC SECTION. Miscellaneous methods.
-	 */
 
-	/**
-	 * Checks that the developer (that's you!) read the instructions. IMPORTANT:
-	 * a method like this SHOULD NOT EXIST in your production app! It merely
-	 * exists here to check that anyone running THIS PARTICULAR SAMPLE did what
-	 * they were supposed to in order for the sample to work.
-	 */
-	private boolean verifyPlaceholderIdsReplaced() {
-		final boolean CHECK_PKGNAME = true; // set to false to disable check
-											// (not recommended!)
-
-		// Did the developer forget to change the package name?
-		if (CHECK_PKGNAME && getPackageName().startsWith("com.google.example."))
-			return false;
-
-		// Did the developer forget to replace a placeholder ID?
-		int res_ids[] = new int[] { R.string.app_id };
-		for (int i : res_ids) {
-			if (getString(i).equalsIgnoreCase("ReplaceMe"))
-				return false;
-		}
-		return true;
-	}
-
-	// Sets the flag to keep this screen on. It's recommended to do that during
-	// the
-	// handshake when setting up a game, because if the screen turns off, the
-	// game will be
-	// cancelled.
 	private void keepScreenOn() {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	// Clears the flag that keeps the screen on.
 	private void stopKeepingScreenOn() {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}	
