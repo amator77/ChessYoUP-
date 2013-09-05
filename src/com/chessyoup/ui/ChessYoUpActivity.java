@@ -11,47 +11,16 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
-import android.text.Layout;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.TextPaint;
-import android.text.style.BackgroundColorSpan;
-import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.LeadingMarginSpan;
-import android.text.style.StyleSpan;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.chessyoup.R;
-import com.chessyoup.chessboard.ChessboardController;
 import com.chessyoup.chessboard.ChessboardMode;
-import com.chessyoup.chessboard.ChessboardStatus;
-import com.chessyoup.chessboard.ChessboardUIInterface;
-import com.chessyoup.game.view.ChessBoardPlay;
-import com.chessyoup.game.view.ColorTheme;
-import com.chessyoup.model.GameTree.Node;
-import com.chessyoup.model.Move;
-import com.chessyoup.model.Position;
-import com.chessyoup.model.TextIO;
-import com.chessyoup.model.pgn.PGNOptions;
-import com.chessyoup.model.pgn.PgnToken;
-import com.chessyoup.model.pgn.PgnTokenReceiver;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
-import com.chessyoup.ui.fragment.FragmenChat;
-import com.chessyoup.ui.fragment.FragmentGame;
-import com.chessyoup.ui.fragment.MainViewPagerAdapter;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -102,42 +71,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	private int mCurScreen = -1;
 	
-	
-
-	// *********************************************************************
-	// *********************************************************************
-	// GameHelperListener methods
-	// *********************************************************************
-	// *********************************************************************
-
-	/**
-	 * Called by the base class (BaseGameActivity) when sign-in has failed. For
-	 * example, because the user hasn't authenticated yet. We react to this by
-	 * showing the sign-in button.
-	 */
-	@Override
-	public void onSignInFailed() {
-		Log.d(TAG, "Sign-in failed.");
-		switchToScreen(R.id.screen_sign_in);
-	}
-
-	/**
-	 * Called by the base class (BaseGameActivity) when sign-in succeeded. We
-	 * react by going to our main screen.
-	 */
-	@Override
-	public void onSignInSucceeded() {
-		Log.d(TAG, "Sign-in succeeded.");
-
-		getGamesClient().registerInvitationListener(this);
-
-		if (getInvitationId() != null) {
-			acceptInviteToRoom(getInvitationId());
-			return;
-		}
-
-		switchToMainScreen();		
-	}
 
 	// *********************************************************************
 	// *********************************************************************
@@ -151,7 +84,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		this.chessTableUI = new ChessTableUI(this);
-		
+		this.chessTableUI.setChessTableUIListener(this);
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
 		}
@@ -284,7 +217,46 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 		return super.onKeyDown(keyCode, e);
 	}
+	
+	
+	
 
+	// *********************************************************************
+	// *********************************************************************
+	// GameHelperListener methods
+	// *********************************************************************
+	// *********************************************************************
+
+	/**
+	 * Called by the base class (BaseGameActivity) when sign-in has failed. For
+	 * example, because the user hasn't authenticated yet. We react to this by
+	 * showing the sign-in button.
+	 */
+	@Override
+	public void onSignInFailed() {
+		Log.d(TAG, "Sign-in failed.");
+		switchToScreen(R.id.screen_sign_in);
+	}
+
+	/**
+	 * Called by the base class (BaseGameActivity) when sign-in succeeded. We
+	 * react by going to our main screen.
+	 */
+	@Override
+	public void onSignInSucceeded() {
+		Log.d(TAG, "Sign-in succeeded.");
+
+		getGamesClient().registerInvitationListener(this);
+
+		if (getInvitationId() != null) {
+			acceptInviteToRoom(getInvitationId());
+			return;
+		}
+
+		switchToMainScreen();		
+	}
+	
+		
 	// *********************************************************************
 	// OnInvitationReceivedListener methods
 	// *********************************************************************
@@ -342,14 +314,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		mRoom = null;
 		showGameError();
 	}
-
-	// We treat most of the room update callbacks in the same way: we update our
-	// list of
-	// participants and update the display. In a real game we would also have to
-	// check if that
-	// change requires some action like removing the corresponding player avatar
-	// from the screen,
-	// etc.
+	
 	@Override
 	public void onPeerDeclined(Room room, List<String> arg1) {
 		updateRoom(room);
