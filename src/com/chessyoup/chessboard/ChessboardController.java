@@ -281,9 +281,10 @@ public class ChessboardController {
 	}
 	
 	public void drawGame() {
+		this.resetFlags();
+		
 		if (game.getGameState() == GameState.ALIVE) {			
-			game.processString("draw accept");
-			this.resetFlags();
+			game.processString("draw accept");			
 			updateGUI();
 			System.out.println( "game state :"+ game.getGameState());
 		}				
@@ -291,9 +292,10 @@ public class ChessboardController {
 	
 	/** Resign game for current player. */
 	public final synchronized void abortGame() {
+		this.resetFlags();
+		
 		if (game.getGameState() == GameState.ALIVE) {
-			game.processString("abort");
-			this.resetFlags();
+			game.processString("abort");			
 			updateGUI();
 		}
 	}
