@@ -423,18 +423,18 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onRematchRequested() {
 		
-		if( !this.chessTableUI.getCtrl().isRemtachRequested() ){
-			this.sendMove("rematch");		
-		}
-		else{
+		if( this.chessTableUI.getCtrl().isRemtachRequested() ) {
 			
 			if( isRoomOwner() ){
 				broadcastStart();
 			}
 			else{
 				this.sendMove("rematch");
-			}
+			}			
 		}
+		else{
+			this.chessTableUI.getCtrl().setRemtachRequested(true);			
+		}		
 	}
 
 	@Override
@@ -735,9 +735,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			else if( move.equals("rematch")){
 				Log.d(TAG, "Rematch requested!");
 				
-				if( !this.chessTableUI.getCtrl().isRemtachRequested() ){
-					broadcastStart();
-					displayShortMessage( "Game Started!" );
+				if( this.chessTableUI.getCtrl().isRemtachRequested() ){
+					
+					if( isRoomOwner() ){
+						broadcastStart();	
+					}									
 				}
 				else{
 					this.chessTableUI.getCtrl().setRemtachRequested(true);
