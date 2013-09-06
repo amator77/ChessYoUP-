@@ -422,7 +422,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onRematchRequested() {
-		this.sendMove("remtach");		
+		this.sendMove("rematch");		
 	}
 
 	@Override
