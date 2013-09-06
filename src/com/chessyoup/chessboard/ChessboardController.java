@@ -534,7 +534,7 @@ public class ChessboardController {
 	}
 
 	public void offerDraw() {		
-		game.processString("draw offer ");									
+		game.processString("draw offer");									
 		updateGUI();
 	}
 	
@@ -700,8 +700,7 @@ public class ChessboardController {
 		return false;
 	}
 	
-	private void resetFlags(){
-		
+	private void resetFlags(){		
 		this.remtachRequested = false;
 		this.drawRequested = false;
 		this.abortRequested = false;		

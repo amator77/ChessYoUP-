@@ -436,7 +436,7 @@ public class Game {
                     processString(ms);
                 }
             }
-        } else if (drawCmd.startsWith("offer ")) {
+        } else if (drawCmd.startsWith("offer")) {
             pendingDrawOffer = true;
             String ms = drawCmd.substring(drawCmd.indexOf(" ") + 1);
             if (TextIO.stringToMove(pos, ms) != null) {

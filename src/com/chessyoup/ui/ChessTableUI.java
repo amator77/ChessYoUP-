@@ -447,8 +447,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() == GameState.ALIVE) {
 							if (ctrl.isDrawRequested()) {
-								ctrl.drawGame();
-								ctrl.setDrawRequested(false);
+								ctrl.drawGame();								
 
 								if (chessTableUIListener != null) {
 									chessTableUIListener.onMove("draw");
