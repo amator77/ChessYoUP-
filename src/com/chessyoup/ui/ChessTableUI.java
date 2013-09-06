@@ -472,12 +472,10 @@ public class ChessTableUI implements ChessboardUIInterface {
 					@Override
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() != GameState.ALIVE) {
-							
-							ctrl.setRemtachRequested(true);
-							
+														
 							if (chessTableUIListener != null) {
 								chessTableUIListener.onRematchRequested();
-							}
+							}							
 						}
 					}
 				});

@@ -422,7 +422,19 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onRematchRequested() {
-		this.sendMove("rematch");		
+		
+		if( !this.chessTableUI.getCtrl().isRemtachRequested() ){
+			this.sendMove("rematch");		
+		}
+		else{
+			
+			if( isRoomOwner() ){
+				broadcastStart();
+			}
+			else{
+				this.sendMove("rematch");
+			}
+		}
 	}
 
 	@Override
@@ -636,7 +648,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			}
 		}
 	}
-
+	
+	private boolean isRoomOwner(){
+		return mMyId.equals(mRoom.getCreatorId());
+	}
+	
 	// Broadcast a message indicating that we're starting to play. Everyone else
 	// will react
 	// by dismissing their waiting room UIs and starting to play too.
@@ -645,7 +661,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		String wp = getNextWhitePlayer();
 		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
 		
-		if( mMyId.equals(mRoom.getCreatorId())){			
+		if( isRoomOwner() ){			
 			Map<String, String> command = new HashMap<String, String>();
 			command.put("cmd", "start");
 			command.put("wp", wp);
@@ -727,10 +743,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 					this.chessTableUI.getCtrl().setRemtachRequested(true);
 					displayShortMessage( getRemoteDisplayName()+ " is requesting rematch!" );
 				}				
-			}
-			else if( move.equals("rematch accepted")){
-				Log.d(TAG, "Rematch accepted!");
-				broadcastStart();
 			}
 			else{
 				this.chessTableUI.getCtrl().makeRemoteMove(payload.get("mv"));
