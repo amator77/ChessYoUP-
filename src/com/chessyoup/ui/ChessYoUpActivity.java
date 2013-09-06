@@ -434,6 +434,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 		else{
 			this.chessTableUI.getCtrl().setRemtachRequested(true);			
+			this.sendMove("rematch");
 		}		
 	}
 
