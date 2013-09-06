@@ -554,6 +554,7 @@ public class ChessboardController {
 
 	public void setDrawRequested(boolean drawRequested) {
 		this.drawRequested = drawRequested;
+		this.game.processString("draw offer");
 	}
 
 	public boolean isAbortRequested() {

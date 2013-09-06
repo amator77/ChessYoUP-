@@ -469,9 +469,8 @@ public class ChessTableUI implements ChessboardUIInterface {
 				rematchButton.setOnClickListener(new OnClickListener() {
 
 					@Override
-					public void onClick(View v) {
-						if (ctrl.getGame().getGameState() != GameState.ALIVE) {
-														
+					public void onClick(View v) {						
+						if (ctrl.getGame().getGameState() != GameState.ALIVE) {							
 							if (chessTableUIListener != null) {
 								chessTableUIListener.onRematchRequested();
 							}							

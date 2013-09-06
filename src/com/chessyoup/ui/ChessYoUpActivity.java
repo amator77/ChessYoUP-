@@ -424,8 +424,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	public void onRematchRequested() {
 		
 		if( this.chessTableUI.getCtrl().isRemtachRequested() ) {
-			
-			if( isRoomOwner() ){
+			if( isRoomOwner() ){				
 				broadcastStart();
 			}
 			else{

@@ -378,8 +378,7 @@ public class Game {
         return new Pair<Position, ArrayList<Move>>(pos, mList);
     }
 
-    private final void handleDrawCmd(String drawCmd) {
-    	System.out.println("handle draw cmd :"+drawCmd);
+    private final void handleDrawCmd(String drawCmd) {    	
         Position pos = tree.currentPos;
         if (drawCmd.startsWith("rep") || drawCmd.startsWith("50")) {
             boolean rep = drawCmd.startsWith("rep");
