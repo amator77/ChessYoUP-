@@ -139,11 +139,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			if (responseCode == Activity.RESULT_OK) {
 				Log.d(TAG,
 						"Starting game because user requested via waiting room UI.");
-				
-				if( mMyId.equals(mRoom.getCreatorId())){
-					broadcastStart();
-				}
-				
+				broadcastStart();
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
 			} else if (responseCode == Activity.RESULT_CANCELED) {
@@ -645,14 +641,18 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// will react
 	// by dismissing their waiting room UIs and starting to play too.
 	private void broadcastStart() {
+		
 		String wp = getNextWhitePlayer();
 		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
-		Map<String, String> command = new HashMap<String, String>();
-		command.put("cmd", "start");
-		command.put("wp", wp);
-		command.put("bp", bp);
-		this.sendGameCommand(command);
-
+		
+		if( mMyId.equals(mRoom.getCreatorId())){			
+			Map<String, String> command = new HashMap<String, String>();
+			command.put("cmd", "start");
+			command.put("wp", wp);
+			command.put("bp", bp);
+			this.sendGameCommand(command);
+		}
+				
 		// start the game!
 		startGame(wp, bp);
 	}
