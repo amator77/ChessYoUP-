@@ -139,7 +139,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			if (responseCode == Activity.RESULT_OK) {
 				Log.d(TAG,
 						"Starting game because user requested via waiting room UI.");
-				broadcastStart();
+				
+				if( mMyId.equals(mRoom.getCreatorId())){
+					broadcastStart();
+				}
+				
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
 			} else if (responseCode == Activity.RESULT_CANCELED) {
