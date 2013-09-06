@@ -12,11 +12,13 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.BoringLayout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
@@ -37,30 +39,30 @@ import com.google.example.games.basegameutils.BaseGameActivity;
 public class ChessYoUpActivity extends BaseGameActivity implements
 		View.OnClickListener, RealTimeMessageReceivedListener,
 		RoomStatusUpdateListener, RoomUpdateListener,
-		OnInvitationReceivedListener , ChessTableUIListener{
+		OnInvitationReceivedListener, ChessTableUIListener {
 
 	private final static String TAG = "ChessYoUpActivity";
-	
+
 	private final static int RC_SELECT_PLAYERS = 10000;
-	
+
 	private final static int RC_INVITATION_INBOX = 10001;
-	
+
 	private final static int RC_WAITING_ROOM = 10002;
-	
+
 	private ChessTableUI chessTableUI;
-		
+
 	private Room mRoom = null;
 
 	private String mMyId = null;
 
 	private String mRemoteId = null;
-	
+
 	private String mLastWhitePlayerId = null;
-				
+
 	private String mIncomingInvitationId = null;
-	
+
 	private boolean mWaitRoomDismissedFromCode = false;
-	
+
 	private final static int[] CLICKABLES = {
 			R.id.button_accept_popup_invitation, R.id.button_invite_players,
 			R.id.button_see_invitations, R.id.button_sign_in,
@@ -70,7 +72,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;
-	
 
 	// *********************************************************************
 	// *********************************************************************
@@ -134,13 +135,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		case RC_WAITING_ROOM:
 			if (mWaitRoomDismissedFromCode)
 				break;
- 
-			if (responseCode == Activity.RESULT_OK) { 
-				Log.d(TAG, "Starting game because user requested via waiting room UI.");
+
+			if (responseCode == Activity.RESULT_OK) {
+				Log.d(TAG,
+						"Starting game because user requested via waiting room UI.");
 				broadcastStart();
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
-			} else if (responseCode == Activity.RESULT_CANCELED) {				
+			} else if (responseCode == Activity.RESULT_CANCELED) {
 				leaveRoom();
 			}
 
@@ -181,8 +183,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 		return super.onKeyDown(keyCode, e);
 	}
-	
-		
 
 	// *********************************************************************
 	// *********************************************************************
@@ -207,10 +207,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			return;
 		}
 
-		switchToMainScreen();		
+		switchToMainScreen();
 	}
-	
-		
+
 	// *********************************************************************
 	// OnInvitationReceivedListener methods
 	// *********************************************************************
@@ -258,7 +257,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		mRoom = null;
 		showGameError();
 	}
-	
+
 	@Override
 	public void onPeerDeclined(Room room, List<String> arg1) {
 		updateRoom(room);
@@ -349,7 +348,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		// show the waiting room UI
 		showWaitingRoom(room);
 	}
-	
+
 	@Override
 	public void onLeftRoom(int statusCode, String roomId) {
 		Log.d(TAG, "onLeftRoom, code " + statusCode);
@@ -363,7 +362,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 
 	@Override
-	public void onRealTimeMessageReceived(RealTimeMessage rtm) {		
+	public void onRealTimeMessageReceived(RealTimeMessage rtm) {
 		Log.d(TAG,
 				"onRealTimeMessageReceived :" + rtm.toString() + " , "
 						+ rtm.getSenderParticipantId() + " , "
@@ -373,18 +372,18 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			JSONObject json = new JSONObject(new String(rtm.getMessageData()));
 			Map<String, String> payload = new HashMap<String, String>();
 			Iterator it = json.keys();
-			
-			while(it.hasNext()){
-				String key = it.next().toString();								
-				payload.put(key, json.get(key).toString());				
+
+			while (it.hasNext()) {
+				String key = it.next().toString();
+				payload.put(key, json.get(key).toString());
 			}
-			
-			this.handleIncomingGameCommand(payload.get("cmd") ,payload );
-									
+
+			this.handleIncomingGameCommand(payload.get("cmd"), payload);
+
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return;
-		}		
+		}
 	}
 
 	// *********************************************************************
@@ -395,53 +394,81 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onChat(String chatMessage) {
-		Map<String, String> payload = new HashMap<String, String>();
-		payload.put("m", chatMessage);
-		sendGameCommand("chat", payload);		
+		Map<String, String> command = new HashMap<String, String>();
+		command.put("cmd", "chat");
+		command.put("m", chatMessage);
+		sendGameCommand(command);
 	}
 
 	@Override
 	public void onMove(String move) {
-		Map<String, String> payload = new HashMap<String, String>();
-		payload.put("mv", move);
-		sendGameCommand("move", payload);								
+		this.sendMove(move);		
 	}
 
 	@Override
 	public void onDrawRequested() {
-		// TODO Auto-generated method stub
-		
+		this.sendMove("draw");		
 	}
 
 	@Override
 	public void onResign() {
-		// TODO Auto-generated method stub
-		
+		this.sendMove("resign");		
 	}
 
 	@Override
 	public void onAbortRequested() {
-		// TODO Auto-generated method stub
-		
+		this.sendMove("abort");		
 	}
 
 	@Override
 	public void onRematchRequested() {
-		// TODO Auto-generated method stub
-		
+		this.sendMove("remtach");		
 	}
 
 	@Override
-	public void onExit() {
-		// TODO Auto-generated method stub
-		
+	public void onTableExit() {
+		leaveRoom();
 	}
 
 	// *********************************************************************
 	// *********************************************************************
 	// Private section
 	// *********************************************************************
-	// *********************************************************************	
+	// *********************************************************************
+	
+	private void sendMove(String move){
+		Map<String, String> command = new HashMap<String, String>();
+		command.put("cmd", "mv");
+		command.put("mv", move);
+		sendGameCommand(command);
+	}
+	
+	private String getRemoteDisplayName() {
+		if (this.mRoom != null) {
+			if (this.mRemoteId != null) {
+				for (Participant p : this.mRoom.getParticipants()) {
+					if (p.getParticipantId().equals(this.mRemoteId)) {
+						return p.getPlayer().getDisplayName();
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private String getDisplayName(String participantId) {
+		if (this.mRoom != null) {
+
+			for (Participant p : this.mRoom.getParticipants()) {
+				if (p.getParticipantId().equals(participantId)) {
+					return p.getPlayer().getDisplayName();
+				}
+			}
+		}
+
+		return null;
+	}
 
 	private void startQuickGame() {
 		// quick-start a game with 1 randomly selected opponent
@@ -489,7 +516,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 
 		// create the room
-		Log.d(TAG, "Creating room...");		
+		Log.d(TAG, "Creating room...");
 		RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(this);
 		rtmConfigBuilder.addPlayersToInvite(invitees);
 		rtmConfigBuilder.setMessageReceivedListener(this);
@@ -524,7 +551,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	// Accept the given invitation.
 	private void acceptInviteToRoom(String invId) {
-		// accept the invitation		
+		// accept the invitation
 		Log.d(TAG, "Accepting invitation: " + invId);
 		RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(this);
 		roomConfigBuilder.setInvitationIdToAccept(invId)
@@ -552,15 +579,17 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	// Start the gameplay phase of the game.
-	private void startGame(String whitePlayerId,String blackPlayerId) {
+	private void startGame(String whitePlayerId, String blackPlayerId) {
 
 		switchToScreen(R.id.screen_game);
-		
-		this.chessTableUI.getCtrl().newGame(mMyId.equals(whitePlayerId) ? new ChessboardMode(
-				ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(
-				ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
+
+		this.chessTableUI.getCtrl().newGame(
+				mMyId.equals(whitePlayerId) ? new ChessboardMode(
+						ChessboardMode.TWO_PLAYERS_BLACK_REMOTE)
+						: new ChessboardMode(
+								ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
 		this.chessTableUI.getCtrl().startGame();
-		this.chessTableUI.flipBoard(!mMyId.equals(whitePlayerId));		
+		this.chessTableUI.flipBoard(!mMyId.equals(whitePlayerId));
 	}
 
 	// Leave the room.
@@ -600,81 +629,132 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void updateRoom(Room room) {
-		
-		for(Participant p : room.getParticipants()){
-			if( !p.getParticipantId().equals(mMyId) ){
+
+		for (Participant p : room.getParticipants()) {
+			if (!p.getParticipantId().equals(mMyId)) {
 				mRemoteId = p.getParticipantId();
 			}
-		}						
+		}
 	}
 
 	// Broadcast a message indicating that we're starting to play. Everyone else
 	// will react
 	// by dismissing their waiting room UIs and starting to play too.
-	private void broadcastStart() {			
+	private void broadcastStart() {
 		String wp = getNextWhitePlayer();
 		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
-		Map<String, String> payload = new HashMap<String, String>();
-		payload.put("wp", wp);
-		payload.put("bp", bp);
-		this.sendGameCommand("start", payload);
-		
+		Map<String, String> command = new HashMap<String, String>();
+		command.put("cmd", "start");
+		command.put("wp", wp);
+		command.put("bp", bp);
+		this.sendGameCommand(command);
+
 		// start the game!
-		startGame(wp,bp);
+		startGame(wp, bp);
 	}
 
-	private void sendGameCommand(String cmd, Map<String, String> payload) {
+	private void sendGameCommand(Map<String, String> command) {
 		JSONObject json = new JSONObject();
 
-		try {
-			json.put("cmd", cmd);
-
-			if (payload != null) {
-				for (String key : payload.keySet()) {
-					json.put(key, payload.get(key));
-				}
-			}
-
+		try {			
+			
+			for (String key : command.keySet()) {
+				json.put(key, command.get(key));
+			}			
+			
+			Log.d(TAG, "Sending command :"+json.toString());
+			
 			getGamesClient().sendReliableRealTimeMessage(null,
-					json.toString().getBytes(), mRoom.getRoomId(),
-					mRemoteId);
+					json.toString().getBytes(), mRoom.getRoomId(), mRemoteId);
 
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void handleIncomingGameCommand(String command , Map<String,String> payload) {
-		Log.d(TAG, "handleIncomingGameCommand :"+payload);
-		
-		if( command.equals("start")){
+	private void handleIncomingGameCommand(String command,
+			Map<String, String> payload) {
+		Log.d(TAG, "handleIncomingGameCommand :" + payload);
+
+		if (command.equals("start")) {			
 			dismissWaitingRoom();
-			startGame(payload.get("wp"),payload.get("bp"));
-		}
-		else if( command.equals("move")){
-			this.chessTableUI.getCtrl().makeRemoteMove(payload.get("mv"));
-		}
-		else if( command.equals("chat")){
+			startGame(payload.get("wp"), payload.get("bp"));
+			
+		} else if (command.equals("mv")) {
+			
+			String move = payload.get("mv");
+			
+			if( move.equals("draw")){
+				Log.d(TAG, "Draw requested!");
+				
+				if( this.chessTableUI.getCtrl().isDrawRequested() ){
+					this.chessTableUI.getCtrl().drawGame();
+					displayShortMessage("Draw by mutual agreement!");
+				}
+				else{
+					this.chessTableUI.getCtrl().setDrawRequested(true);
+					displayShortMessage( getRemoteDisplayName()+ " is requesting draw!");
+				}				
+			}			
+			else if( move.equals("abort")){
+				Log.d(TAG, "Abort requested!");
+				
+				if( this.chessTableUI.getCtrl().isAbortRequested() ){
+					this.chessTableUI.getCtrl().abortGame();					
+					displayShortMessage( "Game aborted!");
+				}else{
+					this.chessTableUI.getCtrl().setAbortRequested(true);
+					displayShortMessage( getRemoteDisplayName()+ " is requesting to abort the game!");
+				}				
+			}			
+			else if( move.equals("resign")){
+				Log.d(TAG, "Remote resigned!");
+				this.chessTableUI.getCtrl().resignGame();
+				displayShortMessage( getRemoteDisplayName()+ " resigned!");
+			}
+			else if( move.equals("rematch")){
+				Log.d(TAG, "Rematch requested!");
+				
+				if( !this.chessTableUI.getCtrl().isRemtachRequested() ){
+					broadcastStart();
+					displayShortMessage( "Game Started!" );
+				}
+				else{
+					this.chessTableUI.getCtrl().setRemtachRequested(true);
+					displayShortMessage( getRemoteDisplayName()+ " is requesting rematch!" );
+				}				
+			}
+			else if( move.equals("rematch accepted")){
+				Log.d(TAG, "Rematch accepted!");
+				broadcastStart();
+			}
+			else{
+				this.chessTableUI.getCtrl().makeRemoteMove(payload.get("mv"));
+			}
+			
+		} else if (command.equals("chat")) {
 			this.chessTableUI.appendChatMesssage(payload.get("m"));
 		}
 	}
-	
-	private String getNextWhitePlayer(){
-		if( this.mLastWhitePlayerId == null ){
+
+	private void displayShortMessage(String string) { 
+		Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT).show();
+	}
+
+	private String getNextWhitePlayer() {
+		if (this.mLastWhitePlayerId == null) {
 			return mMyId;
-		}
-		else{
-			if( this.mLastWhitePlayerId.equals(mMyId) ){
+		} else {
+			if (this.mLastWhitePlayerId.equals(mMyId)) {
 				this.mLastWhitePlayerId = mRemoteId;
 				return mRemoteId;
-			}
-			else{
+			} else {
 				this.mLastWhitePlayerId = mMyId;
 				return mMyId;
 			}
 		}
 	}
-	
+
 	private void switchToScreen(int screenId) {
 		// make the requested screen visible; hide all others.
 		for (int id : SCREENS) {
@@ -700,12 +780,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
-
 	private void keepScreenOn() {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
 	private void stopKeepingScreenOn() {
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-	}	
+	}
 }

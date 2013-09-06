@@ -3,6 +3,7 @@ package com.chessyoup.ui;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardController;
@@ -47,7 +49,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 
 		void onRematchRequested();
 
-		void onExit();
+		void onTableExit();
 	}
 
 	protected static final String TAG = "ChessTableUI";
@@ -73,10 +75,6 @@ public class ChessTableUI implements ChessboardUIInterface {
 	private ImageButton exitButton;
 
 	private ImageButton rematchButton;
-
-	private boolean drawRequested;
-
-	private boolean abortRequested;
 
 	private PgnScreenTextView pgnScreenTextView;
 
@@ -112,7 +110,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 				pgOptions);
 		this.installListeners(parent);
 	}
-			
+
 	public ChessboardController getCtrl() {
 		return ctrl;
 	}
@@ -121,7 +119,8 @@ public class ChessTableUI implements ChessboardUIInterface {
 		return chessTableUIListener;
 	}
 
-	public void setChessTableUIListener(ChessTableUIListener chessTableUIListener) {
+	public void setChessTableUIListener(
+			ChessTableUIListener chessTableUIListener) {
 		this.chessTableUIListener = chessTableUIListener;
 	}
 
@@ -134,14 +133,66 @@ public class ChessTableUI implements ChessboardUIInterface {
 
 	@Override
 	public void setSelection(int sq) {
-		// TODO Auto-generated method stub
-
+		boardPlay.setSelection(sq);
+		boardPlay.userSelectedSquare = false;
 	}
 
 	@Override
-	public void setStatus(ChessboardStatus status) {
-		// TODO Auto-generated method stub
-
+	public void setStatus(ChessboardStatus s) {
+		String str;
+		switch (s.state) {
+		case ALIVE:
+			str = Integer.valueOf(s.moveNr).toString();
+			if (s.white)
+				str += ". " + this.parent.getString(R.string.whites_move);
+			else
+				str += "... " + this.parent.getString(R.string.blacks_move);
+			if (s.ponder)
+				str += " (" + this.parent.getString(R.string.ponder) + ")";
+			if (s.thinking)
+				str += " (" + this.parent.getString(R.string.thinking) + ")";
+			if (s.analyzing)
+				str += " (" + this.parent.getString(R.string.analyzing) + ")";
+			break;
+		case WHITE_MATE:
+			str = this.parent.getString(R.string.white_mate);
+			break;
+		case BLACK_MATE:
+			str = this.parent.getString(R.string.black_mate);
+			break;
+		case WHITE_STALEMATE:
+		case BLACK_STALEMATE:
+			str = this.parent.getString(R.string.stalemate);
+			break;
+		case DRAW_REP: {
+			str = this.parent.getString(R.string.draw_rep);
+			if (s.drawInfo.length() > 0)
+				str = str + " [" + s.drawInfo + "]";
+			break;
+		}
+		case DRAW_50: {
+			str = this.parent.getString(R.string.draw_50);
+			if (s.drawInfo.length() > 0)
+				str = str + " [" + s.drawInfo + "]";
+			break;
+		}
+		case DRAW_NO_MATE:
+			str = this.parent.getString(R.string.draw_no_mate);
+			break;
+		case DRAW_AGREE:
+			str = this.parent.getString(R.string.draw_agree);
+			break;
+		case RESIGN_WHITE:
+			str = this.parent.getString(R.string.resign_white);
+			break;
+		case RESIGN_BLACK:
+			str = this.parent.getString(R.string.resign_black);
+			break;
+		default:
+			str = "unknown";
+		}
+		
+		Log.d(TAG, "setStatus :: "+str);
 	}
 
 	@Override
@@ -171,20 +222,21 @@ public class ChessTableUI implements ChessboardUIInterface {
 
 	@Override
 	public void requestPromotePiece() {
-		// TODO Auto-generated method stub
-
+		promoteDialog().show();
 	}
 
 	@Override
 	public void runOnUIThread(Runnable runnable) {
-		// TODO Auto-generated method stub
-
+		this.parent.runOnUiThread(runnable);
 	}
 
 	@Override
 	public void reportInvalidMove(Move m) {
 		// TODO Auto-generated method stub
-
+		String msg = String.format("%s %s-%s",
+				parent.getString(R.string.invalid_move),
+				TextIO.squareToString(m.from), TextIO.squareToString(m.to));
+		Toast.makeText(parent.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
@@ -222,11 +274,11 @@ public class ChessTableUI implements ChessboardUIInterface {
 		// TODO Auto-generated method stub
 
 	}
-	
-	public void flipBoard(boolean flip){
+
+	public void flipBoard(boolean flip) {
 		boardPlay.setFlipped(flip);
 	}
-	
+
 	private void installListeners(FragmentActivity parent) {
 
 		final GestureDetector gd = new GestureDetector(parent,
@@ -356,10 +408,11 @@ public class ChessTableUI implements ChessboardUIInterface {
 					@Override
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() == GameState.ALIVE) {
-							if (abortRequested) {
+							if (ctrl.isAbortRequested()) {
 								ctrl.abortGame();
 								fGame.moveListView.append(" aborted");
-								abortRequested = false;
+								ctrl.setAbortRequested(false);
+
 								if (chessTableUIListener != null) {
 									chessTableUIListener.onMove("abort");
 								}
@@ -391,9 +444,9 @@ public class ChessTableUI implements ChessboardUIInterface {
 					@Override
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() == GameState.ALIVE) {
-							if (drawRequested) {
+							if (ctrl.isDrawRequested()) {
 								ctrl.drawGame();
-								drawRequested = false;
+								ctrl.setDrawRequested(false);
 
 								if (chessTableUIListener != null) {
 									chessTableUIListener.onMove("draw");
@@ -452,7 +505,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 													chessTableUIListener
 															.onMove("resign");
 													chessTableUIListener
-															.onExit();
+															.onTableExit();
 												}
 												break;
 											case 1:
@@ -471,7 +524,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 						} else {
 
 							if (chessTableUIListener != null) {
-								chessTableUIListener.onExit();
+								chessTableUIListener.onTableExit();
 							}
 
 							ctrl.abortGame();
@@ -483,6 +536,22 @@ public class ChessTableUI implements ChessboardUIInterface {
 	}
 
 	public void appendChatMesssage(String string) {
-		fChat.chatDisplay.append(string);		
+		fChat.chatDisplay.append(string);
 	}
+	
+	private final Dialog promoteDialog() {
+        final CharSequence[] items = {
+            parent.getString(R.string.queen), parent.getString(R.string.rook),
+            parent.getString(R.string.bishop), parent.getString(R.string.knight)
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+        builder.setTitle(R.string.promote_pawn_to);
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                ctrl.reportPromotePiece(item);
+            }
+        });
+        AlertDialog alert = builder.create();
+        return alert;
+    }
 }

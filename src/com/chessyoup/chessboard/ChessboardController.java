@@ -42,6 +42,8 @@ public class ChessboardController {
 
 	private boolean abortRequested;
 	
+	private boolean remtachRequested;
+	
 	public ChessboardController(ChessboardUIInterface gui,
 			PgnTokenReceiver gameTextListener, PGNOptions options) {
 		this.gui = gui;
@@ -55,6 +57,7 @@ public class ChessboardController {
 
 	/** Start a new game. */
 	public void newGame(ChessboardMode gameMode) {
+		this.resetFlags();
 		this.gameMode = gameMode;
 		this.game = new Game(gameTextListener, timeControl, movesPerSession,
 				timeIncrement);
@@ -120,9 +123,16 @@ public class ChessboardController {
 	public ChessboardMode getGameMode() {
 		return gameMode;
 	}
+		
 	
-	
-	
+	public boolean isRemtachRequested() {
+		return remtachRequested;
+	}
+
+	public void setRemtachRequested(boolean remtachRequested) {
+		this.remtachRequested = remtachRequested;
+	}
+
 	public PGNOptions getPgnOptions() {
 		return pgnOptions;
 	}
@@ -273,6 +283,7 @@ public class ChessboardController {
 	public void drawGame() {
 		if (game.getGameState() == GameState.ALIVE) {			
 			game.processString("draw accept");
+			this.resetFlags();
 			updateGUI();
 			System.out.println( "game state :"+ game.getGameState());
 		}				
@@ -282,6 +293,7 @@ public class ChessboardController {
 	public final synchronized void abortGame() {
 		if (game.getGameState() == GameState.ALIVE) {
 			game.processString("abort");
+			this.resetFlags();
 			updateGUI();
 		}
 	}
@@ -686,6 +698,12 @@ public class ChessboardController {
 		return false;
 	}
 	
-	
+	private void resetFlags(){
+		
+		this.remtachRequested = false;
+		this.drawRequested = false;
+		this.abortRequested = false;		
+	}
+		
 	
 }
