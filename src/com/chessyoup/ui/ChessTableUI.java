@@ -417,6 +417,8 @@ public class ChessTableUI implements ChessboardUIInterface {
 									chessTableUIListener.onMove("abort");
 								}
 							} else {
+								ctrl.setAbortRequested(true);
+								
 								if (chessTableUIListener != null) {
 									chessTableUIListener.onAbortRequested();
 								}
@@ -455,6 +457,7 @@ public class ChessTableUI implements ChessboardUIInterface {
 							} else {
 
 								ctrl.offerDraw();
+								ctrl.setDrawRequested(true);
 
 								if (chessTableUIListener != null) {
 									chessTableUIListener.onDrawRequested();
@@ -469,7 +472,9 @@ public class ChessTableUI implements ChessboardUIInterface {
 					@Override
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() != GameState.ALIVE) {
-
+							
+							ctrl.setRemtachRequested(true);
+							
 							if (chessTableUIListener != null) {
 								chessTableUIListener.onRematchRequested();
 							}
