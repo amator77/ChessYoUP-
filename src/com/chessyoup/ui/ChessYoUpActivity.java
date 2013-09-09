@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.BoringLayout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -23,7 +22,10 @@ import android.widget.Toast;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
+import com.chessyoup.ui.fragment.GameRequestDialog;
+import com.chessyoup.ui.fragment.GameRequestDialog.GameRequestDialogListener;
 import com.chessyoup.ui.fragment.NewGameDialog;
+import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -73,7 +75,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;
-
+	
+	private Map<String,String> newGameCommand;
+	
 	// *********************************************************************
 	// *********************************************************************
 	// Activity methods
@@ -90,9 +94,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
 		}
-		
-		NewGameDialog dialog = new NewGameDialog();
-		dialog.show(this.getSupportFragmentManager(), TAG);
 	}
 
 	@Override
@@ -137,13 +138,36 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			handleInvitationInboxResult(responseCode, intent);
 			break;
 		case RC_WAITING_ROOM:
-			if (mWaitRoomDismissedFromCode)
+			if (mWaitRoomDismissedFromCode){
+				switchToScreen(R.id.screen_game);
 				break;
+			}
 
 			if (responseCode == Activity.RESULT_OK) {
 				Log.d(TAG,
-						"Starting game because user requested via waiting room UI.");
-				broadcastStart();
+						"Sending ready request to remote.");
+				switchToScreen(R.id.screen_game);
+				broadcastReady();
+				showNewGameDialog(new NewGameDialogListener() {
+					
+					@Override
+					public void onNewGameRejected() {
+						Log.d(TAG, "New game dialog canceled!");						
+					}
+					
+					@Override
+					public void onNewGameCreated(String color, boolean isRated, int timeControll) {
+						Log.d(TAG, "onNewGameCreated :: color :"+color+" , isRated :"+isRated +" , timeControll"+timeControll);
+						Map<String, String> cmd = new HashMap<String, String>();
+						cmd.put("cmd", "newGame");
+						cmd.put("wp",  color.equals("white") ? mMyId : mRemoteId );
+						cmd.put("bp",  color.equals("white") ? mRemoteId : mMyId );
+						cmd.put("ir",  isRated+"");
+						cmd.put("tc",  String.valueOf(timeControll) );						
+						newGameCommand = cmd;
+						sendGameCommand(cmd);
+					}
+				});			
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
 			} else if (responseCode == Activity.RESULT_CANCELED) {
@@ -152,6 +176,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			break;
 		}
+	}
+
+	private void showNewGameDialog(NewGameDialogListener listener) {
+		NewGameDialog d = new NewGameDialog();
+		d.setListener(listener);
+		d.show(this.getSupportFragmentManager(), TAG);		
 	}
 
 	// Activity is going to the background. We have to leave the current room.
@@ -406,39 +436,37 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onMove(String move) {
-		this.sendMove(move);		
+		this.sendMove(move);
 	}
 
 	@Override
 	public void onDrawRequested() {
-		this.sendMove("draw");		
+		this.sendMove("draw");
 	}
 
 	@Override
 	public void onResign() {
-		this.sendMove("resign");		
+		this.sendMove("resign");
 	}
 
 	@Override
 	public void onAbortRequested() {
-		this.sendMove("abort");		
+		this.sendMove("abort");
 	}
 
 	@Override
 	public void onRematchRequested() {
-		
-		if( this.chessTableUI.getCtrl().isRemtachRequested() ) {
-			if( isRoomOwner() ){				
+
+		if (this.chessTableUI.getCtrl().isRemtachRequested()) {
+			if (isRoomOwner()) {
 				broadcastStart();
-			}
-			else{
+			} else {
 				this.sendMove("rematch");
-			}			
-		}
-		else{
-			this.chessTableUI.getCtrl().setRemtachRequested(true);			
+			}
+		} else {
+			this.chessTableUI.getCtrl().setRemtachRequested(true);
 			this.sendMove("rematch");
-		}		
+		}
 	}
 
 	@Override
@@ -451,14 +479,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// Private section
 	// *********************************************************************
 	// *********************************************************************
-	
-	private void sendMove(String move){
+
+	private void sendMove(String move) {
 		Map<String, String> command = new HashMap<String, String>();
 		command.put("cmd", "mv");
 		command.put("mv", move);
 		sendGameCommand(command);
 	}
-	
+
 	private String getRemoteDisplayName() {
 		if (this.mRoom != null) {
 			if (this.mRemoteId != null) {
@@ -595,10 +623,15 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	// Start the gameplay phase of the game.
-	private void startGame(String whitePlayerId, String blackPlayerId) {
+	private void startGame() {
+		
+		if( newGameCommand != null ){
+			this.startGame(newGameCommand.get("wp"), newGameCommand.get("bp"));
+		}				
+	}
 
-		switchToScreen(R.id.screen_game);
-
+	private void startGame(String whitePlayerId , String blackPlayerId) {
+		
 		this.chessTableUI.getCtrl().newGame(
 				mMyId.equals(whitePlayerId) ? new ChessboardMode(
 						ChessboardMode.TWO_PLAYERS_BLACK_REMOTE)
@@ -606,8 +639,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 								ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
 		this.chessTableUI.getCtrl().startGame();
 		this.chessTableUI.flipBoard(!mMyId.equals(whitePlayerId));
+		newGameCommand = null;
+		displayShortMessage("Game started!");
 	}
-
+	
 	// Leave the room.
 	private void leaveRoom() {
 		Log.d(TAG, "Leaving room.");
@@ -652,27 +687,36 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			}
 		}
 	}
-	
-	private boolean isRoomOwner(){
+
+	private boolean isRoomOwner() {
 		return mMyId.equals(mRoom.getCreatorId());
+	}
+
+	private void broadcastReady() {
+		
+		if (isRoomOwner()) {
+			Map<String, String> command = new HashMap<String, String>();
+			command.put("cmd", "ready");			
+			this.sendGameCommand(command);
+		}
 	}
 	
 	// Broadcast a message indicating that we're starting to play. Everyone else
 	// will react
 	// by dismissing their waiting room UIs and starting to play too.
 	private void broadcastStart() {
-		
+
 		String wp = getNextWhitePlayer();
 		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
-		
-		if( isRoomOwner() ){			
+
+		if (isRoomOwner()) {
 			Map<String, String> command = new HashMap<String, String>();
 			command.put("cmd", "start");
 			command.put("wp", wp);
 			command.put("bp", bp);
 			this.sendGameCommand(command);
 		}
-				
+
 		// start the game!
 		startGame(wp, bp);
 	}
@@ -680,14 +724,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void sendGameCommand(Map<String, String> command) {
 		JSONObject json = new JSONObject();
 
-		try {			
-			
+		try {
+
 			for (String key : command.keySet()) {
 				json.put(key, command.get(key));
-			}			
-			
-			Log.d(TAG, "Sending command :"+json.toString());
-			
+			}
+
+			Log.d(TAG, "Sending command :" + json.toString());
+
 			getGamesClient().sendReliableRealTimeMessage(null,
 					json.toString().getBytes(), mRoom.getRoomId(), mRemoteId);
 
@@ -699,68 +743,99 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void handleIncomingGameCommand(String command,
 			Map<String, String> payload) {
 		Log.d(TAG, "handleIncomingGameCommand :" + payload);
-
-		if (command.equals("start")) {			
+		
+		if (command.equals("ready")) {			
 			dismissWaitingRoom();
-			startGame(payload.get("wp"), payload.get("bp"));
-			
+			displayShortMessage("Ready to play!");			
+		} else  if (command.equals("newGame")) {			
+			showNewGameRequestDialog(payload.get("wp") , payload.get("bp") , payload.get("ir") , payload.get("tc"));			
+		}
+		else  if (command.equals("gameRejected")) {
+			newGameCommand = null;
+			displayShortMessage("Game rejected!");					
+		}
+		else if (command.equals("gameAccepted")) {						
+			startGame();
 		} else if (command.equals("mv")) {
-			
+
 			String move = payload.get("mv");
-			
-			if( move.equals("draw")){
+
+			if (move.equals("draw")) {
 				Log.d(TAG, "Draw requested!");
-				
-				if( this.chessTableUI.getCtrl().isDrawRequested() ){
+
+				if (this.chessTableUI.getCtrl().isDrawRequested()) {
 					this.chessTableUI.getCtrl().drawGame();
 					displayShortMessage("Draw by mutual agreement!");
-				}
-				else{
+				} else {
 					this.chessTableUI.getCtrl().setDrawRequested(true);
-					displayShortMessage( getRemoteDisplayName()+ " is requesting draw!");
-				}				
-			}			
-			else if( move.equals("abort")){
+					displayShortMessage(getRemoteDisplayName()
+							+ " is requesting draw!");
+				}
+			} else if (move.equals("abort")) {
 				Log.d(TAG, "Abort requested!");
-				
-				if( this.chessTableUI.getCtrl().isAbortRequested() ){
-					this.chessTableUI.getCtrl().abortGame();					
-					displayShortMessage( "Game aborted!");
-				}else{
+
+				if (this.chessTableUI.getCtrl().isAbortRequested()) {
+					this.chessTableUI.getCtrl().abortGame();
+					displayShortMessage("Game aborted!");
+				} else {
 					this.chessTableUI.getCtrl().setAbortRequested(true);
-					displayShortMessage( getRemoteDisplayName()+ " is requesting to abort the game!");
-				}				
-			}			
-			else if( move.equals("resign")){
+					displayShortMessage(getRemoteDisplayName()
+							+ " is requesting to abort the game!");
+				}
+			} else if (move.equals("resign")) {
 				Log.d(TAG, "Remote resigned!");
 				this.chessTableUI.getCtrl().resignGame();
-				displayShortMessage( getRemoteDisplayName()+ " resigned!");
-			}
-			else if( move.equals("rematch")){
+				displayShortMessage(getRemoteDisplayName() + " resigned!");
+			} else if (move.equals("rematch")) {
 				Log.d(TAG, "Rematch requested!");
-				
-				if( this.chessTableUI.getCtrl().isRemtachRequested() ){
-					
-					if( isRoomOwner() ){
-						broadcastStart();	
-					}									
-				}
-				else{
+
+				if (this.chessTableUI.getCtrl().isRemtachRequested()) {
+
+					if (isRoomOwner()) {
+						broadcastStart();
+					}
+				} else {
 					this.chessTableUI.getCtrl().setRemtachRequested(true);
-					displayShortMessage( getRemoteDisplayName()+ " is requesting rematch!" );
-				}				
-			}
-			else{
+					displayShortMessage(getRemoteDisplayName()
+							+ " is requesting rematch!");
+				}
+			} else {
 				this.chessTableUI.getCtrl().makeRemoteMove(payload.get("mv"));
 			}
-			
+
 		} else if (command.equals("chat")) {
 			this.chessTableUI.appendChatMesssage(payload.get("m"));
 		}
 	}
 
-	private void displayShortMessage(String string) { 
-		Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT).show();
+	private void showNewGameRequestDialog(String whitePlayerId, String blackPlayerId,
+			String isRated, String timeControll) {
+		
+		GameRequestDialog grd = new GameRequestDialog();
+		grd.setGameDetails(whitePlayerId+" vs "+blackPlayerId+" , "+( isRated.equals("true") ? "rated" : "friendly" )+" game.");
+		
+		grd.setListener(new GameRequestDialogListener() {
+			
+			@Override
+			public void onGameRequestRejected() {
+				Map<String, String> cmd  = new HashMap<String, String>();
+				cmd.put("cmd", "gameRejected");
+				sendGameCommand(cmd);
+			}
+			
+			@Override
+			public void onGameRequestAccepted() {				
+				Map<String, String> cmd  = new HashMap<String, String>();
+				cmd.put("cmd", "acceptGame");
+				sendGameCommand(cmd);
+				startGame();
+			}
+		});
+	}
+
+	private void displayShortMessage(String string) {
+		Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT)
+				.show();
 	}
 
 	private String getNextWhitePlayer() {

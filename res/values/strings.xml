@@ -258,6 +258,7 @@
     <string name="err_too_many_white_pieces">Too many white pieces</string>
     <string name="err_too_many_black_pieces">Too many black pieces</string>
     <string name="option_new_game">New Game</string>
+    <string name="option_game_request_details">Game details</string>
     <string name="option_file">File</string>
     <string name="option_resign_game">Resign game</string>
     <string name="option_edit_board">Edit Board</string>
