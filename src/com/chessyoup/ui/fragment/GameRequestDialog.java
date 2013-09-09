@@ -23,6 +23,8 @@ public class GameRequestDialog extends DialogFragment {
 	
 	private GameRequestDialogListener listener; 
 	
+	private String textDetails;
+	
 	private TextView textView;
 	
 	public GameRequestDialogListener getListener() {
@@ -40,7 +42,11 @@ public class GameRequestDialog extends DialogFragment {
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		View view = inflater.inflate(R.layout.game_request_dialog, null);
 		builder.setView(view);
-		textView = (TextView)view.findViewById(R.id.textView1);
+		textView = (TextView)view.findViewById(R.id.gameDetails);
+		
+		if(textDetails != null ){
+			textView.setText(textDetails);
+		}
 		
 		builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
@@ -66,7 +72,7 @@ public class GameRequestDialog extends DialogFragment {
 		return builder.create();
 	}
 
-	public void setGameDetails(String details) {		
-		textView.setText(details);		
+	public void setGameDetails(String details) {	
+		textDetails = details;			
 	}
 }
