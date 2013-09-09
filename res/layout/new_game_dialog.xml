@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_margin="2dp" >
+
+  <RadioGroup
+        android:id="@+id/radioGroup1"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true" >
+
+        <RadioButton
+            android:id="@+id/radio0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/white" />
+
+        <RadioButton
+            android:id="@+id/radio1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/black" />
+       
+    </RadioGroup>
+
+  <CheckBox
+      android:id="@+id/checkBox1"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+      android:layout_alignParentRight="true"
+      android:layout_below="@+id/radioGroup1"
+      android:text="@string/option_rated" />
+
+  <Spinner
+      android:id="@+id/spinner1"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+      android:paddingTop="0dp"
+      android:layout_below="@+id/textView1" />
+
+  <TextView
+      android:id="@+id/textView1"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+      android:layout_below="@+id/checkBox1"
+      android:layout_marginLeft="6dp"
+      android:layout_marginTop="6dp"
+      android:text="Time controll"
+      android:textAppearance="?android:attr/textAppearanceSmall" />
+
+</RelativeLayout>

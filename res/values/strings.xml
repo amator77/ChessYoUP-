@@ -270,6 +270,7 @@
     <string name="option_select_engine">Select Chess Engine</string>
     <string name="option_color_theme">Set Color Theme</string>
     <string name="option_about">About / Help</string>
+    <string name="option_rated">Rated game</string>
     <string name="prefs_playing_options">Playing Options</string>
     <string name="prefs_playerName_title">Player Name</string>
     <string name="prefs_playerName_summary">Default player name in new games</string>

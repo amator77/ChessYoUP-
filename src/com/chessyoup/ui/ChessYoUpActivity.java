@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
+import com.chessyoup.ui.fragment.NewGameDialog;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -89,6 +90,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
 		}
+		
+		NewGameDialog dialog = new NewGameDialog();
+		dialog.show(this.getSupportFragmentManager(), TAG);
 	}
 
 	@Override
