@@ -1,10 +1,12 @@
 package com.chessyoup.ui;
 
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.text.Layout;
@@ -33,7 +35,7 @@ import com.chessyoup.ui.fragment.FragmenChat;
 import com.chessyoup.ui.fragment.FragmentGame;
 import com.chessyoup.ui.fragment.MainViewPagerAdapter;
 
-public class ChessTableUI implements ChessboardUIInterface {
+public class ChessTableUI implements ChessboardUIInterface,Runnable {
 
 	public interface ChessTableUIListener {
 
@@ -80,8 +82,11 @@ public class ChessTableUI implements ChessboardUIInterface {
 
 	private FragmentActivity parent;
 
+	private Handler handlerTimer;
+    	
 	public ChessTableUI(FragmentActivity parent) {
 		this.parent = parent;
+		this.handlerTimer = new Handler();
 		this.boardPlay = (ChessBoardPlay) parent.findViewById(R.id.chessboard);
 		this.abortButton = (ImageButton) parent
 				.findViewById(R.id.abortGameButton);
@@ -110,7 +115,11 @@ public class ChessTableUI implements ChessboardUIInterface {
 				pgOptions);
 		this.installListeners(parent);
 	}
-
+	
+	public void run() {
+        ctrl.updateRemainingTime();
+    }
+	
 	public ChessboardController getCtrl() {
 		return ctrl;
 	}
@@ -238,12 +247,23 @@ public class ChessTableUI implements ChessboardUIInterface {
 				TextIO.squareToString(m.from), TextIO.squareToString(m.to));
 		Toast.makeText(parent.getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 	}
-
-	@Override
-	public void setRemainingTime(long wTime, long bTime, long nextUpdate) {
-		// TODO Auto-generated method stub
-
-	}
+	
+    @Override
+    public void setRemainingTime(int wTime, int bTime, int nextUpdate) {
+    	Log.d(TAG, "setRemainingTime :: wTime:"+wTime+",bTime:"+bTime+",nextUpdate:"+nextUpdate );
+    	
+        if (ctrl.getGameMode().clocksActive()) {
+        	Log.d(TAG, "wTime"  + timeToString(wTime));
+        	Log.d(TAG, "bTime"  + timeToString(bTime));        	            
+        } else {
+            TreeMap<String,String> headers = new TreeMap<String,String>();
+            ctrl.getHeaders(headers);            
+        }
+        
+        handlerTimer.removeCallbacks(this);
+        if (nextUpdate > 0)
+            handlerTimer.postDelayed(this, nextUpdate);
+    }
 
 	@Override
 	public void setAnimMove(Position sourcePos, Move move, boolean forward) {
@@ -535,7 +555,25 @@ public class ChessTableUI implements ChessboardUIInterface {
 			}
 		};
 	}
-
+	
+	private final String timeToString(int time) {
+        int secs = (int)Math.floor((time + 999) / 1000.0);
+        boolean neg = false;
+        if (secs < 0) {
+            neg = true;
+            secs = -secs;
+        }
+        int mins = secs / 60;
+        secs -= mins * 60;
+        StringBuilder ret = new StringBuilder();
+        if (neg) ret.append('-');
+        ret.append(mins);
+        ret.append(':');
+        if (secs < 10) ret.append('0');
+        ret.append(secs);
+        return ret.toString();
+    }
+	
 	public void appendChatMesssage(String string) {
 		fChat.chatDisplay.append(string);
 	}

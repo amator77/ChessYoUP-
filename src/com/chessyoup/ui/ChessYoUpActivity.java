@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
+import com.chessyoup.ui.ChessClock.ChessClockListener;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
 import com.chessyoup.ui.fragment.GameRequestDialog;
 import com.chessyoup.ui.fragment.GameRequestDialog.GameRequestDialogListener;
@@ -83,7 +84,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// Activity methods
 	// *********************************************************************
 	// *********************************************************************
-
+	ChessClock clck = new ChessClock();
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		enableDebugLog(true, TAG);
@@ -94,6 +96,34 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
 		}
+		
+		
+		clck.setListener(new ChessClockListener() {
+			
+			@Override
+			public void onTimesUp() {
+				System.out.println("onTimesUp");				
+			}
+			
+			@Override
+			public void onTick() {
+				System.out.println("onTick");
+			}
+			
+			@Override
+			public void onStop() {
+				// TODO Auto-generated method stub
+				System.out.println("onStop");
+			}
+			
+			@Override
+			public void onStart() {
+				// TODO Auto-generated method stub
+				System.out.println("onStart");
+			}
+		});
+		
+		clck.startClock(1000*60*3, 0);
 	}
 
 	@Override
@@ -198,6 +228,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		leaveRoom();
 		stopKeepingScreenOn();
 		switchToScreen(R.id.screen_wait);
+		clck.stopClock();
 		super.onStop();
 	}
 

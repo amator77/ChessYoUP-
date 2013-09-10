@@ -50,7 +50,7 @@ public class ChessboardController {
 		this.gameTextListener = gameTextListener;
 		this.gameMode = new ChessboardMode(ChessboardMode.ANALYSIS);
 		this.pgnOptions = options;
-		this.timeControl = 120000;
+		this.timeControl = 1000*60*3;
 		this.movesPerSession = 60;
 		this.timeIncrement = 0;
 	}
@@ -450,11 +450,11 @@ public class ChessboardController {
 	/** Update remaining time and trigger GUI update of clocks. */
 	public final synchronized void updateRemainingTime() {
 		long now = System.currentTimeMillis();
-		long wTime = game.timeController.getRemainingTime(true, now);
-		long bTime = game.timeController.getRemainingTime(false, now);
-		long nextUpdate = 0;
+		int wTime = game.timeController.getRemainingTime(true, now);
+		int bTime = game.timeController.getRemainingTime(false, now);
+		int nextUpdate = 0;
 		if (game.timeController.clockRunning()) {
-			long t = game.currPos().whiteMove ? wTime : bTime;
+			int t = game.currPos().whiteMove ? wTime : bTime;
 			nextUpdate = t % 1000;
 			if (nextUpdate < 0)
 				nextUpdate += 1000;

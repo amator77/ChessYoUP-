@@ -27,7 +27,7 @@ public interface ChessboardUIInterface {
     public void reportInvalidMove(Move m);
 
     /** Report remaining thinking time to GUI. */
-    public void setRemainingTime(long wTime, long bTime, long nextUpdate);
+    public void setRemainingTime(int wTime, int bTime, int nextUpdate);
 
     /** Report a move made that is a candidate for GUI animation. */
     public void setAnimMove(Position sourcePos, Move move, boolean forward);
