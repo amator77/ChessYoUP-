@@ -629,7 +629,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void startGame() {
 
 		if (newGameCommand != null) {
-			this.startGame(newGameCommand.get("wp"), newGameCommand.get("bp") , Integer.valueOf(newGameCommand.get("tc")) ,  0);
+			String[] tcs = getResources().getStringArray(R.array.time_control_values);
+			int time = Integer.parseInt( tcs[Integer.valueOf(newGameCommand.get("tc"))]);	
+			String[] tis = getResources().getStringArray(R.array.time_increment_values);
+			int inc = Integer.parseInt( tis[Integer.valueOf(newGameCommand.get("inc"))]);
+			this.startGame(newGameCommand.get("wp"), newGameCommand.get("bp") , time ,  inc);
 		}
 	}
 
