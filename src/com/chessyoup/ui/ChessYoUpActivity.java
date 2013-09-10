@@ -628,12 +628,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void startGame() {
 
 		if (newGameCommand != null) {
-			this.startGame(newGameCommand.get("wp"), newGameCommand.get("bp"));
+			this.startGame(newGameCommand.get("wp"), newGameCommand.get("bp") , Integer.valueOf(newGameCommand.get("tc")) ,  0);
 		}
 	}
 
-	private void startGame(String whitePlayerId, String blackPlayerId) {
-
+	private void startGame(String whitePlayerId, String blackPlayerId , int timeControll , int increment) {
+		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
 		this.chessTableUI.getCtrl().newGame(
 				mMyId.equals(whitePlayerId) ? new ChessboardMode(
 						ChessboardMode.TWO_PLAYERS_BLACK_REMOTE)
@@ -701,26 +701,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			command.put("cmd", "ready");
 			this.sendGameCommand(command);
 		}
-	}
-
-	// Broadcast a message indicating that we're starting to play. Everyone else
-	// will react
-	// by dismissing their waiting room UIs and starting to play too.
-	private void broadcastStart() {
-
-		String wp = getNextWhitePlayer();
-		String bp = wp.equals(mMyId) ? mRemoteId : mMyId;
-
-		if (isRoomOwner()) {
-			Map<String, String> command = new HashMap<String, String>();
-			command.put("cmd", "start");
-			command.put("wp", wp);
-			command.put("bp", bp);
-			this.sendGameCommand(command);
-		}
-
-		// start the game!
-		startGame(wp, bp);
 	}
 
 	private void sendGameCommand(Map<String, String> command) {
@@ -802,7 +782,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void showNewGameRequestDialog(final String whitePlayerId,
-			final String blackPlayerId, String isRated, String timeControll) {
+			final String blackPlayerId, String isRated, final String timeControll) {
 
 		GameRequestDialog grd = new GameRequestDialog();
 		grd.setGameDetails(whitePlayerId + " vs " + blackPlayerId + " , "
@@ -822,7 +802,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				Map<String, String> cmd = new HashMap<String, String>();
 				cmd.put("cmd", "gameAccepted");
 				sendGameCommand(cmd);
-				startGame(whitePlayerId,blackPlayerId);
+				startGame(whitePlayerId,blackPlayerId,Integer.valueOf(timeControll),0);
 			}
 		});
 		
