@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.chessyoup.R;
@@ -77,7 +78,11 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 	private ImageButton exitButton;
 
 	private ImageButton rematchButton;
-
+	
+	private TextView whiteClockView;
+	
+	private TextView blackClockView;
+	
 	private PgnScreenTextView pgnScreenTextView;
 
 	private FragmentActivity parent;
@@ -100,6 +105,8 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 				.findViewById(R.id.rematchGameButton);
 		this.gameViewPager = (ViewPager) parent
 				.findViewById(R.id.chessBoardViewPager);
+		this.whiteClockView = (TextView)parent.findViewById(R.id.chessboard_white_clock);
+		this.blackClockView = (TextView)parent.findViewById(R.id.chessboard_black_clock);
 		this.fChat = new FragmenChat();
 		this.fGame = new FragmentGame();
 		MainViewPagerAdapter fAdapter = new MainViewPagerAdapter(
@@ -241,7 +248,6 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 
 	@Override
 	public void reportInvalidMove(Move m) {
-		// TODO Auto-generated method stub
 		String msg = String.format("%s %s-%s",
 				parent.getString(R.string.invalid_move),
 				TextIO.squareToString(m.from), TextIO.squareToString(m.to));
@@ -253,12 +259,9 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
     	Log.d(TAG, "setRemainingTime :: wTime:"+wTime+",bTime:"+bTime+",nextUpdate:"+nextUpdate );
     	
         if (ctrl.getGameMode().clocksActive()) {
-        	Log.d(TAG, "wTime"  + timeToString(wTime));
-        	Log.d(TAG, "bTime"  + timeToString(bTime));        	            
-        } else {
-            TreeMap<String,String> headers = new TreeMap<String,String>();
-            ctrl.getHeaders(headers);            
-        }
+        	this.whiteClockView.setText(timeToString(wTime));
+        	this.blackClockView.setText(timeToString(bTime));        	        	           
+        } 
         
         handlerTimer.removeCallbacks(this);
         if (nextUpdate > 0)
