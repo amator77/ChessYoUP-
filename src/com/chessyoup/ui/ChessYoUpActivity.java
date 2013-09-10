@@ -801,8 +801,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			public void onGameRequestAccepted() {
 				Map<String, String> cmd = new HashMap<String, String>();
 				cmd.put("cmd", "gameAccepted");
-				sendGameCommand(cmd);
-				startGame(whitePlayerId,blackPlayerId,Integer.valueOf(timeControll),0);
+				sendGameCommand(cmd);				
+				startGame(whitePlayerId,blackPlayerId,getResources().getIntArray(R.array.time_control_values)[Integer.valueOf(timeControll)],0);
 			}
 		});
 		
