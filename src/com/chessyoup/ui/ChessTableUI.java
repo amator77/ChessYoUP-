@@ -6,6 +6,7 @@ import java.util.TreeMap;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.IntentSender.SendIntentException;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -53,6 +54,8 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 		void onRematchRequested();
 
 		void onTableExit();
+
+		void onFlag();
 	}
 
 	protected static final String TAG = "ChessTableUI";
@@ -257,6 +260,24 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
     @Override
     public void setRemainingTime(int wTime, int bTime, int nextUpdate) {
     	Log.d(TAG, "setRemainingTime :: wTime:"+wTime+",bTime:"+bTime+",nextUpdate:"+nextUpdate );
+    	
+    	if( getCtrl().localTurn() ){
+    		if( wTime <= 0 && getCtrl().getGame().currPos().whiteMove ){
+    			getCtrl().resignGame();
+    			
+    			if( this.chessTableUIListener != null ){
+    				this.chessTableUIListener.onFlag();
+    			}
+    		}
+    		
+    		if( bTime <= 0 && !getCtrl().getGame().currPos().whiteMove ){
+    			getCtrl().resignGame();
+    			
+    			if( this.chessTableUIListener != null ){
+    				this.chessTableUIListener.onFlag();
+    			}
+    		}
+    	}
     	
         if (ctrl.getGameMode().clocksActive()) {
         	this.whiteClockView.setText(timeToString(wTime));
