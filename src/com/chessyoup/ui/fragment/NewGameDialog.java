@@ -22,7 +22,7 @@ public class NewGameDialog extends DialogFragment {
 	public interface NewGameDialogListener {
 
 		public void onNewGameCreated(String color, boolean isRated,
-				int timeControll);
+				int timeControll , int increment);
 
 		public void onNewGameRejected();
 	}
@@ -43,17 +43,25 @@ public class NewGameDialog extends DialogFragment {
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		LayoutInflater inflater = getActivity().getLayoutInflater();
 		final View view = inflater.inflate(R.layout.new_game_dialog, null);
-		final Spinner spinner = (Spinner) view.findViewById(R.id.spinner1);
-
+		final Spinner spinner1 = (Spinner) view.findViewById(R.id.spinner1);
+		final Spinner spinner2 = (Spinner) view.findViewById(R.id.spinner2);
+		
 		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
 				this.getActivity(), R.array.time_control_texts,
 				android.R.layout.simple_dropdown_item_1line);
 
+		ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(
+				this.getActivity(), R.array.time_increment_texts,
+				android.R.layout.simple_dropdown_item_1line);
+		
 		Log.d(TAG, adapter.getItem(1) + "");
 
-		spinner.setAdapter(adapter);
-		spinner.setSelection(0);
-
+		spinner1.setAdapter(adapter);
+		spinner1.setSelection(3);
+		
+		spinner2.setAdapter(adapter2);
+		spinner2.setSelection(0);
+		
 		builder.setView(view);
 
 		builder.setPositiveButton(R.string.yes,
@@ -68,10 +76,12 @@ public class NewGameDialog extends DialogFragment {
 									.findViewById(R.id.checkBox1);
 							String color = rg.getCheckedRadioButtonId() == R.id.radio0 ? "white"
 									: "black";
-							int timeControll = spinner
+							int timeControll = spinner1
+									.getSelectedItemPosition();
+							int increment = spinner2
 									.getSelectedItemPosition();
 							listener.onNewGameCreated(color, cb.isSelected(),
-									timeControll);
+									timeControll , increment);
 						}
 					}
 				}).setNegativeButton(R.string.cancel,
@@ -82,7 +92,8 @@ public class NewGameDialog extends DialogFragment {
 						}
 					}
 				});
-
+		
+		
 		builder.setTitle(R.string.option_new_game);
 
 		Dialog d = builder.create();

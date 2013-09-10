@@ -93,7 +93,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		this.chessTableUI.setChessTableUIListener(this);
 		for (int id : CLICKABLES) {
 			findViewById(id).setOnClickListener(this);
-		}			
+		}							
 	}
 
 	@Override
@@ -158,7 +158,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 						@Override
 						public void onNewGameCreated(String color,
-								boolean isRated, int timeControll) {
+								boolean isRated, int timeControll , int increment) {
 							Log.d(TAG, "onNewGameCreated :: color :" + color
 									+ " , isRated :" + isRated
 									+ " , timeControll" + timeControll);
@@ -170,6 +170,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 									: mMyId);
 							cmd.put("ir", isRated + "");
 							cmd.put("tc", String.valueOf(timeControll));
+							cmd.put("inc", String.valueOf(increment));
 							newGameCommand = cmd;
 							sendGameCommand(cmd);
 						}
@@ -731,7 +732,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			displayShortMessage("Ready to play!");
 		} else if (command.equals("newGame")) {
 			showNewGameRequestDialog(payload.get("wp"), payload.get("bp"),
-					payload.get("ir"), payload.get("tc"));
+					payload.get("ir"), payload.get("tc") , payload.get("inc"));
 		} else if (command.equals("gameRejected")) {
 			newGameCommand = null;
 			displayShortMessage("Game rejected!");
@@ -782,7 +783,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void showNewGameRequestDialog(final String whitePlayerId,
-			final String blackPlayerId, String isRated, final String timeControll) {
+			final String blackPlayerId, String isRated, final String timeControll , final String increment) {
 
 		GameRequestDialog grd = new GameRequestDialog();
 		grd.setGameDetails(whitePlayerId + " vs " + blackPlayerId + " , "
@@ -803,8 +804,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				cmd.put("cmd", "gameAccepted");
 				sendGameCommand(cmd);					
 				String[] tcs = getResources().getStringArray(R.array.time_control_values);
-				int time = Integer.parseInt( tcs[Integer.valueOf(timeControll)]);								
-				startGame(whitePlayerId,blackPlayerId,time,0);
+				int time = Integer.parseInt( tcs[Integer.valueOf(timeControll)]);	
+				String[] tis = getResources().getStringArray(R.array.time_increment_values);
+				int inc = Integer.parseInt( tis[Integer.valueOf(increment)]);
+				startGame(whitePlayerId,blackPlayerId,time,inc);
 			}
 		});
 		
@@ -870,7 +873,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onNewGameCreated(String color,
-			boolean isRated, int timeControll) {
+			boolean isRated, int timeControll , int increment) {
 		Log.d(TAG, "onNewGameCreated :: color :" + color
 				+ " , isRated :" + isRated
 				+ " , timeControll" + timeControll);
@@ -882,6 +885,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				: mMyId);
 		cmd.put("ir", isRated + "");
 		cmd.put("tc", String.valueOf(timeControll));
+		cmd.put("inc", String.valueOf(increment));
 		newGameCommand = cmd;
 		sendGameCommand(cmd);
 	}
