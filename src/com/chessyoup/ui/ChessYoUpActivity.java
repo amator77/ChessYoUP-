@@ -632,7 +632,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 	}
 
-	private void startGame(String whitePlayerId, String blackPlayerId , int timeControll , int increment) {
+	private void startGame(String whitePlayerId, String blackPlayerId , int timeControll , int increment) {				
 		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
 		this.chessTableUI.getCtrl().newGame(
 				mMyId.equals(whitePlayerId) ? new ChessboardMode(
@@ -801,8 +801,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			public void onGameRequestAccepted() {
 				Map<String, String> cmd = new HashMap<String, String>();
 				cmd.put("cmd", "gameAccepted");
-				sendGameCommand(cmd);				
-				startGame(whitePlayerId,blackPlayerId,getResources().getIntArray(R.array.time_control_values)[Integer.valueOf(timeControll)],0);
+				sendGameCommand(cmd);					
+				String[] tcs = getResources().getStringArray(R.array.time_control_values);
+				int time = Integer.parseInt( tcs[Integer.valueOf(timeControll)]);								
+				startGame(whitePlayerId,blackPlayerId,time,0);
 			}
 		});
 		
