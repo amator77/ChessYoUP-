@@ -16,7 +16,10 @@
 
         <meta-data android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/app_id" />
-
+		        
+        <meta-data android:name="com.google.android.gms.appstate.APP_ID"
+        	android:value="@string/app_id" />
+        
         <activity
             android:name="com.chessyoup.ui.ChessYoUpActivity"
             android:icon="@drawable/ic_launcher"

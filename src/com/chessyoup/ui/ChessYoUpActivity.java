@@ -19,6 +19,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.chessyoup.PlayerState;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
@@ -26,6 +27,8 @@ import com.chessyoup.ui.fragment.GameRequestDialog;
 import com.chessyoup.ui.fragment.GameRequestDialog.GameRequestDialogListener;
 import com.chessyoup.ui.fragment.NewGameDialog;
 import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
+import com.google.android.gms.appstate.AppStateClient;
+import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -43,7 +46,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		View.OnClickListener, RealTimeMessageReceivedListener,
 		RoomStatusUpdateListener, RoomUpdateListener,
 		OnInvitationReceivedListener, ChessTableUIListener,
-		NewGameDialogListener {
+		NewGameDialogListener, OnStateLoadedListener {
 
 	private final static String TAG = "ChessYoUpActivity";
 
@@ -78,12 +81,61 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private int mCurScreen = -1;
 
 	private Map<String, String> newGameCommand;
+	
+	private PlayerState playerState;
+	
+	public ChessYoUpActivity(){
+        super(BaseGameActivity.CLIENT_APPSTATE |
+              BaseGameActivity.CLIENT_GAMES);
+	}
+	
+	@Override
+	public void onStateConflict(int stateKey, String resolvedVersion,
+			byte[] localData, byte[] serverData) {
+ 
+		Log.d(TAG, "onStateConflict :: stateKey:"+stateKey+" , resolvedVersion:"+resolvedVersion+" localData:"+ new String(localData)+" , serverData"+new String(serverData));
+	}
 
+	@Override
+	public void onStateLoaded(int statusCode, int stateKey, byte[] localData) {
+		
+		Log.d(TAG, "onStateLoaded :: statusCode:"+statusCode+" , stateKey:"+stateKey+" localData:"+ (localData != null ? new String(localData) : "null data"));
+						
+		switch (statusCode) {
+		case AppStateClient.STATUS_OK :			
+			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_OK");
+			
+			if( localData == null ){
+				this.playerState = new PlayerState(getGamesClient().getCurrentPlayerId());				
+				getAppStateClient().updateState(0, this.playerState.toJSON().getBytes());
+			}
+			else{
+				this.playerState = new PlayerState(getGamesClient().getCurrentPlayerId());
+				this.playerState.updateFromJSON(new String(localData));
+			}
+			
+			this.updatePlayerStateView();
+			
+			break;
+		case AppStateClient.STATUS_STATE_KEY_NOT_FOUND :
+			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_STATE_KEY_NOT_FOUND");
+			
+			this.playerState = new PlayerState(getGamesClient().getCurrentPlayerId());
+			getAppStateClient().updateState(0, this.playerState.toJSON().getBytes());
+			this.updatePlayerStateView();
+			
+			break;						
+		default:
+			break;
+		}
+	}
+	
 	// *********************************************************************
 	// *********************************************************************
 	// Activity methods
 	// *********************************************************************
 	// *********************************************************************
+
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -213,7 +265,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onStart() {
 		switchToScreen(R.id.screen_wait);
-		super.onStart();
+		super.onStart();		
 	}
 
 	// Handle back key to make sure we cleanly leave a game if we are in the
@@ -242,7 +294,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
-
+		
+		getAppStateClient().loadState(this, 0);
+		
 		getGamesClient().registerInvitationListener(this);
 
 		if (getInvitationId() != null) {
@@ -909,4 +963,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		newGameCommand = cmd;
 		sendGameCommand(cmd);
 	}
+	
+	private void updatePlayerStateView() {
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append("Welcome ").append(getGamesClient().getCurrentPlayer().getDisplayName());
+		sb.append("\n").append("ELO :"+this.playerState.getRating().getRating()).append(" , Wins :"+playerState.getWins());
+		sb.append(" , Draws:"+this.playerState.getDraws()+" , Loses :"+this.playerState.getLoses());
+		Log.d(TAG, "Player state :"+sb.toString());
+		((TextView)findViewById(R.id.playerStateView)).setText(sb.toString());
+	}		
 }

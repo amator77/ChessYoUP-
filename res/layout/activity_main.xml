@@ -50,7 +50,13 @@
 	        android:src="@drawable/chess_icon" />
         
         <TextView style="@style/GameTitle" />
-                       
+        
+        <TextView
+             android:id="@+id/playerStateView"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+            />
+        
         <Button android:id="@+id/button_invite_players"
             style="@style/MainScreenButton"
             android:text="@string/invite_players" />
