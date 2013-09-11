@@ -1,11 +1,11 @@
-package com.chessyoup;
+package com.chessyoup.game;
 
 import org.goochjs.glicko2.Rating;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class PlayerState {
-
+			
 	private Rating rating;
 
 	private int wins;
@@ -14,8 +14,8 @@ public class PlayerState {
 
 	private int loses;
 
-	public PlayerState(String player) {
-		this.rating = new Rating(player, Util.ratingSystem);
+	public PlayerState(String playerId) {
+		this.rating = new Rating(playerId, Util.ratingSystem);
 		this.wins = 0;
 		this.draws = 0;
 		this.loses = 0;
@@ -52,7 +52,11 @@ public class PlayerState {
 	public void setLoses(int loses) {
 		this.loses = loses;
 	}
-
+	
+	public String getId(){
+		return this.rating.getUid();
+	}
+	
 	public void updateFromJSON(String jsonString) {
 
 		try {

@@ -1,12 +1,10 @@
 package com.chessyoup.ui;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.IntentSender.SendIntentException;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
