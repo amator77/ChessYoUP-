@@ -1,49 +1,61 @@
 package com.chessyoup.game;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.util.Log;
+
+import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
+import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
+import com.google.android.gms.games.multiplayer.realtime.RealTimeReliableMessageSentListener;
 
 
-public class RealTimeGame {
+public abstract class RealTimeGame implements RealTimeMessageReceivedListener, RealTimeReliableMessageSentListener {
 	
-	private String localPlayerId;
+	private static final String TAG = "RealTimeGame";
 	
-	private String remotePlayerId;
+	protected GamesClient client;
 	
-	private List<GameMessage> history;
+	protected GameState gameState;
+				
+	public RealTimeGame(GamesClient client,GameState gameState){
+		this.client = client;
+		this.gameState = gameState;		
+	}
 	
-	private GameConnector connector;
+	public void sendMessage(byte[] messageData){
+		this.client.sendReliableRealTimeMessage(this, messageData, gameState.getRoom().getRoomId(), gameState.getRemoteId());
+	}
+
+	public GameState getGameState() {
+		return gameState;
+	}
+
+	public void setGameState(GameState gameState) {
+		this.gameState = gameState;
+	}
+
+	@Override
+	public void onRealTimeMessageSent(int statusCode, int tokenId,
+			String recipientParticipantId) {
 		
-	
-	public RealTimeGame(){
-		this.history = new ArrayList<GameMessage>();
-	}
-	
-	public void sendMessage(GameMessage message){
+		Log.d(TAG, "onRealTimeMessageSent :: statusCode:"+statusCode+" ,tokenId:"+tokenId+" ,recipientParticipantId:"+recipientParticipantId);
 		
+		switch (statusCode) {
+			
+		case GamesClient.STATUS_OK :			
+			break;
+		case GamesClient.STATUS_REAL_TIME_MESSAGE_SEND_FAILED :			
+			break;
+		case GamesClient.STATUS_REAL_TIME_ROOM_NOT_JOINED :			
+			break;
+		default:
+			break;
+		}		
 	}
 
-	public String getLocalPlayerId() {
-		return localPlayerId;
-	}
-
-	public void setLocalPlayerId(String localPlayerId) {
-		this.localPlayerId = localPlayerId;
-	}
-
-	public String getRemotePlayerId() {
-		return remotePlayerId;
-	}
-
-	public void setRemotePlayerId(String remotePlayerId) {
-		this.remotePlayerId = remotePlayerId;
-	}
-
-	public GameConnector getConnector() {
-		return connector;
-	}
-
-	public void setConnector(GameConnector connector) {
-		this.connector = connector;
+	@Override
+	public void onRealTimeMessageReceived(RealTimeMessage message) {		
+		this.handleMessageReceived(message.getSenderParticipantId() ,  message.getMessageData());		
 	}	
+	
+	protected abstract void handleMessageReceived( String senderId ,  byte[] messageData);
 }

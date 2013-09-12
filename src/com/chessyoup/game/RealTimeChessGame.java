@@ -1,10 +1,16 @@
 package com.chessyoup.game;
 
-import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
-import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class RealTimeChessGame extends RealTimeGame implements RealTimeMessageReceivedListener {
-	
+import android.util.Log;
+
+import com.google.android.gms.games.GamesClient;
+
+public class RealTimeChessGame extends RealTimeGame {
+
+	private static final String TAG = "RealTimeChessGame";
+
 	private static final byte READY = 0;
 	private static final byte START = 1;
 	private static final byte MOVE = 2;
@@ -12,29 +18,80 @@ public class RealTimeChessGame extends RealTimeGame implements RealTimeMessageRe
 	private static final byte RESIGN = 4;
 	private static final byte FLAG = 5;
 	private static final byte REMATCH = 6;
-	
+	private static final String ELO_KEY = "elo";
+	private static final String RD_KEY = "rd";
+	private static final String MOVE_KEY = "m";
+	private static final String THINKING_TIME_KEY = "tt";
+	private static final String WHITE_PLAYER_KEY = "wp";
+	private static final String BLACK_PLAYER_KEY = "bp";
+	private static final String TIME_KEY = "t";
+	private static final String INCREMENT_KEY = "i";
+	private static final String RATED_KEY = "r";
+
 	private RealTimeChessGameListener listener;
-	
-	public interface RealTimeChessGameListener{
-		
-		public void onReadyRecevied();
-		
-		public void onStartRecevied();
-		
-		public void onMoveRecevied();
-		
+
+	public interface RealTimeChessGameListener {
+
+		public void onStartRecevied(String whitePlayerId, String blackPlayerId,
+				int time, int increment, boolean rated);
+
+		public void onReadyRecevied(double remoteRating, double remoteRD);
+
+		public void onMoveRecevied(String move, int thinkingTime);
+
+		public void onResignRecevied();
+
 		public void onDrawRecevied();
-		
+
 		public void onFlagRecevied();
-		
+
 		public void onRematchRecevied();
+
+		public void onException(String message);
 	}
-	
-	public RealTimeChessGame(GameConnector connector){
-		
+
+	public RealTimeChessGame(GamesClient client, GameState gameState) {
+		super(client, gameState);
 	}
-	
-	
+
+	@Override
+	protected void handleMessageReceived(String senderId, byte[] messageData) {
+		byte command = messageData[0];
+		byte[] payload = new byte[messageData.length - 1];
+		JSONObject jsonPayload = getPayloadJSON(payload);
+
+		for (int i = 1; i < messageData.length; i++) {
+			payload[i - 1] = messageData[i];
+		}
+
+		switch (command) {
+		case READY:
+			this.handleReadyReceived(jsonPayload);
+			break;
+		case START:
+			this.handleStartReceived(jsonPayload);
+			break;
+		case MOVE:
+			this.handleMoveReceived(jsonPayload);
+			break;
+		case RESIGN:
+			this.handleResignReceived(jsonPayload);
+			break;
+		case DRAW:
+			this.handleDrawReceived(jsonPayload);
+			break;
+		case FLAG:
+			this.handleFlagReceived(jsonPayload);
+			break;
+		case REMATCH:
+			this.handleRematchReceived(jsonPayload);
+			break;
+		default:
+			this.handleUnknownCommandReceived(messageData);
+			break;
+		}
+	}
+
 	public RealTimeChessGameListener getListener() {
 		return listener;
 	}
@@ -43,9 +100,164 @@ public class RealTimeChessGame extends RealTimeGame implements RealTimeMessageRe
 		this.listener = listener;
 	}
 
-	@Override
-	public void onRealTimeMessageReceived(RealTimeMessage message) {
-		// TODO Auto-generated method stub
+	public void ready() {
+		JSONObject json = new JSONObject();
+
+		try {
+			json.put(ELO_KEY, this.gameState.getOwner().getRating()
+					.getGlicko2Rating());
+			json.put(RD_KEY, this.gameState.getOwner().getRating()
+					.getRatingDeviation());
+		} catch (JSONException e) {
+			Log.e(TAG, "Error on creating json object!", e);
+		}
+
+		this.sendChessGameMessage(READY, json.toString());
+	}
+
+	public void move(String move, int thinkingTime) {
+		JSONObject json = new JSONObject();
+
+		try {
+			json.put(MOVE_KEY, move);
+			json.put(THINKING_TIME_KEY, thinkingTime);
+		} catch (JSONException e) {
+			Log.e(TAG, "Error on creating json object!", e);
+		}
+
+		this.sendChessGameMessage(MOVE, json.toString());
+	}
+
+	public void draw() {
+		this.sendChessGameMessage(DRAW, null);
+	}
+
+	public void flag() {
+		this.sendChessGameMessage(FLAG, null);
+	}
+
+	public void rematch() {
+		this.sendChessGameMessage(REMATCH, null);
+	}
+
+	private void sendChessGameMessage(byte command, String jsonPayload) {
+
+		byte[] payload = jsonPayload.getBytes();
+		byte[] message = new byte[payload.length + 1];
+		message[0] = command;
+
+		for (int i = 1; i < message.length; i++) {
+			message[i] = payload[i - 1];
+		}
+
+		this.sendMessage(message);
+	}
+
+	private JSONObject getPayloadJSON(byte[] payload) {
 		
-	}			
+		if( payload.length > 0 ){
+		
+			try {
+				return new JSONObject(new String(payload));
+			} catch (JSONException e) {
+				Log.e(TAG, "Invalid payload json game command! ", e);
+			}
+		}
+
+		return new JSONObject();
+	}
+
+	private void handleUnknownCommandReceived(byte[] messageData) {
+		Log.d(TAG, "Unknown game command! :" + new String(messageData));
+	}
+
+	private void handleRematchReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleRematchReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			this.listener.onRematchRecevied();
+		}
+	}
+
+	private void handleFlagReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleFlagReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			this.listener.onFlagRecevied();
+		}
+	}
+
+	private void handleDrawReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleDrawReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			this.listener.onDrawRecevied();
+		}
+	}
+
+	private void handleResignReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleResignReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			this.listener.onResignRecevied();
+		}
+	}
+
+	private void handleStartReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleStartReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			try {
+				this.listener.onStartRecevied(
+						getPlayerId(jsonPayload.getInt(WHITE_PLAYER_KEY)),
+						getPlayerId(jsonPayload.getInt(BLACK_PLAYER_KEY)),
+						jsonPayload.getInt(TIME_KEY),
+						jsonPayload.getInt(INCREMENT_KEY),
+						jsonPayload.getBoolean(RATED_KEY));
+			} catch (JSONException e) {
+				Log.e(TAG, "Invalid start message!", e);
+				this.listener.onException("Invalid ready message!");
+			}
+		}
+
+	}
+
+	private void handleMoveReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleMoveReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			try {
+				this.listener.onMoveRecevied(jsonPayload.getString(MOVE_KEY),
+						jsonPayload.getInt(THINKING_TIME_KEY));
+			} catch (JSONException e) {
+				Log.e(TAG, "Invalid move message!", e);
+				this.listener.onException("Invalid ready message!");
+			}
+		}
+	}
+
+	private void handleReadyReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleReadyReceived :: " + jsonPayload.toString());
+
+		if (this.listener != null) {
+			try {
+				double remoteElo = jsonPayload.getDouble(ELO_KEY);
+				double remoteRd = jsonPayload.getDouble(RD_KEY);
+				this.gameState.setRemotePlayerRating(remoteElo);
+				this.gameState.setRemotePlayerRatingDeviation(remoteRd);
+				this.listener.onReadyRecevied(remoteElo, remoteRd);
+			} catch (JSONException e) {
+				Log.e(TAG, "Invalid ready message!", e);
+				this.listener.onException("Invalid ready message!");
+			}
+		}
+	}
+
+	private String getPlayerId(int gamePosition) {
+		if (gamePosition == 0) {
+			return this.gameState.getMyId();
+		} else {
+			return this.gameState.getRemoteId();
+		}
+	}
 }
