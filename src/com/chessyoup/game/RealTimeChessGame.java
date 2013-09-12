@@ -20,6 +20,7 @@ public class RealTimeChessGame extends RealTimeGame {
 	private static final byte REMATCH = 6;
 	private static final byte ABORT = 7;
 	private static final byte NEW_GAME = 8;	
+	private static final byte CHAT = 9;
 	private static final String ELO_KEY = "elo";
 	private static final String RD_KEY = "rd";
 	private static final String MOVE_KEY = "m";
@@ -29,7 +30,8 @@ public class RealTimeChessGame extends RealTimeGame {
 	private static final String TIME_KEY = "t";
 	private static final String INCREMENT_KEY = "i";
 	private static final String RATED_KEY = "r";
-
+	private static final String CHAT_KEY = "c";
+	
 	private RealTimeChessGameListener listener;
 
 	public interface RealTimeChessGameListener {
@@ -54,6 +56,8 @@ public class RealTimeChessGame extends RealTimeGame {
 		public void onAbortRecevied();
 		
 		public void onException(String message);
+		
+		public void onChatReceived(String message);
 	}
 
 	public RealTimeChessGame(GamesClient client, GameState gameState) {
@@ -100,12 +104,15 @@ public class RealTimeChessGame extends RealTimeGame {
 		case ABORT:
 			this.handleAbortReceived(jsonPayload);
 			break;
+		case CHAT:
+			this.handleChatReceived(jsonPayload);
+			break;
 		default:
 			this.handleUnknownCommandReceived(messageData);
 			break;
 		}
 	}
-	
+
 	public RealTimeChessGameListener getListener() {
 		return listener;
 	}
@@ -144,6 +151,18 @@ public class RealTimeChessGame extends RealTimeGame {
 		
 		this.gameState.setStartGameRequest(new StartGameRequest(whitePlayer,blackPlayer,time,increment,rated));
 		this.sendChessGameMessage(NEW_GAME, json.toString());
+	}
+	
+	public void sendChatMessage(String message){
+		JSONObject json = new JSONObject();
+
+		try {
+			json.put(CHAT_KEY, message);			
+		} catch (JSONException e) {
+			Log.e(TAG, "Error on creating json object!", e);
+		}
+
+		this.sendChessGameMessage(CHAT, json.toString());
 	}
 	
 	public void start() {
@@ -205,7 +224,20 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		return new JSONObject();
 	}
+	
+	private void handleChatReceived(JSONObject jsonPayload) {
+		Log.d(TAG, "handleChatReceived :: " + jsonPayload.toString());
 
+		if (this.listener != null) {
+			try {
+				this.listener.onChatReceived(jsonPayload.getString(CHAT_KEY));
+			} catch (JSONException e) {
+				Log.e(TAG, "Invalid chat message!", e);
+				this.listener.onException("Invalid chat message!");				
+			}
+		}
+	}
+	
 	private void handleUnknownCommandReceived(byte[] messageData) {
 		Log.d(TAG, "Unknown game command! :" + new String(messageData));
 	}
@@ -334,6 +366,9 @@ public class RealTimeChessGame extends RealTimeGame {
 			break;
 		case START:
 			cmd = "START";
+			break;
+		case NEW_GAME:
+			cmd = "NEW_GAME";
 			break;
 		case MOVE:
 			cmd = "MOVE";

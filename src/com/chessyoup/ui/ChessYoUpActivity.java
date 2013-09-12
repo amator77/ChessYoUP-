@@ -533,10 +533,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onChat(String chatMessage) {
-		Map<String, String> command = new HashMap<String, String>();
-		command.put("cmd", "chat");
-		command.put("m", chatMessage);
-		sendGameCommand(command);
+		realTimeChessGame.sendChatMessage(chatMessage);				
 	}
 
 	@Override
@@ -573,7 +570,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			this.sendMove("rematch");
 		}
 	}
-
+	
+	@Override
+	public void onChatReceived(String message){
+		this.chessTableUI.appendChatMesssage(message);
+	}
+	
 	@Override
 	public void onTableExit() {
 		leaveRoom();
@@ -586,10 +588,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 
 	private void sendMove(String move) {
-		Map<String, String> command = new HashMap<String, String>();
-		command.put("cmd", "mv");
-		command.put("mv", move);
-		sendGameCommand(command);
+		realTimeChessGame.move(move, 0);				
 	}
 
 	// Handle the result of the "Select players UI" we launched when the user
@@ -753,29 +752,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void broadcastReady() {
 
 		if (gameState.isLocalPlayerRoomOwner()) {
-			Map<String, String> command = new HashMap<String, String>();
-			command.put("cmd", "ready");
-			this.sendGameCommand(command);
-		}
-	}
-
-	private void sendGameCommand(Map<String, String> command) {
-		JSONObject json = new JSONObject();
-
-		try {
-
-			for (String key : command.keySet()) {
-				json.put(key, command.get(key));
-			}
-
-			Log.d(TAG, "Sending command :" + json.toString());
-
-			getGamesClient().sendReliableRealTimeMessage(null,
-					json.toString().getBytes(),
-					gameState.getRoom().getRoomId(), gameState.getRemoteId());
-
-		} catch (JSONException e) {
-			e.printStackTrace();
+			realTimeChessGame.ready();			
 		}
 	}
 
@@ -791,16 +768,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			@Override
 			public void onGameRequestRejected() {
-				Map<String, String> cmd = new HashMap<String, String>();
-				cmd.put("cmd", "gameRejected");
-				sendGameCommand(cmd);
+				realTimeChessGame.abort();				
 			}
 
 			@Override
 			public void onGameRequestAccepted() {
-				Map<String, String> cmd = new HashMap<String, String>();
-				cmd.put("cmd", "gameAccepted");
-				sendGameCommand(cmd);
+				realTimeChessGame.start();				
 				String[] tcs = getResources().getStringArray(
 						R.array.time_control_values);
 				int time = Integer.parseInt(tcs[Integer.valueOf(timeControll)]);
