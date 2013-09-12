@@ -204,7 +204,7 @@ public class RealTimeChessGame extends RealTimeGame {
 		
 		Log.d(TAG, "sendChessGameMessage :: command :"+command+" json :"+jsonPayload);
 		
-		byte[] payload = jsonPayload.getBytes();
+		byte[] payload = jsonPayload != null ? jsonPayload.getBytes() : new byte[0];
 		byte[] message = new byte[payload.length + 1];
 		message[0] = command;
 
