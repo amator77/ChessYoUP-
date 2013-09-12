@@ -17,7 +17,7 @@ public class GameState {
 
 	private String incomingInvitationId = null;
 	
-	private StartGameRequest incomingStartGameRequest;
+	private StartGameRequest startGameRequest;
 	
 	private boolean waitRoomDismissedFromCode = false;
 	
@@ -38,7 +38,7 @@ public class GameState {
 		this.waitRoomDismissedFromCode = false;
 		this.remotePlayerRating = 0;
 		this.remotePlayerRatingDeviation = 0;
-		this.incomingStartGameRequest = null;
+		this.startGameRequest = null;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -137,13 +137,13 @@ public class GameState {
 	}
 	
 	
-	public StartGameRequest getIncomingStartGameRequest() {
-		return incomingStartGameRequest;
+	public StartGameRequest getStartGameRequest() {
+		return startGameRequest;
 	}
 
-	public void setIncomingStartGameRequest(
-			StartGameRequest incomingStartGameRequest) {
-		this.incomingStartGameRequest = incomingStartGameRequest;
+	public void setStartGameRequest(
+			StartGameRequest startGameRequest) {
+		this.startGameRequest = startGameRequest;
 	}
 
 	public String getDisplayName(String participantId) {
@@ -179,7 +179,7 @@ public class GameState {
 				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
 				+ lastWhitePlayerId + ", incomingInvitationId="
 				+ incomingInvitationId + ", incomingStartGameRequest="
-				+ incomingStartGameRequest + ", waitRoomDismissedFromCode="
+				+ startGameRequest + ", waitRoomDismissedFromCode="
 				+ waitRoomDismissedFromCode + ", remotePlayerRating="
 				+ remotePlayerRating + ", remotePlayerRatingDeviation="
 				+ remotePlayerRatingDeviation + "]";
