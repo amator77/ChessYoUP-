@@ -107,6 +107,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			this.gameState = new GameState(playerState);
 			this.realTimeChessGame = new RealTimeChessGame(getGamesClient(), gameState);
+			this.realTimeChessGame.setListener(this);
 			this.updatePlayerStateView();
 
 			break;
