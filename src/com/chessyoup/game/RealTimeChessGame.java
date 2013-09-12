@@ -70,11 +70,13 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		byte command = messageData[0];
 		byte[] payload = new byte[messageData.length - 1];
-		JSONObject jsonPayload = getPayloadJSON(payload);
-
+		
 		for (int i = 1; i < messageData.length; i++) {
 			payload[i - 1] = messageData[i];
 		}
+		
+		JSONObject jsonPayload = getPayloadJSON(payload);
+		
 
 		switch (command) {
 		case READY:
