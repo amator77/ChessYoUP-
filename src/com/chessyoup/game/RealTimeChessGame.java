@@ -213,7 +213,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 	private JSONObject getPayloadJSON(byte[] payload) {
 
-		if (payload.length > 0) {
+		if (payload.length > 1) {
 
 			try {
 				return new JSONObject(new String(payload));
