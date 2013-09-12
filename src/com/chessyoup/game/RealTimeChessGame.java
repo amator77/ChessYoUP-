@@ -143,7 +143,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		try {
 			json.put(WHITE_PLAYER_KEY, whitePlayer.equals(gameState.getMyId()) ? 0 : 1);
-			json.put(BLACK_PLAYER_KEY, blackPlayer.equals(gameState.getMyId()) ? 1 : 0);
+			json.put(BLACK_PLAYER_KEY, blackPlayer.equals(gameState.getRemoteId()) ? 1 : 0);
 			json.put(TIME_KEY, time);
 			json.put(INCREMENT_KEY, increment);
 			json.put(RATED_KEY, rated);						
