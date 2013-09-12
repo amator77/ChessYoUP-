@@ -89,4 +89,9 @@ public class PlayerState {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "PlayerState [rating=" + rating + ", wins=" + wins + ", draws="
+				+ draws + ", loses=" + loses + "]";
+	}
 }

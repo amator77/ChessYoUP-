@@ -22,6 +22,7 @@ public abstract class RealTimeGame implements RealTimeMessageReceivedListener, R
 	}
 	
 	public void sendMessage(byte[] messageData){
+		Log.d(TAG, "sendMessage :: "+parseMessage(messageData));
 		this.client.sendReliableRealTimeMessage(this, messageData, gameState.getRoom().getRoomId(), gameState.getRemoteId());
 	}
 
@@ -58,4 +59,6 @@ public abstract class RealTimeGame implements RealTimeMessageReceivedListener, R
 	}	
 	
 	protected abstract void handleMessageReceived( String senderId ,  byte[] messageData);
+	
+	protected abstract String parseMessage( byte[] messageData);
 }

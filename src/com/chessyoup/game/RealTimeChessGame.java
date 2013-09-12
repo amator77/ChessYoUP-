@@ -56,6 +56,8 @@ public class RealTimeChessGame extends RealTimeGame {
 
 	@Override
 	protected void handleMessageReceived(String senderId, byte[] messageData) {
+		Log.d(TAG, "handleMessageReceived ::" + parseMessage(messageData));
+
 		byte command = messageData[0];
 		byte[] payload = new byte[messageData.length - 1];
 		JSONObject jsonPayload = getPayloadJSON(payload);
@@ -154,9 +156,9 @@ public class RealTimeChessGame extends RealTimeGame {
 	}
 
 	private JSONObject getPayloadJSON(byte[] payload) {
-		
-		if( payload.length > 0 ){
-		
+
+		if (payload.length > 0) {
+
 			try {
 				return new JSONObject(new String(payload));
 			} catch (JSONException e) {
@@ -208,6 +210,15 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		if (this.listener != null) {
 			try {
+				this.gameState
+						.setIncomingStartGameRequest(new StartGameRequest(
+								getPlayerId(jsonPayload
+										.getInt(WHITE_PLAYER_KEY)),
+								getPlayerId(jsonPayload
+										.getInt(BLACK_PLAYER_KEY)), jsonPayload
+										.getInt(TIME_KEY), jsonPayload
+										.getInt(INCREMENT_KEY), jsonPayload
+										.getBoolean(RATED_KEY)));
 				this.listener.onStartRecevied(
 						getPlayerId(jsonPayload.getInt(WHITE_PLAYER_KEY)),
 						getPlayerId(jsonPayload.getInt(BLACK_PLAYER_KEY)),
@@ -219,7 +230,6 @@ public class RealTimeChessGame extends RealTimeGame {
 				this.listener.onException("Invalid ready message!");
 			}
 		}
-
 	}
 
 	private void handleMoveReceived(JSONObject jsonPayload) {
@@ -259,5 +269,42 @@ public class RealTimeChessGame extends RealTimeGame {
 		} else {
 			return this.gameState.getRemoteId();
 		}
+	}
+
+	@Override
+	protected String parseMessage(byte[] messageData) {
+		String cmd = "UNKNOW";
+
+		switch (messageData[0]) {
+		case READY:
+			cmd = "READY";
+			break;
+		case START:
+			cmd = "START";
+			break;
+		case MOVE:
+			cmd = "MOVE";
+			break;
+		case RESIGN:
+			cmd = "RESIGN";
+			break;
+		case DRAW:
+			cmd = "DRAW";
+			break;
+		case FLAG:
+			cmd = "FLAG";
+			break;
+		case REMATCH:
+			cmd = "REMATCH";
+			break;
+		default:
+			cmd = "UNKNOW :" + messageData[0];
+			break;
+		}
+
+		byte[] payload = new byte[messageData.length - 1];
+		JSONObject jsonPayload = getPayloadJSON(payload);
+
+		return cmd + " , paylaod:" + jsonPayload.toString();
 	}
 }

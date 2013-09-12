@@ -16,7 +16,9 @@ public class GameState {
 	private String lastWhitePlayerId = null;
 
 	private String incomingInvitationId = null;
-
+	
+	private StartGameRequest incomingStartGameRequest;
+	
 	private boolean waitRoomDismissedFromCode = false;
 	
 	private double remotePlayerRating;
@@ -36,6 +38,7 @@ public class GameState {
 		this.waitRoomDismissedFromCode = false;
 		this.remotePlayerRating = 0;
 		this.remotePlayerRatingDeviation = 0;
+		this.incomingStartGameRequest = null;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -133,6 +136,16 @@ public class GameState {
 		return null;
 	}
 	
+	
+	public StartGameRequest getIncomingStartGameRequest() {
+		return incomingStartGameRequest;
+	}
+
+	public void setIncomingStartGameRequest(
+			StartGameRequest incomingStartGameRequest) {
+		this.incomingStartGameRequest = incomingStartGameRequest;
+	}
+
 	public String getDisplayName(String participantId) {
 		if (this.room != null) {
 
@@ -159,16 +172,16 @@ public class GameState {
 			}
 		}
 	}
-	
-	
+
 	@Override
 	public String toString() {
 		return "GameState [owner=" + owner + ", room=" + room + ", myId="
 				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
 				+ lastWhitePlayerId + ", incomingInvitationId="
-				+ incomingInvitationId + ", waitRoomDismissedFromCode="
+				+ incomingInvitationId + ", incomingStartGameRequest="
+				+ incomingStartGameRequest + ", waitRoomDismissedFromCode="
 				+ waitRoomDismissedFromCode + ", remotePlayerRating="
 				+ remotePlayerRating + ", remotePlayerRatingDeviation="
 				+ remotePlayerRatingDeviation + "]";
-	}		
+	}
 }
