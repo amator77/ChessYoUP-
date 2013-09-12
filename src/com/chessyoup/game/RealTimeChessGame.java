@@ -199,7 +199,9 @@ public class RealTimeChessGame extends RealTimeGame {
 	}
 	
 	private void sendChessGameMessage(byte command, String jsonPayload) {
-
+		
+		Log.d(TAG, "sendChessGameMessage :: command :"+command+" json :"+jsonPayload);
+		
 		byte[] payload = jsonPayload.getBytes();
 		byte[] message = new byte[payload.length + 1];
 		message[0] = command;
@@ -213,7 +215,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 	private JSONObject getPayloadJSON(byte[] payload) {
 
-		if (payload.length > 1) {
+		if (payload.length > 0) {
 
 			try {
 				return new JSONObject(new String(payload));
@@ -391,6 +393,11 @@ public class RealTimeChessGame extends RealTimeGame {
 		}
 
 		byte[] payload = new byte[messageData.length - 1];
+		
+		for( int i = 1 ; i < messageData.length ; i++ ){
+			payload[i-1] = messageData[i];
+		}
+		
 		JSONObject jsonPayload = getPayloadJSON(payload);
 
 		return cmd + " , paylaod:" + jsonPayload.toString();
