@@ -23,6 +23,7 @@ public class RealTimeChessGame extends RealTimeGame {
 	private static final byte CHAT = 9;
 	private static final String ELO_KEY = "elo";
 	private static final String RD_KEY = "rd";
+	private static final String VOLATILITY_KEY = "vol";
 	private static final String MOVE_KEY = "m";
 	private static final String THINKING_TIME_KEY = "tt";
 	private static final String WHITE_PLAYER_KEY = "wp";
@@ -41,7 +42,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		public void onStartRecevied();
 
-		public void onReadyRecevied(double remoteRating, double remoteRD);
+		public void onReadyRecevied(double remoteRating, double remoteRD,double volatility);
 
 		public void onMoveRecevied(String move, int thinkingTime);
 
@@ -126,10 +127,9 @@ public class RealTimeChessGame extends RealTimeGame {
 		JSONObject json = new JSONObject();
 
 		try {
-			json.put(ELO_KEY, this.gameState.getOwner().getRating()
-					.getRating());
-			json.put(RD_KEY, this.gameState.getOwner().getRating()
-					.getRatingDeviation());
+			json.put(ELO_KEY, this.gameState.getOwner().getRating());
+			json.put(RD_KEY, this.gameState.getOwner().getRatingDeviation());
+			json.put(VOLATILITY_KEY, this.gameState.getOwner().getVolatility());
 		} catch (JSONException e) {
 			Log.e(TAG, "Error on creating json object!", e);
 		}
@@ -346,8 +346,9 @@ public class RealTimeChessGame extends RealTimeGame {
 			try {
 				double remoteElo = jsonPayload.getDouble(ELO_KEY);
 				double remoteRd = jsonPayload.getDouble(RD_KEY);
-				this.gameState.setRemoteRating(remoteElo, remoteRd);				
-				this.listener.onReadyRecevied(remoteElo, remoteRd);
+				double volatility = jsonPayload.getDouble(VOLATILITY_KEY);
+				this.gameState.setRemoteRating(remoteElo, remoteRd,volatility);				
+				this.listener.onReadyRecevied(remoteElo, remoteRd,volatility);
 			} catch (JSONException e) {
 				Log.e(TAG, "Invalid ready message!", e);
 				this.listener.onException("Invalid ready message!");

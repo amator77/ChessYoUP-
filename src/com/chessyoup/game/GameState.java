@@ -29,6 +29,8 @@ public class GameState {
 	
 	private String blackPlayerId;
 	
+	private boolean ready;
+	
 	public GameState(PlayerState ownerState){
 		this.owner = ownerState;			
 	}
@@ -44,6 +46,7 @@ public class GameState {
 		this.remoteRating = null;
 		this.whitePlayerId = null;
 		this.blackPlayerId = null;
+		this.ready = false;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -76,7 +79,7 @@ public class GameState {
 	}
 
 	public void setMyId(String myId) {
-		this.myId = myId;
+		this.myId = myId;		
 	}
 
 	public String getRemoteId() {
@@ -161,12 +164,22 @@ public class GameState {
 		}
 	}
 
-	public void setRemoteRating(double remoteRating, double remoteRD) {
+	public void setRemoteRating(double remoteRating, double remoteRD,double volatility) {
 		this.remoteRating = new Rating(remoteId, Util.ratingSystem);
 		this.remoteRating.setRating(remoteRating);
-		this.remoteRating.setRatingDeviation(remoteRD);		
+		this.remoteRating.setRatingDeviation(remoteRD);
+		this.remoteRating.setVolatility(volatility);
 	}
-
+	
+	public Rating getOwnerRating() {
+		Rating rating = new Rating(myId, Util.ratingSystem);
+		rating.setRating(owner.getRating());
+		rating.setRatingDeviation(owner.getRatingDeviation());
+		rating.setVolatility(owner.getVolatility());
+		
+		return rating;
+	}
+	
 	public Rating getRemoteRating() {
 		return remoteRating;
 	}
@@ -185,5 +198,25 @@ public class GameState {
 
 	public void setBlackPlayerId(String blackPlayerId) {
 		this.blackPlayerId = blackPlayerId;
+	}
+
+	public boolean isReady() {
+		return ready;
+	}
+
+	public void setReady(boolean ready) {
+		this.ready = ready;
+	}
+
+	@Override
+	public String toString() {
+		return "GameState [owner=" + owner + ", room=" + room + ", myId="
+				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
+				+ lastWhitePlayerId + ", incomingInvitationId="
+				+ incomingInvitationId + ", startGameRequest="
+				+ startGameRequest + ", waitRoomDismissedFromCode="
+				+ waitRoomDismissedFromCode + ", remoteRating=" + remoteRating
+				+ ", whitePlayerId=" + whitePlayerId + ", blackPlayerId="
+				+ blackPlayerId + ", ready=" + ready + "]";
 	}	
 }

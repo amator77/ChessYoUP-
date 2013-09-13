@@ -1,32 +1,50 @@
 package com.chessyoup.game;
 
-import org.goochjs.glicko2.Rating;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class PlayerState {
 			
-	private Rating rating;
-
+	private double rating;
+	
+	private double ratingDeviation;
+	
+	private double volatility;
+	
 	private int wins;
 
 	private int draws;
 
 	private int loses;
 
-	public PlayerState(String playerId) {
-		this.rating = new Rating(playerId, Util.ratingSystem);
+	public PlayerState(String playerId) {		
 		this.wins = 0;
 		this.draws = 0;
 		this.loses = 0;
 	}
 
-	public Rating getRating() {
+	public double getRating() {
 		return rating;
 	}
 
-	public void setRating(Rating rating) {
+	public void setRating(double rating) {
 		this.rating = rating;
+	}
+
+	public double getRatingDeviation() {
+		return ratingDeviation;
+	}
+
+	public void setRatingDeviation(double ratingDeviation) {
+		this.ratingDeviation = ratingDeviation;
+	}
+
+	public double getVolatility() {
+		return volatility;
+	}
+
+	public void setVolatility(double volatility) {
+		this.volatility = volatility;
 	}
 
 	public int getWins() {
@@ -52,18 +70,14 @@ public class PlayerState {
 	public void setLoses(int loses) {
 		this.loses = loses;
 	}
-	
-	public String getId(){
-		return this.rating.getUid();
-	}
-	
+			
 	public void updateFromJSON(String jsonString) {
 
 		try {
 			JSONObject json = new JSONObject(jsonString);
-			this.rating.setRating(json.getDouble("elo"));
-			this.rating.setRatingDeviation(json.getDouble("rd"));
-			this.rating.setVolatility(json.getDouble("vol"));
+			this.rating = json.getDouble("elo");
+			this.ratingDeviation = json.getDouble("rd");
+			this.volatility = json.getDouble("vol");
 			this.wins = json.getInt("wins");
 			this.draws = json.getInt("draws");
 			this.loses = json.getInt("loses");
@@ -76,9 +90,9 @@ public class PlayerState {
 		JSONObject json = new JSONObject();
 
 		try {
-			json.put("elo", this.rating.getRating());
-			json.put("rd", this.rating.getRatingDeviation());
-			json.put("vol", this.rating.getVolatility());
+			json.put("elo", this.rating);
+			json.put("rd", this.ratingDeviation);
+			json.put("vol", this.volatility);
 			json.put("wins", this.wins);
 			json.put("draws", this.draws);
 			json.put("loses", this.loses);
@@ -91,7 +105,8 @@ public class PlayerState {
 
 	@Override
 	public String toString() {
-		return "PlayerState [rating=" + rating + ", wins=" + wins + ", draws="
-				+ draws + ", loses=" + loses + "]";
+		return "PlayerState [rating=" + rating + ", ratingDeviation="
+				+ ratingDeviation + ", volatility=" + volatility + ", wins="
+				+ wins + ", draws=" + draws + ", loses=" + loses + "]";
 	}
 }

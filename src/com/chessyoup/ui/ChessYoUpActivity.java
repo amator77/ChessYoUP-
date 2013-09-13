@@ -194,7 +194,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				switchToScreen(R.id.screen_game);
 
 				if (gameState.isLocalPlayerRoomOwner()) {
-					realTimeChessGame.ready();
+					
+					if( !gameState.isReady()){
+						realTimeChessGame.ready();
+						gameState.setReady(true);
+					}
 				}
 
 				if (gameState.isLocalPlayerRoomOwner()) {
@@ -432,10 +436,16 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	@Override
-	public void onReadyRecevied(double remoteRating, double remoteRD) {
-		gameState.setRemoteRating(remoteRating,remoteRD);
-		dismissWaitingRoom();
+	public void onReadyRecevied(double remoteRating, double remoteRD,double volatility) {
+		gameState.setRemoteRating(remoteRating,remoteRD,volatility);
+		
+		dismissWaitingRoom();		
 		displayShortMessage("Ready to play!");
+		
+		if( !gameState.isReady() ){
+			gameState.setReady(true);
+			realTimeChessGame.ready();
+		}			
 	}
 
 	@Override
@@ -627,9 +637,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				updateRatingOnDraw(whitePlayerId,blackPlayerId);
 				break;
 			case RESIGN_WHITE:	
+				Log.d(TAG, "RESIGN_WHITE");
 				updateRatingOnResult(blackPlayerId, whitePlayerId);
 				break;
 			case RESIGN_BLACK:
+				Log.d(TAG, "RESIGN_BLACK");
 				updateRatingOnResult(whitePlayerId,blackPlayerId);
 				break;
 			case ALIVE:				
@@ -646,20 +658,28 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 	}
 	
-	private void updateRatingOnResult(String winerId, String loserId) {
-		System.out.println(winerId+","+loserId);
-		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState.getOwner().getRating() : gameState.getRemoteRating();
-		Rating loserRating = winerId.equals(gameState.getRemoteId()) ? gameState.getRemoteRating() : gameState.getOwner().getRating();						
+	private void updateRatingOnResult(String winerId, String loserId) {		
+		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState.getOwnerRating() : gameState.getRemoteRating();
+		Rating loserRating = loserId.equals(gameState.getMyId()) ? gameState.getOwnerRating() : gameState.getRemoteRating();
+				
 		Util.computeRatingOnResult(winerRating, loserRating);
 		
-		if( gameState.getMyId().equals(winerRating.getUid())){
+		if(winerRating.getUid().equals(gameState.getMyId())){
+			gameState.getOwner().setRating(winerRating.getRating());
+			gameState.getOwner().setRatingDeviation(winerRating.getRatingDeviation());
+			gameState.getOwner().setVolatility(winerRating.getVolatility());
+			gameState.setRemoteRating(loserRating.getRating(), loserRating.getRatingDeviation(), loserRating.getVolatility());
 			gameState.getOwner().setWins(gameState.getOwner().getWins()+1);
 		}
 		else{
+			gameState.getOwner().setRating(loserRating.getRating());
+			gameState.getOwner().setRatingDeviation(loserRating.getRatingDeviation());
+			gameState.getOwner().setVolatility(loserRating.getVolatility());
+			gameState.setRemoteRating(winerRating.getRating(), winerRating.getRatingDeviation(), winerRating.getVolatility());
 			gameState.getOwner().setLoses(gameState.getOwner().getLoses()+1);
 		}
-		
-		Log.d(TAG, "gameState.getOwner().toJSON()");
+						
+		updatePlayerStateView();				
 		getAppStateClient().updateState(0, gameState.getOwner().toJSON().getBytes());
 	}
 	
@@ -901,7 +921,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		sb.append("Welcome ").append(
 				getGamesClient().getCurrentPlayer().getDisplayName());
 		sb.append("\n")
-				.append("ELO :" + gameState.getOwner().getRating().getRating())
+				.append("ELO :" + gameState.getOwner().getRating())
 				.append(" , Wins :" + gameState.getOwner().getWins());
 		sb.append(" , Draws:" + this.gameState.getOwner().getDraws()
 				+ " , Loses :" + this.gameState.getOwner().getLoses());
