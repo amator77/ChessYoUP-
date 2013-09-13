@@ -127,7 +127,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		try {
 			json.put(ELO_KEY, this.gameState.getOwner().getRating()
-					.getGlicko2Rating());
+					.getRating());
 			json.put(RD_KEY, this.gameState.getOwner().getRating()
 					.getRatingDeviation());
 		} catch (JSONException e) {
@@ -346,8 +346,7 @@ public class RealTimeChessGame extends RealTimeGame {
 			try {
 				double remoteElo = jsonPayload.getDouble(ELO_KEY);
 				double remoteRd = jsonPayload.getDouble(RD_KEY);
-				this.gameState.setRemotePlayerRating(remoteElo);
-				this.gameState.setRemotePlayerRatingDeviation(remoteRd);
+				this.gameState.setRemoteRating(remoteElo, remoteRd);				
 				this.listener.onReadyRecevied(remoteElo, remoteRd);
 			} catch (JSONException e) {
 				Log.e(TAG, "Invalid ready message!", e);

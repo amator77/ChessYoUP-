@@ -1,12 +1,14 @@
 package com.chessyoup.game;
 
+import org.goochjs.glicko2.Rating;
+
 import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 
 public class GameState {
 	
 	private PlayerState owner;
-	
+		
 	private Room room = null;
 
 	private String myId = null;
@@ -21,10 +23,8 @@ public class GameState {
 	
 	private boolean waitRoomDismissedFromCode = false;
 	
-	private double remotePlayerRating;
-	
-	private double remotePlayerRatingDeviation;
-		
+	private Rating remoteRating;
+			
 	public GameState(PlayerState ownerState){
 		this.owner = ownerState;			
 	}
@@ -35,10 +35,9 @@ public class GameState {
 		this.remoteId = null;
 		this.lastWhitePlayerId = null;
 		this.incomingInvitationId = null;
-		this.waitRoomDismissedFromCode = false;
-		this.remotePlayerRating = 0;
-		this.remotePlayerRatingDeviation = 0;
+		this.waitRoomDismissedFromCode = false;		
 		this.startGameRequest = null;
+		this.remoteRating = null;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -105,22 +104,6 @@ public class GameState {
 	public void setWaitRoomDismissedFromCode(boolean waitRoomDismissedFromCode) {
 		this.waitRoomDismissedFromCode = waitRoomDismissedFromCode;
 	}
-
-	public double getRemotePlayerRating() {
-		return remotePlayerRating;
-	}
-
-	public void setRemotePlayerRating(double remotePlayerRating) {
-		this.remotePlayerRating = remotePlayerRating;
-	}
-
-	public double getRemotePlayerRatingDeviation() {
-		return remotePlayerRatingDeviation;
-	}
-
-	public void setRemotePlayerRatingDeviation(double remotePlayerRatingDeviation) {
-		this.remotePlayerRatingDeviation = remotePlayerRatingDeviation;
-	}
 	
 	public String getRemoteDisplayName() {
 		if (this.room != null) {
@@ -172,15 +155,13 @@ public class GameState {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return "GameState [owner=" + owner + ", room=" + room + ", myId="
-				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
-				+ lastWhitePlayerId + ", incomingInvitationId="
-				+ incomingInvitationId + ", incomingStartGameRequest="
-				+ startGameRequest + ", waitRoomDismissedFromCode="
-				+ waitRoomDismissedFromCode + ", remotePlayerRating="
-				+ remotePlayerRating + ", remotePlayerRatingDeviation="
-				+ remotePlayerRatingDeviation + "]";
+	public void setRemoteRating(double remoteRating, double remoteRD) {
+		this.remoteRating = new Rating(remoteId, Util.ratingSystem);
+		this.remoteRating.setRating(remoteRating);
+		this.remoteRating.setRatingDeviation(remoteRD);		
+	}
+
+	public Rating getRemoteRating() {
+		return remoteRating;
 	}
 }

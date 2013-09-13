@@ -3,6 +3,8 @@ package com.chessyoup.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.goochjs.glicko2.Rating;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,7 +21,9 @@ import com.chessyoup.game.GameState;
 import com.chessyoup.game.PlayerState;
 import com.chessyoup.game.RealTimeChessGame;
 import com.chessyoup.game.StartGameRequest;
+import com.chessyoup.game.Util;
 import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
+import com.chessyoup.model.Game;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
 import com.chessyoup.ui.fragment.GameRequestDialog;
 import com.chessyoup.ui.fragment.GameRequestDialog.GameRequestDialogListener;
@@ -205,8 +209,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			break;
 		}
 	}
-
-	// Activity is going to the background. We have to leave the current room.
+	
 	@Override
 	public void onStop() {
 		Log.d(TAG, "**** got onStop");
@@ -215,22 +218,13 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		switchToScreen(R.id.screen_wait);
 		super.onStop();
 	}
-
-	// Activity just got to the foreground. We switch to the wait screen because
-	// we will now
-	// go through the sign-in flow (remember that, yes, every time the Activity
-	// comes back to the
-	// foreground we go through the sign-in flow -- but if the user is already
-	// authenticated,
-	// this flow simply succeeds and is imperceptible).
+	
 	@Override
 	public void onStart() {
 		switchToScreen(R.id.screen_wait);
 		super.onStart();
 	}
-
-	// Handle back key to make sure we cleanly leave a game if we are in the
-	// middle of one
+	
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent e) {
 		if (keyCode == KeyEvent.KEYCODE_BACK && mCurScreen == R.id.screen_game) {
@@ -294,7 +288,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		gameState.setMyId(room.getParticipantId(getGamesClient()
 				.getCurrentPlayerId()));
 
-		// get room ID, participants and my ID:
 		gameState.setRoom(room);
 
 		for (Participant p : room.getParticipants()) {
@@ -304,7 +297,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			}
 		}
 
-		// print out the list of participants (for debug purposes)
 		Log.d(TAG, gameState.toString());
 		Log.d(TAG, "<< CONNECTED TO ROOM>>");
 	}
@@ -431,7 +423,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		if (gameState.getStartGameRequest() != null) {
 			StartGameRequest req = gameState.getStartGameRequest();
 			startGame(req.getWhitePlayerId(), req.getBlackPlayerId(),
-					req.getTime(), req.getIncrement());
+					req.getTime(), req.getIncrement(),req.isRated());
 		} else {
 			Log.d(TAG,
 					"Invalid game state! There is no previous start request!");
@@ -441,6 +433,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onReadyRecevied(double remoteRating, double remoteRD) {
+		gameState.setRemoteRating(remoteRating,remoteRD);
 		dismissWaitingRoom();
 		displayShortMessage("Ready to play!");
 	}
@@ -561,6 +554,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	public void onTableExit() {
 		leaveRoom();
 	}
+	
+	@Override
+	public void onGameFinished(Game g) {
+		this.handleGameFinished(g, g.tree.white,g.tree.black);
+		
+	}
 
 	// *********************************************************************
 	// *********************************************************************
@@ -592,6 +591,82 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// Private section
 	// *********************************************************************
 	// *********************************************************************
+	
+	private void handleGameFinished(Game game,String whitePlayerId, String blackPlayerId){
+		
+		if( game.isRated()){
+			switch (game.getGameState()) {
+			case ABORTED:
+				updateLocalPlayerLevel();
+				break;
+			case BLACK_MATE:
+				updateRatingOnResult(blackPlayerId, whitePlayerId);
+				break;
+			case WHITE_MATE:				
+				updateRatingOnResult(whitePlayerId,blackPlayerId);
+				break;
+			case DRAW_50:		
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case DRAW_AGREE:				
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case DRAW_NO_MATE:				
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case DRAW_REP:				
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case WHITE_STALEMATE:				
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case BLACK_STALEMATE:				
+				updateRatingOnDraw(whitePlayerId,blackPlayerId);
+				break;
+			case RESIGN_WHITE:	
+				updateRatingOnResult(blackPlayerId, whitePlayerId);
+				break;
+			case RESIGN_BLACK:
+				updateRatingOnResult(whitePlayerId,blackPlayerId);
+				break;
+			case ALIVE:				
+				Log.d(TAG, "Game not finished!");
+				break;
+			default:
+				Log.d(TAG, "Game not finished!");
+				break;
+			}
+		}
+		else{
+			Log.d(TAG, "Frendly game.Increment only level");
+			updateLocalPlayerLevel();			
+		}
+	}
+	
+	private void updateRatingOnResult(String winerId, String loserId) {
+		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState.getOwner().getRating() : gameState.getRemoteRating();
+		Rating loserRating = winerId.equals(gameState.getRemoteId()) ? gameState.getRemoteRating() : gameState.getOwner().getRating();						
+		Util.computeRatingOnResult(winerRating, loserRating);
+		
+		if( gameState.getMyId().equals(winerRating.getUid())){
+			gameState.getOwner().setWins(gameState.getOwner().getWins()+1);
+		}
+		else{
+			gameState.getOwner().setLoses(gameState.getOwner().getLoses()+1);
+		}
+		
+		Log.d(TAG, "gameState.getOwner().toJSON()");
+		getAppStateClient().updateState(0, gameState.getOwner().toJSON().getBytes());
+	}
+	
+	private void updateRatingOnDraw(String whitePlayerId, String blackPlayerId) {
+		
+	}
+	
+	private void updateLocalPlayerLevel() {
+		// TODO Auto-generated method stub
+		
+	}
 
 	private int getTimeControllValue(int index) {
 
@@ -689,10 +764,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void startGame(String whitePlayerId, String blackPlayerId,
-			int timeControll, int increment) {
+			int timeControll, int increment , boolean rated) {
 		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
 		this.chessTableUI.getCtrl().newGame(
-				getChessboardMode(whitePlayerId, blackPlayerId));
+				getChessboardMode(whitePlayerId, blackPlayerId),whitePlayerId, blackPlayerId,rated);
 		this.chessTableUI.getCtrl().startGame();
 		this.chessTableUI.flipBoard(!gameState.getMyId().equals(whitePlayerId));
 		gameState.setStartGameRequest(null);
@@ -749,7 +824,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void showNewGameRequestDialog(final String whitePlayerId,
-			final String blackPlayerId, boolean isRated,
+			final String blackPlayerId, final boolean isRated,
 			final int timeControll, final int increment) {
 
 		GameRequestDialog grd = new GameRequestDialog();
@@ -767,7 +842,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			@Override
 			public void onGameRequestAccepted() {
 				realTimeChessGame.start();
-				startGame(whitePlayerId, blackPlayerId, timeControll, increment);
+				startGame(whitePlayerId, blackPlayerId, timeControll, increment , isRated);
 			}
 		});
 
@@ -779,15 +854,13 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				.show();
 	}
 
-	private void switchToScreen(int screenId) {
-		// make the requested screen visible; hide all others.
+	private void switchToScreen(int screenId) { 
 		for (int id : SCREENS) {
 			findViewById(id).setVisibility(
 					screenId == id ? View.VISIBLE : View.GONE);
 		}
 		mCurScreen = screenId;
-
-		// should we show the invitation popup?
+ 
 		boolean showInvPopup;
 		if (gameState == null || gameState.getIncomingInvitationId() == null) {
 			showInvPopup = false;

@@ -20,7 +20,7 @@ import com.chessyoup.model.pgn.PgnTokenReceiver;
 
 public class GameTree {
     // Data from the seven tag roster (STR) part of the PGN standard
-    String event, site, date, round, white, black;
+    public String event, site, date, round, white, black;
     // Result is the last tag pair in the STR, but it is computed on demand from the game tree.
 
     Position startPos;

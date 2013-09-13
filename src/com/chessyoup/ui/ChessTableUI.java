@@ -26,6 +26,7 @@ import com.chessyoup.chessboard.ChessboardStatus;
 import com.chessyoup.chessboard.ChessboardUIInterface;
 import com.chessyoup.game.view.ChessBoardPlay;
 import com.chessyoup.game.view.PgnScreenTextView;
+import com.chessyoup.model.Game;
 import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.Move;
 import com.chessyoup.model.Position;
@@ -54,6 +55,8 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 		void onTableExit();
 
 		void onFlag();
+		
+		void onGameFinished(Game game);
 	}
 
 	protected static final String TAG = "ChessTableUI";
@@ -207,6 +210,12 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 			break;
 		default:
 			str = "unknown";
+		}
+		
+		if( s.state != GameState.ALIVE ){
+			if( this.chessTableUIListener != null ){
+				this.chessTableUIListener.onGameFinished(this.ctrl.getGame());
+			}
 		}
 		
 		Log.d(TAG, "setStatus :: "+str);

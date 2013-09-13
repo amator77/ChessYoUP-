@@ -11,6 +11,7 @@ public class Game {
     boolean pendingDrawOffer;
     public GameTree tree;
     public TimeControl timeController;
+    public boolean rated;
     private boolean gamePaused;
     /** If true, add new moves as mainline moves. */
     private AddMoveBehavior addMoveBehavior;
@@ -67,8 +68,16 @@ public class Game {
             updateTimeControl(false);
         return ret;
     }
+        
+    public boolean isRated() {
+		return rated;
+	}
 
-    public final Position currPos() {
+	public void setRated(boolean rated) {
+		this.rated = rated;
+	}
+
+	public final Position currPos() {
         return tree.currentPos;
     }
 
