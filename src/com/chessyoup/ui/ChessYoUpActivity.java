@@ -585,7 +585,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		realTimeChessGame.newGame(isOwnerWhite ? gameState.getMyId()
 				: gameState.getRemoteId(),
 				!isOwnerWhite ? gameState.getRemoteId() : gameState.getMyId(),
-				timeControll, increment, isRated);
+						getTimeControllValue(timeControll), getIncrementValue(increment), isRated);
 	}
 
 	// *********************************************************************
