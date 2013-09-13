@@ -56,15 +56,14 @@ public class ChessboardController {
 	}
 
 	/** Start a new game. */
-	public void newGame(ChessboardMode gameMode,String whitePlayer,String blackPlayer,boolean rated) {
+	public void newGame(ChessboardMode gameMode,boolean rated) {
 		this.resetFlags();		
 		this.gameMode = gameMode;
 		this.game = new Game(gameTextListener, timeControl, movesPerSession,
 				timeIncrement);
 		this.game.setRated(rated);
 		game.currPos().whiteMove = true;
-		this.game.tree.setPlayerNames(whitePlayer, blackPlayer);
-		
+	
 		updateGUI();
 		setPlayerNames(game);
 		updateGameMode();

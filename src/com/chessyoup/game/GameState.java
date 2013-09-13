@@ -24,7 +24,11 @@ public class GameState {
 	private boolean waitRoomDismissedFromCode = false;
 	
 	private Rating remoteRating;
-			
+	
+	private String whitePlayerId;
+	
+	private String blackPlayerId;
+	
 	public GameState(PlayerState ownerState){
 		this.owner = ownerState;			
 	}
@@ -38,6 +42,8 @@ public class GameState {
 		this.waitRoomDismissedFromCode = false;		
 		this.startGameRequest = null;
 		this.remoteRating = null;
+		this.whitePlayerId = null;
+		this.blackPlayerId = null;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -164,4 +170,20 @@ public class GameState {
 	public Rating getRemoteRating() {
 		return remoteRating;
 	}
+
+	public String getWhitePlayerId() {
+		return whitePlayerId;
+	}
+
+	public void setWhitePlayerId(String whitePlayerId) {
+		this.whitePlayerId = whitePlayerId;
+	}
+
+	public String getBlackPlayerId() {
+		return blackPlayerId;
+	}
+
+	public void setBlackPlayerId(String blackPlayerId) {
+		this.blackPlayerId = blackPlayerId;
+	}	
 }

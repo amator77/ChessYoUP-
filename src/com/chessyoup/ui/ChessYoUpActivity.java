@@ -557,8 +557,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	
 	@Override
 	public void onGameFinished(Game g) {
-		this.handleGameFinished(g, g.tree.white,g.tree.black);
-		
+		this.handleGameFinished(g, gameState.getWhitePlayerId(),gameState.getBlackPlayerId());		
 	}
 
 	// *********************************************************************
@@ -644,6 +643,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 	
 	private void updateRatingOnResult(String winerId, String loserId) {
+		System.out.println(winerId+","+loserId);
 		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState.getOwner().getRating() : gameState.getRemoteRating();
 		Rating loserRating = winerId.equals(gameState.getRemoteId()) ? gameState.getRemoteRating() : gameState.getOwner().getRating();						
 		Util.computeRatingOnResult(winerRating, loserRating);
@@ -767,10 +767,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			int timeControll, int increment , boolean rated) {
 		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
 		this.chessTableUI.getCtrl().newGame(
-				getChessboardMode(whitePlayerId, blackPlayerId),whitePlayerId, blackPlayerId,rated);
+				getChessboardMode(whitePlayerId, blackPlayerId),rated);
 		this.chessTableUI.getCtrl().startGame();
 		this.chessTableUI.flipBoard(!gameState.getMyId().equals(whitePlayerId));
 		gameState.setStartGameRequest(null);
+		gameState.setWhitePlayerId(whitePlayerId);
+		gameState.setBlackPlayerId(blackPlayerId);
 		displayShortMessage("Game started!");
 	}
 
