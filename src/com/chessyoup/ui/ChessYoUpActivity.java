@@ -578,11 +578,15 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				+ isRated + " , timeControll" + timeControll);
 
 		boolean isOwnerWhite = color.equals("white");
-
-		realTimeChessGame.newGame(isOwnerWhite ? gameState.getMyId()
-				: gameState.getRemoteId(),
-				!isOwnerWhite ? gameState.getRemoteId() : gameState.getMyId(),
+		
+		if( isOwnerWhite ){
+			realTimeChessGame.newGame(gameState.getMyId(), gameState.getRemoteId(),
 						getTimeControllValue(timeControll), getIncrementValue(increment), isRated);
+		}
+		else{
+			realTimeChessGame.newGame( gameState.getRemoteId(),gameState.getMyId(),
+					getTimeControllValue(timeControll), getIncrementValue(increment), isRated);
+		}
 	}
 
 	// *********************************************************************
