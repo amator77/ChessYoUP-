@@ -271,11 +271,57 @@ public class ChessboardController {
 		updateGUI();
 		return true;
 	}
-
+	
+	public void resignGameForWhite() {
+		if (game.getGameState() == GameState.ALIVE) {
+			
+			System.out.println("resignGameForWhite");
+			System.out.println(game.currPos().whiteMove);
+			
+			if( game.currPos().whiteMove  ){
+				game.processString("resign");
+			}
+			else{
+				System.out.println("makeHumanNullMove");
+				makeHumanNullMove();
+				System.out.println(game.currPos().whiteMove);
+				game.processString("resign");
+			}						
+			
+			updateGUI();
+		}
+	}
+	
+	public void resignGameForBlack() {
+		if (game.getGameState() == GameState.ALIVE) {
+			
+			System.out.println("resignGameForBlack");
+			
+			if( !game.currPos().whiteMove  ){
+				game.processString("resign");
+			}
+			else{
+				makeHumanNullMove();
+				game.processString("resign");
+			}						
+			
+			updateGUI();
+		}
+	}
+	
 	/** Resign game for current player. */
 	public void resignGame() {
 		if (game.getGameState() == GameState.ALIVE) {
+			
+			if(!localTurn()){				
+				System.out.println("human null move done");
+//				makeHumanNullMove();
+			}
+			
+			System.out.println("is white to move "+game.currPos().whiteMove );
 			game.processString("resign");
+			
+			
 			updateGUI();
 		}
 	}
@@ -706,6 +752,8 @@ public class ChessboardController {
 		this.drawRequested = false;
 		this.abortRequested = false;		
 	}
+
+	
 		
 	
 }

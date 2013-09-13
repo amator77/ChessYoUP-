@@ -118,7 +118,7 @@ public class Game {
             handleDrawCmd(drawCmd);
             return true;
         } else if (str.equals("resign")) {
-            addToGameTree(new Move(0, 0, 0), "resign");
+            addToGameTree(new Move(0, 0, 0), "resign");            
             return true;
         }else if(str.startsWith("abort")){
         	addToGameTree(new Move(0, 0, 0), "abort");

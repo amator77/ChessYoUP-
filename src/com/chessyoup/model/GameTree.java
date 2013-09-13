@@ -833,9 +833,9 @@ public class GameTree {
 
     final GameState getGameState() {
         Position pos = currentPos;
-        String action = currentNode.playerAction;
+        String action = currentNode.playerAction;        
         if (action.equals("resign")) {
-            // Player made null move to resign, causing whiteMove to toggle
+            // Player made null move to resign, causing whiteMove to toggle          
             return pos.whiteMove ? GameState.RESIGN_BLACK : GameState.RESIGN_WHITE;
         }
         else if (action.equals("abort")) {

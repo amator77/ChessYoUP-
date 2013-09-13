@@ -218,7 +218,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 			}
 		}
 		
-		Log.d(TAG, "setStatus :: "+str);
+		Log.d(TAG, "setStatus :: "+str +" status :"+GameState.ALIVE);
 	}
 
 	@Override
@@ -483,7 +483,6 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 					@Override
 					public void onClick(View v) {
 						if (ctrl.getGame().getGameState() == GameState.ALIVE) {
-							ctrl.resignGame();
 
 							if (chessTableUIListener != null) {
 								chessTableUIListener.onResign();

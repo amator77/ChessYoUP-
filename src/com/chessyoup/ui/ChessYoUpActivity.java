@@ -456,7 +456,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onResignRecevied() {
 		Log.d(TAG, "Remote resigned!");
-		this.chessTableUI.getCtrl().resignGame();
+		
+		if( gameState.getWhitePlayerId().equals(gameState.getRemoteId())){
+			this.chessTableUI.getCtrl().resignGameForWhite();
+		}
+		else{
+			this.chessTableUI.getCtrl().resignGameForBlack();
+		}
+						
 		displayShortMessage(gameState.getRemoteDisplayName() + " resigned!");
 	}
 
@@ -532,6 +539,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onResign() {
+				
+		if(gameState.getWhitePlayerId().equals(gameState.getMyId())){
+			this.chessTableUI.getCtrl().resignGameForWhite();
+		}
+		else{
+			this.chessTableUI.getCtrl().resignGameForBlack();
+		}
+		
 		this.realTimeChessGame.resign();
 	}
 
@@ -606,6 +621,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	
 	private void handleGameFinished(Game game,String whitePlayerId, String blackPlayerId){
+		Log.d(TAG, "handleGameFinished :: game state :"+game.getGameState()+" , wp :"+whitePlayerId+",bp:"+blackPlayerId);
 		
 		if( game.isRated()){
 			switch (game.getGameState()) {
@@ -661,8 +677,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	private void updateRatingOnResult(String winerId, String loserId) {		
 		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState.getOwnerRating() : gameState.getRemoteRating();
 		Rating loserRating = loserId.equals(gameState.getMyId()) ? gameState.getOwnerRating() : gameState.getRemoteRating();
-				
+		
+		Log.d(TAG, "Initial ratings :winer "+winerRating.toString());
+		Log.d(TAG, "Initial ratings :loserRating "+loserRating.toString());
+		
 		Util.computeRatingOnResult(winerRating, loserRating);
+		
+		Log.d(TAG, "Updated ratings :winer "+winerRating.toString());
+		Log.d(TAG, "Updated ratings :loserRating "+loserRating.toString());				
 		
 		if(winerRating.getUid().equals(gameState.getMyId())){
 			gameState.getOwner().setRating(winerRating.getRating());
