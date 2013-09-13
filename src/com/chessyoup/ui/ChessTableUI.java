@@ -43,13 +43,13 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 
 		void onMove(String move);
 
-		void onDrawRequested();
+		void onDrawRequest();
 
 		void onResign();
 
-		void onAbortRequested();
+		void onAbortRequest();
 
-		void onRematchRequested();
+		void onRematchRequest();
 
 		void onTableExit();
 
@@ -462,7 +462,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 								ctrl.setAbortRequested(true);
 								
 								if (chessTableUIListener != null) {
-									chessTableUIListener.onAbortRequested();
+									chessTableUIListener.onAbortRequest();
 								}
 							}
 						}
@@ -492,7 +492,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 								ctrl.drawGame();								
 
 								if (chessTableUIListener != null) {
-									chessTableUIListener.onMove("draw");
+									chessTableUIListener.onDrawRequest();
 								}
 
 							} else {
@@ -501,7 +501,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 								ctrl.setDrawRequested(true);
 
 								if (chessTableUIListener != null) {
-									chessTableUIListener.onDrawRequested();
+									chessTableUIListener.onDrawRequest();
 								}
 							}
 						}
@@ -514,7 +514,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 					public void onClick(View v) {						
 						if (ctrl.getGame().getGameState() != GameState.ALIVE) {							
 							if (chessTableUIListener != null) {
-								chessTableUIListener.onRematchRequested();
+								chessTableUIListener.onRematchRequest();
 							}							
 						}
 					}

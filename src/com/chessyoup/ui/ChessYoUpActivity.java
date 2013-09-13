@@ -523,7 +523,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	@Override
-	public void onDrawRequested() {
+	public void onDrawRequest() {
 		this.realTimeChessGame.draw();
 	}
 
@@ -538,13 +538,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	@Override
-	public void onAbortRequested() {
+	public void onAbortRequest() {
 		this.realTimeChessGame.abort();
-		;
 	}
 
 	@Override
-	public void onRematchRequested() {
+	public void onRematchRequest() {
 
 		if (gameState.isLocalPlayerRoomOwner()) {
 			showNewGameDialog();
