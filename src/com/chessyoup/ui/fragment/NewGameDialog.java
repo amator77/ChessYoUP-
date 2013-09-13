@@ -80,7 +80,7 @@ public class NewGameDialog extends DialogFragment {
 									.getSelectedItemPosition();
 							int increment = spinner2
 									.getSelectedItemPosition();
-							listener.onNewGameCreated(color, cb.isSelected(),
+							listener.onNewGameCreated(color, cb.isChecked(),
 									timeControll , increment);
 						}
 					}

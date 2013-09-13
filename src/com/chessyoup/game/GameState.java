@@ -135,8 +135,7 @@ public class GameState {
 
 		return null;
 	}
-	
-	
+		
 	public StartGameRequest getStartGameRequest() {
 		return startGameRequest;
 	}

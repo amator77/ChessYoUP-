@@ -1,12 +1,7 @@
 package com.chessyoup.ui;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -23,6 +18,7 @@ import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.game.GameState;
 import com.chessyoup.game.PlayerState;
 import com.chessyoup.game.RealTimeChessGame;
+import com.chessyoup.game.StartGameRequest;
 import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
 import com.chessyoup.ui.fragment.GameRequestDialog;
@@ -106,7 +102,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			}
 
 			this.gameState = new GameState(playerState);
-			this.realTimeChessGame = new RealTimeChessGame(getGamesClient(), gameState);
+			this.realTimeChessGame = new RealTimeChessGame(getGamesClient(),
+					gameState);
 			this.realTimeChessGame.setListener(this);
 			this.updatePlayerStateView();
 
@@ -191,32 +188,13 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			if (responseCode == Activity.RESULT_OK) {
 				Log.d(TAG, "Sending ready request to remote.");
 				switchToScreen(R.id.screen_game);
-				broadcastReady();
 
 				if (gameState.isLocalPlayerRoomOwner()) {
-					showNewGameDialog(new NewGameDialogListener() {
+					realTimeChessGame.ready();
+				}
 
-						@Override
-						public void onNewGameRejected() {
-							Log.d(TAG, "New game dialog canceled!");
-						}
-
-						@Override
-						public void onNewGameCreated(String color,
-								boolean isRated, int timeControll, int increment) {
-							Log.d(TAG, "onNewGameCreated :: color :" + color
-									+ " , isRated :" + isRated
-									+ " , timeControll" + timeControll);
-
-							realTimeChessGame.newGame(
-									color.equals("white") ? gameState.getMyId()
-											: gameState.getRemoteId(),
-									color.equals("white") ? gameState
-											.getRemoteId() : gameState
-											.getMyId(), timeControll,
-									increment, isRated);
-						}
-					});
+				if (gameState.isLocalPlayerRoomOwner()) {
+					showNewGameDialog();
 				}
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
@@ -226,12 +204,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 			break;
 		}
-	}
-
-	private void showNewGameDialog(NewGameDialogListener listener) {
-		NewGameDialog d = new NewGameDialog();
-		d.setListener(listener);
-		d.show(this.getSupportFragmentManager(), TAG);
 	}
 
 	// Activity is going to the background. We have to leave the current room.
@@ -456,7 +428,15 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onStartRecevied() {
-		startGame();
+		if (gameState.getStartGameRequest() != null) {
+			StartGameRequest req = gameState.getStartGameRequest();
+			startGame(req.getWhitePlayerId(), req.getBlackPlayerId(),
+					req.getTime(), req.getIncrement());
+		} else {
+			Log.d(TAG,
+					"Invalid game state! There is no previous start request!");
+			Log.d(TAG, gameState.toString());
+		}
 	}
 
 	@Override
@@ -534,52 +514,78 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onChat(String chatMessage) {
-		realTimeChessGame.sendChatMessage(chatMessage);				
+		realTimeChessGame.sendChatMessage(chatMessage);
 	}
 
 	@Override
 	public void onMove(String move) {
-		this.sendMove(move);
+		this.realTimeChessGame.move(move, 0);
 	}
 
 	@Override
 	public void onDrawRequested() {
-		this.sendMove("draw");
+		this.realTimeChessGame.draw();
 	}
 
 	@Override
 	public void onResign() {
-		this.sendMove("resign");
+		this.realTimeChessGame.resign();
 	}
 
 	@Override
 	public void onFlag() {
-		this.sendMove("flag");
+		this.realTimeChessGame.flag();
 	}
 
 	@Override
 	public void onAbortRequested() {
-		this.sendMove("abort");
+		this.realTimeChessGame.abort();
+		;
 	}
 
 	@Override
 	public void onRematchRequested() {
 
 		if (gameState.isLocalPlayerRoomOwner()) {
-			showNewGameDialog(this);
+			showNewGameDialog();
 		} else {
-			this.sendMove("rematch");
+			this.realTimeChessGame.rematch();
 		}
 	}
-	
+
 	@Override
-	public void onChatReceived(String message){
+	public void onChatReceived(String message) {
 		this.chessTableUI.appendChatMesssage(message);
 	}
-	
+
 	@Override
 	public void onTableExit() {
 		leaveRoom();
+	}
+
+	// *********************************************************************
+	// *********************************************************************
+	// NewGameDialogListener
+	// *********************************************************************
+	// *********************************************************************
+
+	@Override
+	public void onNewGameRejected() {
+		Log.d(TAG, "New game dialog canceled!");
+	}
+
+	@Override
+	public void onNewGameCreated(String color, boolean isRated,
+			int timeControll, int increment) {
+		Log.d(TAG, "onNewGameCreated :: color :" + color + " , isRated :"
+				+ isRated + " , timeControll" + timeControll);
+
+		boolean isOwnerWhite = color.equals("white");
+
+		realTimeChessGame.newGame(isOwnerWhite ? gameState.getMyId()
+				: gameState.getRemoteId(),
+				!isOwnerWhite ? gameState.getRemoteId() : gameState.getMyId(),
+				timeControll, increment, isRated);
 	}
 
 	// *********************************************************************
@@ -588,8 +594,20 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	private void sendMove(String move) {
-		realTimeChessGame.move(move, 0);				
+	private int getTimeControllValue(int index) {
+
+		String[] tcv = getResources().getStringArray(
+				R.array.time_control_values);
+
+		return Integer.parseInt(tcv[index]);
+	}
+
+	private int getIncrementValue(int index) {
+
+		String[] tiv = getResources().getStringArray(
+				R.array.time_increment_values);
+
+		return Integer.parseInt(tiv[index]);
 	}
 
 	// Handle the result of the "Select players UI" we launched when the user
@@ -633,7 +651,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 		switchToScreen(R.id.screen_wait);
 		keepScreenOn();
-		resetGameVars();
 		getGamesClient().createRoom(rtmConfigBuilder.build());
 		Log.d(TAG, "Room created, waiting for it to be ready...");
 	}
@@ -664,50 +681,32 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				.setRoomStatusUpdateListener(this);
 		switchToScreen(R.id.screen_wait);
 		keepScreenOn();
-		resetGameVars();
 		getGamesClient().joinRoom(roomConfigBuilder.build());
 	}
 
-	// Show error message about game being cancelled and return to main screen.
 	private void showGameError() {
 		showAlert(getString(R.string.error), getString(R.string.game_problem));
 		switchToMainScreen();
-	}
-
-	// Reset game variables in preparation for a new game.
-	private void resetGameVars() {
-
-	}
-
-	// Start the gameplay phase of the game.
-	private void startGame() {
-		if (gameState.getStartGameRequest() != null) {
-			String[] tcs = getResources().getStringArray(
-					R.array.time_control_values);
-			int time = Integer.parseInt(tcs[Integer.valueOf(gameState
-					.getStartGameRequest().getTime())]);
-			String[] tis = getResources().getStringArray(
-					R.array.time_increment_values);
-			int inc = Integer.parseInt(tis[Integer.valueOf(gameState
-					.getStartGameRequest().getIncrement())]);
-			this.startGame(gameState.getStartGameRequest().getWhitePlayerId(),
-					gameState.getStartGameRequest().getBlackPlayerId(), time,
-					inc);
-		}
 	}
 
 	private void startGame(String whitePlayerId, String blackPlayerId,
 			int timeControll, int increment) {
 		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
 		this.chessTableUI.getCtrl().newGame(
-				gameState.getMyId().equals(whitePlayerId) ? new ChessboardMode(
-						ChessboardMode.TWO_PLAYERS_BLACK_REMOTE)
-						: new ChessboardMode(
-								ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
+				getChessboardMode(whitePlayerId, blackPlayerId));
 		this.chessTableUI.getCtrl().startGame();
 		this.chessTableUI.flipBoard(!gameState.getMyId().equals(whitePlayerId));
 		gameState.setStartGameRequest(null);
 		displayShortMessage("Game started!");
+	}
+
+	private ChessboardMode getChessboardMode(String whitePlayerId,
+			String blackPlayerId) {
+		if (gameState.getMyId().equals(whitePlayerId)) {
+			return new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE);
+		} else {
+			return new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE);
+		}
 	}
 
 	// Leave the room.
@@ -750,38 +749,26 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		Log.d(TAG, "updateRoom :" + room.toString());
 	}
 
-	private void broadcastReady() {
-
-		if (gameState.isLocalPlayerRoomOwner()) {
-			realTimeChessGame.ready();			
-		}
-	}
-
 	private void showNewGameRequestDialog(final String whitePlayerId,
 			final String blackPlayerId, boolean isRated,
 			final int timeControll, final int increment) {
 
 		GameRequestDialog grd = new GameRequestDialog();
-		grd.setGameDetails(whitePlayerId + " vs " + blackPlayerId + " , "
+		grd.setGameDetails(gameState.getDisplayName(whitePlayerId) + " vs "
+				+ gameState.getDisplayName(blackPlayerId) + " , "
 				+ (isRated ? "rated" : "friendly") + " game.");
 
 		grd.setListener(new GameRequestDialogListener() {
 
 			@Override
 			public void onGameRequestRejected() {
-				realTimeChessGame.abort();				
+				realTimeChessGame.abort();
 			}
 
 			@Override
 			public void onGameRequestAccepted() {
-				realTimeChessGame.start();				
-				String[] tcs = getResources().getStringArray(
-						R.array.time_control_values);
-				int time = Integer.parseInt(tcs[Integer.valueOf(timeControll)]);
-				String[] tis = getResources().getStringArray(
-						R.array.time_increment_values);
-				int inc = Integer.parseInt(tis[Integer.valueOf(increment)]);
-				startGame(whitePlayerId, blackPlayerId, time, inc);
+				realTimeChessGame.start();
+				startGame(whitePlayerId, blackPlayerId, timeControll, increment);
 			}
 		});
 
@@ -825,22 +812,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	}
 
-	@Override
-	public void onNewGameRejected() {
-		Log.d(TAG, "New game dialog canceled!");
-	}
-
-	@Override
-	public void onNewGameCreated(String color, boolean isRated,
-			int timeControll, int increment) {
-		Log.d(TAG, "onNewGameCreated :: color :" + color + " , isRated :"
-				+ isRated + " , timeControll" + timeControll);
-
-		realTimeChessGame.newGame(
-				color.equals("white") ? gameState.getMyId() : gameState
-						.getRemoteId(),
-				color.equals("white") ? gameState.getRemoteId() : gameState
-						.getMyId(), timeControll, increment, isRated);
+	private void showNewGameDialog() {
+		NewGameDialog d = new NewGameDialog();
+		d.setListener(this);
+		d.show(this.getSupportFragmentManager(), TAG);
 	}
 
 	private void updatePlayerStateView() {
