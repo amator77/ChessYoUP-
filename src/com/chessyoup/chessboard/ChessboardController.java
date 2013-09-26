@@ -260,7 +260,14 @@ public class ChessboardController {
 			gui.setSelection(-1);
 		}
 	}
-
+	
+	public final synchronized void makeNullMove() {		
+		int varNo = game.tree.addMove("--", "", 0, "", "");
+		game.tree.goForward(varNo);
+		updateGUI();
+		gui.setSelection(-1);		
+	}
+	
 	/**
 	 * Help human to claim a draw by trying to find and execute a valid draw
 	 * claim.
@@ -283,7 +290,7 @@ public class ChessboardController {
 			}
 			else{
 				System.out.println("makeHumanNullMove");
-				makeHumanNullMove();
+				makeNullMove();
 				System.out.println(game.currPos().whiteMove);
 				game.processString("resign");
 			}						
@@ -301,7 +308,7 @@ public class ChessboardController {
 				game.processString("resign");
 			}
 			else{
-				makeHumanNullMove();
+				makeNullMove();
 				game.processString("resign");
 			}						
 			
