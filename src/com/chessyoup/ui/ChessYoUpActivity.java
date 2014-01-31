@@ -950,4 +950,10 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		Log.d(TAG, "Player state :" + sb.toString());
 		((TextView) findViewById(R.id.playerStateView)).setText(sb.toString());
 	}
+
+	@Override
+	public void onInvitationRemoved(String invitationId) {
+		// TODO Auto-generated method stub
+		
+	}
 }
