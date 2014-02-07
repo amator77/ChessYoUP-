@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.game.GameState;
+import com.chessyoup.game.GameVariant;
 import com.chessyoup.game.PlayerState;
 import com.chessyoup.game.RealTimeChessGame;
 import com.chessyoup.game.StartGameRequest;
@@ -199,11 +200,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 						realTimeChessGame.ready();
 						gameState.setReady(true);
 					}
-				}
-
-				if (gameState.isLocalPlayerRoomOwner()) {
-					showNewGameDialog();
-				}
+				}				
+				
 			} else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
 				leaveRoom();
 			} else if (responseCode == Activity.RESULT_CANCELED) {
@@ -273,12 +271,22 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onInvitationReceived(Invitation invitation) {
 		gameState.setIncomingInvitationId(invitation.getInvitationId());
+		gameState.setGameVariant(Util.getGameVariant(invitation.getVariant()), false);
 		((TextView) findViewById(R.id.incoming_invitation_text))
-				.setText(invitation.getInviter().getDisplayName() + " "
-						+ getString(R.string.is_inviting_you));
+				.setText(getInviationDisplayInfo(invitation));
 		switchToScreen(mCurScreen); // This will show the invitation popup
 	}
-
+	
+	private String getInviationDisplayInfo(Invitation invitation){
+		StringBuffer sb = new StringBuffer();
+		GameVariant gv = Util.getGameVariant(invitation.getVariant());
+		
+		sb.append(invitation.getInviter().getDisplayName()).append(" ").append(getString(R.string.is_inviting_you));
+		sb.append(" to play an ").append(gv.getTime()).append("'").append(gv.getIncrement()).append("'' game!");
+		
+		return sb.toString();
+	}
+	
 	// *********************************************************************
 	// *********************************************************************
 	// RoomStatusUpdateListener methods
@@ -413,21 +421,18 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// RealTimeChessGameListener methods
 	// *********************************************************************
 	// *********************************************************************
+	
+	@Override	
+	public void onChallangeRecevied(GameVariant gameVariant,String whiteId,String blackId) {
 
-	@Override
-	public void onNewGameRecevied(String whitePlayerId, String blackPlayerId,
-			int time, int increment, boolean rated) {
-
-		showNewGameRequestDialog(whitePlayerId, blackPlayerId, rated, time,
-				increment);
+		showNewGameRequestDialog(whiteId, blackId, gameVariant.isRated(), gameVariant.getTime(),
+				gameVariant.getIncrement());
 	}
 
 	@Override
 	public void onStartRecevied() {
-		if (gameState.getStartGameRequest() != null) {
-			StartGameRequest req = gameState.getStartGameRequest();
-			startGame(req.getWhitePlayerId(), req.getBlackPlayerId(),
-					req.getTime(), req.getIncrement(),req.isRated());
+		if (gameState.getGameVariant() != null) {			
+			startGame();
 		} else {
 			Log.d(TAG,
 					"Invalid game state! There is no previous start request!");
@@ -445,7 +450,11 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		if( !gameState.isReady() ){
 			gameState.setReady(true);
 			realTimeChessGame.ready();
-		}			
+		}
+		
+		if( gameState.isLocalPlayerRoomOwner() && gameState.isReady() ){
+			this.startGame();
+		}
 	}
 
 	@Override
@@ -601,17 +610,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			int timeControll, int increment) {
 		Log.d(TAG, "onNewGameCreated :: color :" + color + " , isRated :"
 				+ isRated + " , timeControll" + timeControll);
-
-		boolean isOwnerWhite = color.equals("white");
 		
-		if( isOwnerWhite ){
-			realTimeChessGame.newGame(gameState.getMyId(), gameState.getRemoteId(),
-						getTimeControllValue(timeControll), getIncrementValue(increment), isRated);
-		}
-		else{
-			realTimeChessGame.newGame( gameState.getRemoteId(),gameState.getMyId(),
-					getTimeControllValue(timeControll), getIncrementValue(increment), isRated);
-		}
+		realTimeChessGame.sendChallange(1, getTimeControllValue(timeControll/1000),  getIncrementValue(increment/1000), 0, isRated, color.equals("white"));		
 	}
 
 	// *********************************************************************
@@ -733,7 +733,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	// Handle the result of the "Select players UI" we launched when the user
 	// clicked the
 	// "Invite friends" button. We react by creating a room with those players.
-	private void handleSelectPlayersResult(int response, Intent data) {
+	private void handleSelectPlayersResult(int response, final Intent data) {
 		if (response != Activity.RESULT_OK) {
 			Log.w(TAG, "*** select players UI cancelled, " + response);
 			switchToMainScreen();
@@ -741,38 +741,40 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		}
 
 		Log.d(TAG, "Select players UI succeeded.");
-
-		// get the invitee list
-		final ArrayList<String> invitees = data
-				.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
-		Log.d(TAG, "Invitee count: " + invitees.size());
-		Log.d(TAG, "Invitee: " + invitees.toString());
-
-		// get the automatch criteria
-		Bundle autoMatchCriteria = null;
-		int minAutoMatchPlayers = data.getIntExtra(
-				GamesClient.EXTRA_MIN_AUTOMATCH_PLAYERS, 0);
-		int maxAutoMatchPlayers = data.getIntExtra(
-				GamesClient.EXTRA_MAX_AUTOMATCH_PLAYERS, 0);
-		if (minAutoMatchPlayers > 0 || maxAutoMatchPlayers > 0) {
-			autoMatchCriteria = RoomConfig.createAutoMatchCriteria(
-					minAutoMatchPlayers, maxAutoMatchPlayers, 0);
-			Log.d(TAG, "Automatch criteria: " + autoMatchCriteria);
-		}
-
-		// create the room
-		Log.d(TAG, "Creating room...");
-		RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(this);
-		rtmConfigBuilder.addPlayersToInvite(invitees);
-		rtmConfigBuilder.setMessageReceivedListener(this.realTimeChessGame);
-		rtmConfigBuilder.setRoomStatusUpdateListener(this);
-		if (autoMatchCriteria != null) {
-			rtmConfigBuilder.setAutoMatchCriteria(autoMatchCriteria);
-		}
-		switchToScreen(R.id.screen_wait);
-		keepScreenOn();
-		getGamesClient().createRoom(rtmConfigBuilder.build());
-		Log.d(TAG, "Room created, waiting for it to be ready...");
+		
+		
+		NewGameDialog d = new NewGameDialog();
+		d.setListener(new NewGameDialogListener() {
+			
+			@Override
+			public void onNewGameRejected() {
+				Log.d(TAG, "Invitation is canceled!");
+				switchToMainScreen();
+			}
+			
+			@Override
+			public void onNewGameCreated(String color, boolean isRated,
+					int timeControll, int increment) {
+				Log.d(TAG, "Details  :"+color+","+isRated+","+getTimeControllValue(timeControll)+","+getIncrementValue(increment));
+				int gameVariant = Util.getGameVariant(1, getTimeControllValue(timeControll)/1000,getIncrementValue(increment)/1000, 0, isRated, color.equals("white"));
+				Log.d(TAG, "Game Variant :"+gameVariant);				
+				final ArrayList<String> invitees = data.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
+				Log.d(TAG, "Invitee count: " + invitees.size());
+				Log.d(TAG, "Invitee: " + invitees.toString()); 
+				Log.d(TAG, "Creating room...");
+				RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(ChessYoUpActivity.this);
+				rtmConfigBuilder.addPlayersToInvite(invitees);
+				rtmConfigBuilder.setVariant(gameVariant);
+				rtmConfigBuilder.setMessageReceivedListener(ChessYoUpActivity.this.realTimeChessGame);
+				rtmConfigBuilder.setRoomStatusUpdateListener(ChessYoUpActivity.this);
+				switchToScreen(R.id.screen_wait);
+				keepScreenOn();
+				getGamesClient().createRoom(rtmConfigBuilder.build());
+				Log.d(TAG, "Room created, waiting for it to be ready...");				
+			}
+		});
+		
+		d.show(this.getSupportFragmentManager(), TAG);		
 	}
 
 	// Handle the result of the invitation inbox UI, where the player can pick
@@ -809,17 +811,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		switchToMainScreen();
 	}
 
-	private void startGame(String whitePlayerId, String blackPlayerId,
-			int timeControll, int increment , boolean rated) {
-		this.chessTableUI.getCtrl().setTimeLimit(timeControll, 0, increment);
+	private void startGame() {
+		this.chessTableUI.getCtrl().setTimeLimit(gameState.getGameVariant().getTime()*1000, 0, gameState.getGameVariant().getIncrement()*1000);
 		this.chessTableUI.getCtrl().newGame(
-				getChessboardMode(whitePlayerId, blackPlayerId),rated);
-		this.chessTableUI.getCtrl().startGame();
-		this.chessTableUI.flipBoard(!gameState.getMyId().equals(whitePlayerId));
-		gameState.setStartGameRequest(null);
-		gameState.setWhitePlayerId(whitePlayerId);
-		gameState.setBlackPlayerId(blackPlayerId);
+				getChessboardMode(gameState.getWhitePlayerId(), gameState.getBlackPlayerId()),gameState.getGameVariant().isRated());
+		this.chessTableUI.getCtrl().startGame();		
+		this.chessTableUI.flipBoard(!gameState.getMyId().equals(gameState.getWhitePlayerId()));		
 		displayShortMessage("Game started!");
+		this.gameState.setStarted(true);
 	}
 
 	private ChessboardMode getChessboardMode(String whitePlayerId,
@@ -890,7 +889,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			@Override
 			public void onGameRequestAccepted() {
 				realTimeChessGame.start();
-				startGame(whitePlayerId, blackPlayerId, timeControll, increment , isRated);
+				startGame();
 			}
 		});
 

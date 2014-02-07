@@ -19,26 +19,21 @@ public class RealTimeChessGame extends RealTimeGame {
 	private static final byte FLAG = 5;
 	private static final byte REMATCH = 6;
 	private static final byte ABORT = 7;
-	private static final byte NEW_GAME = 8;
+	private static final byte CHALLANGE = 8;
 	private static final byte CHAT = 9;
 	private static final String ELO_KEY = "elo";
 	private static final String RD_KEY = "rd";
 	private static final String VOLATILITY_KEY = "vol";
 	private static final String MOVE_KEY = "m";
-	private static final String THINKING_TIME_KEY = "tt";
-	private static final String WHITE_PLAYER_KEY = "wp";
-	private static final String BLACK_PLAYER_KEY = "bp";
-	private static final String TIME_KEY = "t";
-	private static final String INCREMENT_KEY = "i";
-	private static final String RATED_KEY = "r";
+	private static final String THINKING_TIME_KEY = "tt";	
+	private static final String GAME_VARIANT = "gv";	
 	private static final String CHAT_KEY = "c";
 
 	private RealTimeChessGameListener listener;
 
 	public interface RealTimeChessGameListener {
 
-		public void onNewGameRecevied(String whitePlayerId,
-				String blackPlayerId, int time, int increment, boolean rated);
+		public void onChallangeRecevied(GameVariant gameVariant,String whiteId,String blackId);
 
 		public void onStartRecevied();
 
@@ -82,8 +77,8 @@ public class RealTimeChessGame extends RealTimeGame {
 		case READY:
 			this.handleReadyReceived(jsonPayload);
 			break;
-		case NEW_GAME:
-			this.handleNewGameReceived(jsonPayload);
+		case CHALLANGE:
+			this.handleChallangeReceived(jsonPayload);
 			break;
 		case START:
 			this.handleStartReceived(jsonPayload);
@@ -137,23 +132,19 @@ public class RealTimeChessGame extends RealTimeGame {
 		this.sendChessGameMessage(READY, json.toString());
 	}
 
-	public void newGame(String whitePlayer, String blackPlayer, int time,
-			int increment, boolean rated) {
+	public void sendChallange(int gameType , int time,
+			int increment , int moves, boolean isRated , boolean isWhite) {
 		JSONObject json = new JSONObject();
-
+		int gv = Util.getGameVariant(gameType, time, increment, moves , isRated, isWhite);
+		
 		try {
-			json.put(WHITE_PLAYER_KEY, whitePlayer);
-			json.put(BLACK_PLAYER_KEY, blackPlayer);
-			json.put(TIME_KEY, time);
-			json.put(INCREMENT_KEY, increment);
-			json.put(RATED_KEY, rated);
+			json.put(GAME_VARIANT, gv);			
 		} catch (JSONException e) {
 			Log.e(TAG, "Error on creating json object!", e);
 		}
 
-		this.gameState.setStartGameRequest(new StartGameRequest(whitePlayer,
-				blackPlayer, time, increment, rated));
-		this.sendChessGameMessage(NEW_GAME, json.toString());
+		this.gameState.setGameVariant(Util.getGameVariant(gv));
+		this.sendChessGameMessage(CHALLANGE, json.toString());
 	}
 
 	public void sendChatMessage(String message) {
@@ -293,23 +284,14 @@ public class RealTimeChessGame extends RealTimeGame {
 		}
 	}
 
-	private void handleNewGameReceived(JSONObject jsonPayload) {
+	private void handleChallangeReceived(JSONObject jsonPayload) {
 		Log.d(TAG, "handleNewGameReceived :: " + jsonPayload.toString());
 
 		if (this.listener != null) {
 			try {
-				this.gameState.setStartGameRequest(new StartGameRequest(
-						jsonPayload.getString(WHITE_PLAYER_KEY), jsonPayload
-								.getString(BLACK_PLAYER_KEY), jsonPayload
-								.getInt(TIME_KEY), jsonPayload
-								.getInt(INCREMENT_KEY), jsonPayload
-								.getBoolean(RATED_KEY)));
-				this.listener.onNewGameRecevied(
-						jsonPayload.getString(WHITE_PLAYER_KEY),
-						jsonPayload.getString(BLACK_PLAYER_KEY),
-						jsonPayload.getInt(TIME_KEY),
-						jsonPayload.getInt(INCREMENT_KEY),
-						jsonPayload.getBoolean(RATED_KEY));
+				GameVariant gameVariant = Util.getGameVariant(Integer.parseInt(jsonPayload.getString(GAME_VARIANT)));
+				this.gameState.setGameVariant(gameVariant, false);				
+				this.listener.onChallangeRecevied(gameVariant,this.gameState.getWhitePlayerId(),this.gameState.getBlackPlayerId());
 			} catch (JSONException e) {
 				Log.e(TAG, "Invalid start message!", e);
 				this.listener.onException("Invalid ready message!");
@@ -367,7 +349,7 @@ public class RealTimeChessGame extends RealTimeGame {
 		case START:
 			cmd = "START";
 			break;
-		case NEW_GAME:
+		case CHALLANGE:
 			cmd = "NEW_GAME";
 			break;
 		case MOVE:

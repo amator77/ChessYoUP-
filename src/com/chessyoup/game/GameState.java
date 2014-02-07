@@ -19,7 +19,7 @@ public class GameState {
 
 	private String incomingInvitationId = null;
 	
-	private StartGameRequest startGameRequest;
+	private GameVariant gameVariant;
 	
 	private boolean waitRoomDismissedFromCode = false;
 	
@@ -30,6 +30,8 @@ public class GameState {
 	private String blackPlayerId;
 	
 	private boolean ready;
+	
+	private boolean started; 
 	
 	public GameState(PlayerState ownerState){
 		this.owner = ownerState;			
@@ -42,11 +44,12 @@ public class GameState {
 		this.lastWhitePlayerId = null;
 		this.incomingInvitationId = null;
 		this.waitRoomDismissedFromCode = false;		
-		this.startGameRequest = null;
+		this.gameVariant = null;
 		this.remoteRating = null;
 		this.whitePlayerId = null;
 		this.blackPlayerId = null;
 		this.ready = false;
+		this.started = false;
 	}
 			
 	public boolean isLocalPlayerRoomOwner(){
@@ -126,17 +129,54 @@ public class GameState {
 		}
 
 		return null;
+	}	
+	
+	public boolean isStarted() {
+		return started;
 	}
+
+	public void setStarted(boolean started) {
+		this.started = started;
+	}
+
+	public GameVariant getGameVariant() {
+		return gameVariant;
+	}
+
+	public void setGameVariant(GameVariant gameVariant) {
+		if( gameVariant != null ){
+			this.setGameVariant(gameVariant, true);
+		}
+		else{
+			this.gameVariant = null;
+		}
+	}
+
+	public void setGameVariant(GameVariant gameVariant, boolean isOwner) {
+		this.gameVariant = gameVariant;
 		
-	public StartGameRequest getStartGameRequest() {
-		return startGameRequest;
-	}
-
-	public void setStartGameRequest(
-			StartGameRequest startGameRequest) {
-		this.startGameRequest = startGameRequest;
-	}
-
+		if( gameVariant.isWhite() ){
+			if( isOwner ){
+				this.whitePlayerId = this.myId;
+				this.blackPlayerId = this.remoteId;
+			}
+			else{
+				this.whitePlayerId = this.remoteId;
+				this.blackPlayerId = this.myId;
+			}
+		}
+		else{
+			if( isOwner ){
+				this.blackPlayerId = this.myId;
+				this.whitePlayerId = this.remoteId;				
+			}
+			else{
+				this.blackPlayerId = this.remoteId;
+				this.whitePlayerId = this.myId;
+			}
+		}
+	}	
+	
 	public String getDisplayName(String participantId) {
 		if (this.room != null) {
 
@@ -208,15 +248,7 @@ public class GameState {
 		this.ready = ready;
 	}
 
-	@Override
-	public String toString() {
-		return "GameState [owner=" + owner + ", room=" + room + ", myId="
-				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
-				+ lastWhitePlayerId + ", incomingInvitationId="
-				+ incomingInvitationId + ", startGameRequest="
-				+ startGameRequest + ", waitRoomDismissedFromCode="
-				+ waitRoomDismissedFromCode + ", remoteRating=" + remoteRating
-				+ ", whitePlayerId=" + whitePlayerId + ", blackPlayerId="
-				+ blackPlayerId + ", ready=" + ready + "]";
+	public void setRemoteRating(Rating remoteRating) {
+		this.remoteRating = remoteRating;
 	}	
 }

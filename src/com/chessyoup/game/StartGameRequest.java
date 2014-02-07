@@ -1,24 +1,23 @@
 package com.chessyoup.game;
 
 public class StartGameRequest {
-	
-	private boolean rated;
-	
+			
 	private String whitePlayerId;
 	
 	private String blackPlayerId;
 	
-	private int time;
+	private GameVariant gameVariant;	
 	
-	private int increment;
-	
-	
-	public StartGameRequest(String whitePlayerId,String blackPlayerId,int time , int increment,boolean rated){
+	public StartGameRequest(String whitePlayerId,String blackPlayerId,int gameVariant){
 		this.whitePlayerId = whitePlayerId;
 		this.blackPlayerId = blackPlayerId;
-		this.time = time;
-		this.increment = increment;
-		this.rated = rated;
+		this.gameVariant = Util.getGameVariant(gameVariant);
+	}
+	
+	public StartGameRequest(String whitePlayerId,String blackPlayerId,GameVariant gameVariant){
+		this.whitePlayerId = whitePlayerId;
+		this.blackPlayerId = blackPlayerId;
+		this.gameVariant = gameVariant;
 	}
 	
 	public String getWhitePlayerId() {
@@ -37,34 +36,18 @@ public class StartGameRequest {
 		this.blackPlayerId = blackPlayerId;
 	}
 
-	public int getTime() {
-		return time;
+	public GameVariant getGameVariant() {
+		return gameVariant;
 	}
 
-	public void setTime(int time) {
-		this.time = time;
-	}
-
-	public int getIncrement() {
-		return increment;
-	}
-
-	public void setIncrement(int increment) {
-		this.increment = increment;
-	}
-
-	public boolean isRated() {
-		return rated;
-	}
-
-	public void setRated(boolean rated) {
-		this.rated = rated;
+	public void setGameVariant(GameVariant gameVariant) {
+		this.gameVariant = gameVariant;
 	}
 
 	@Override
 	public String toString() {
-		return "StartGameRequest [rated=" + rated + ", whitePlayerId="
-				+ whitePlayerId + ", blackPlayerId=" + blackPlayerId
-				+ ", time=" + time + ", increment=" + increment + "]";
+		return "StartGameRequest [whitePlayerId=" + whitePlayerId
+				+ ", blackPlayerId=" + blackPlayerId + ", gameVariant="
+				+ gameVariant + "]";
 	}
 }
