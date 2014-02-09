@@ -1,5 +1,6 @@
 package com.chessyoup.ui;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,17 +23,18 @@ import com.chessyoup.game.GameState;
 import com.chessyoup.game.GameVariant;
 import com.chessyoup.game.PlayerState;
 import com.chessyoup.game.RealTimeChessGame;
-import com.chessyoup.game.StartGameRequest;
-import com.chessyoup.game.Util;
 import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
+import com.chessyoup.game.Util;
 import com.chessyoup.model.Game;
 import com.chessyoup.ui.ChessTableUI.ChessTableUIListener;
 import com.chessyoup.ui.fragment.GameRequestDialog;
 import com.chessyoup.ui.fragment.GameRequestDialog.GameRequestDialogListener;
 import com.chessyoup.ui.fragment.NewGameDialog;
 import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
+import com.chessyoup.ui.util.DownloadImageTask;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
+import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
@@ -166,8 +169,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 			startActivityForResult(intent, RC_INVITATION_INBOX);
 			break;
 		case R.id.button_accept_popup_invitation:
-			acceptInviteToRoom(gameState.getIncomingInvitationId());
-			gameState.setIncomingInvitationId(null);
+			acceptInviteToRoom(gameState.getIncomingInvitationId());			
 			break;
 		}
 	}
@@ -198,7 +200,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 					
 					if( !gameState.isReady()){
 						realTimeChessGame.ready();
-						gameState.setReady(true);
+						gameState.setReady(true);						
 					}
 				}				
 				
@@ -270,8 +272,8 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 
 	@Override
 	public void onInvitationReceived(Invitation invitation) {
-		gameState.setIncomingInvitationId(invitation.getInvitationId());
-		gameState.setGameVariant(Util.getGameVariant(invitation.getVariant()), false);
+		Log.d(TAG,"onInvitationReceived :: "+invitation.toString());
+		gameState.setIncomingInvitationId(invitation.getInvitationId());		
 		((TextView) findViewById(R.id.incoming_invitation_text))
 				.setText(getInviationDisplayInfo(invitation));
 		switchToScreen(mCurScreen); // This will show the invitation popup
@@ -296,19 +298,24 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	@Override
 	public void onConnectedToRoom(Room room) {
 		Log.d(TAG, "onConnectedToRoom.");
-
+		
+		System.out.println(getGamesClient().getCurrentPlayerId());
+		System.out.println(room.getCreatorId());
+		
 		gameState.setMyId(room.getParticipantId(getGamesClient()
 				.getCurrentPlayerId()));
-
+		
 		gameState.setRoom(room);
-
+		
 		for (Participant p : room.getParticipants()) {
-			if (!p.getParticipantId().equals(gameState.getMyId())) {
-				gameState.setRemoteId(p.getParticipantId());
+			if (!p.getParticipantId().equals(gameState.getMyId())) {				
+				gameState.setRemoteId(p.getParticipantId());			
 				break;
 			}
 		}
-
+		
+		gameState.setGameVariant(Util.getGameVariant(room.getVariant()), gameState.getIncomingInvitationId() == null );
+		
 		Log.d(TAG, gameState.toString());
 		Log.d(TAG, "<< CONNECTED TO ROOM>>");
 	}
@@ -446,15 +453,14 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		
 		dismissWaitingRoom();		
 		displayShortMessage("Ready to play!");
+		Log.d(TAG,"onReadyRecevied :: "+gameState.toString());
 		
 		if( !gameState.isReady() ){
 			gameState.setReady(true);
 			realTimeChessGame.ready();
 		}
 		
-		if( gameState.isLocalPlayerRoomOwner() && gameState.isReady() ){
-			this.startGame();
-		}
+		this.startGame();			
 	}
 
 	@Override
@@ -761,7 +767,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				final ArrayList<String> invitees = data.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
 				Log.d(TAG, "Invitee count: " + invitees.size());
 				Log.d(TAG, "Invitee: " + invitees.toString()); 
-				Log.d(TAG, "Creating room...");
+				Log.d(TAG, "Creating room...");				
 				RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(ChessYoUpActivity.this);
 				rtmConfigBuilder.addPlayersToInvite(invitees);
 				rtmConfigBuilder.setVariant(gameVariant);
@@ -769,7 +775,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 				rtmConfigBuilder.setRoomStatusUpdateListener(ChessYoUpActivity.this);
 				switchToScreen(R.id.screen_wait);
 				keepScreenOn();
-				getGamesClient().createRoom(rtmConfigBuilder.build());
+				getGamesClient().createRoom(rtmConfigBuilder.build());					
 				Log.d(TAG, "Room created, waiting for it to be ready...");				
 			}
 		});
@@ -811,7 +817,9 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 		switchToMainScreen();
 	}
 
-	private void startGame() {
+	private void startGame() {		
+		System.out.println( "isLocalOwner :"+gameState.isLocalPlayerRoomOwner() +" ,wp :"+gameState.getWhitePlayerId()+" ,bp "+gameState.getBlackPlayerId() +" , myd "+gameState.getMyId() );
+		
 		this.chessTableUI.getCtrl().setTimeLimit(gameState.getGameVariant().getTime()*1000, 0, gameState.getGameVariant().getIncrement()*1000);
 		this.chessTableUI.getCtrl().newGame(
 				getChessboardMode(gameState.getWhitePlayerId(), gameState.getBlackPlayerId()),gameState.getGameVariant().isRated());
@@ -867,7 +875,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void updateRoom(Room room) {
-		Log.d(TAG, "updateRoom :" + room.toString());
+//		Log.d(TAG, "updateRoom :" + room.toString());
 	}
 
 	private void showNewGameRequestDialog(final String whitePlayerId,
@@ -938,16 +946,12 @@ public class ChessYoUpActivity extends BaseGameActivity implements
 	}
 
 	private void updatePlayerStateView() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("Welcome ").append(
-				getGamesClient().getCurrentPlayer().getDisplayName());
-		sb.append("\n")
-				.append("ELO :" + gameState.getOwner().getRating())
-				.append(" , Wins :" + gameState.getOwner().getWins());
-		sb.append(" , Draws:" + this.gameState.getOwner().getDraws()
-				+ " , Loses :" + this.gameState.getOwner().getLoses());
-		Log.d(TAG, "Player state :" + sb.toString());
-		((TextView) findViewById(R.id.playerStateView)).setText(sb.toString());
+		((TextView) findViewById(R.id.playerName)).setText(getGamesClient().getCurrentPlayer().getDisplayName());
+		((TextView) findViewById(R.id.playerRating)).setText( "Rating:" + Math.round(gameState.getOwner().getRating()));
+		System.out.println(getGamesClient().getCurrentPlayer().getHiResImageUri().toString());
+		ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.playerAvatar), getGamesClient().getCurrentPlayer().getIconImageUri());
+//		((ImageView) findViewById(R.id.playerAvatar)).setImageURI(getGamesClient().getCurrentPlayer().hasHiResImage() ? getGamesClient().getCurrentPlayer().getHiResImageUri() : getGamesClient().getCurrentPlayer().getIconImageUri());
+//		new DownloadImageTask((ImageView)  findViewById(R.id.playerAvatar)).execute(getGamesClient().getCurrentPlayer().getHiResImageUri().toString());
 	}
 
 	@Override

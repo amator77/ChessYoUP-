@@ -11,8 +11,6 @@ public class GameState {
 		
 	private Room room = null;
 
-	private String myId = null;
-
 	private String remoteId = null;
 
 	private String lastWhitePlayerId = null;
@@ -38,8 +36,7 @@ public class GameState {
 	}
 	
 	public void reset(){
-		this.room = null;
-		this.myId = null;
+		this.room = null;		
 		this.remoteId = null;
 		this.lastWhitePlayerId = null;
 		this.incomingInvitationId = null;
@@ -52,14 +49,6 @@ public class GameState {
 		this.started = false;
 	}
 			
-	public boolean isLocalPlayerRoomOwner(){
-		if( this.myId != null && this.room != null ){
-			return myId.equals(this.room.getCreatorId());
-		}
-		else{
-			return false;
-		}		
-	}
 
 	public PlayerState getOwner() {
 		return owner;
@@ -75,14 +64,6 @@ public class GameState {
 
 	public void setRoom(Room room) {
 		this.room = room;
-	}
-
-	public String getMyId() {
-		return myId;
-	}
-
-	public void setMyId(String myId) {
-		this.myId = myId;		
 	}
 
 	public String getRemoteId() {
@@ -154,26 +135,15 @@ public class GameState {
 
 	public void setGameVariant(GameVariant gameVariant, boolean isOwner) {
 		this.gameVariant = gameVariant;
+		System.out.println("setGameVariant "+gameVariant.toString()+" , isOwner "+isOwner);
 		
-		if( gameVariant.isWhite() ){
-			if( isOwner ){
-				this.whitePlayerId = this.myId;
-				this.blackPlayerId = this.remoteId;
-			}
-			else{
-				this.whitePlayerId = this.remoteId;
-				this.blackPlayerId = this.myId;
-			}
+		if( isOwner ){
+			this.whitePlayerId = gameVariant.isWhite() ? this.myId : this.remoteId;
+			this.blackPlayerId = !gameVariant.isWhite() ? this.myId : this.remoteId;
 		}
 		else{
-			if( isOwner ){
-				this.blackPlayerId = this.myId;
-				this.whitePlayerId = this.remoteId;				
-			}
-			else{
-				this.blackPlayerId = this.remoteId;
-				this.whitePlayerId = this.myId;
-			}
+			this.whitePlayerId = gameVariant.isWhite() ? this.remoteId : this.myId;
+			this.blackPlayerId = !gameVariant.isWhite() ? this.remoteId : this.myId;
 		}
 	}	
 	
@@ -250,5 +220,17 @@ public class GameState {
 
 	public void setRemoteRating(Rating remoteRating) {
 		this.remoteRating = remoteRating;
+	}
+
+	@Override
+	public String toString() {
+		return "GameState [owner=" + owner + ", room=" + room + ", myId="
+				+ myId + ", remoteId=" + remoteId + ", lastWhitePlayerId="
+				+ lastWhitePlayerId + ", incomingInvitationId="
+				+ incomingInvitationId + ", gameVariant=" + gameVariant
+				+ ", waitRoomDismissedFromCode=" + waitRoomDismissedFromCode
+				+ ", remoteRating=" + remoteRating + ", whitePlayerId="
+				+ whitePlayerId + ", blackPlayerId=" + blackPlayerId
+				+ ", ready=" + ready + ", started=" + started + "]";
 	}	
 }
