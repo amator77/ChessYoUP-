@@ -321,8 +321,14 @@ public abstract class ChessBoardView extends View {
             invalidate();
         }
     }
+    
+    
        
-    public Position getPosition() {
+    public boolean isFlipped() {
+		return flipped;
+	}
+
+	public Position getPosition() {
 		return pos;
 	}
 	

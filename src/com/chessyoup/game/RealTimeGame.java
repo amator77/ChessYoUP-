@@ -1,5 +1,6 @@
 package com.chessyoup.game;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.util.Log;
@@ -41,12 +42,18 @@ public abstract class RealTimeGame implements RealTimeMessageReceivedListener,
 		for(Participant p : remotes){
 			this.client.sendReliableRealTimeMessage(this, messageData, activeRoom.getRoomId(), p.getParticipantId());
 		}
-	}
-	
+	}	
 
-	private List<Participant> getRemoteParticipants(Room activeRoom2) {
-		// TODO Auto-generated method stub
-		return null;
+	private List<Participant> getRemoteParticipants(Room activeRoom) {
+		List<Participant> remotes = new ArrayList<Participant>();
+		
+		for(Participant p : activeRoom.getParticipants()){
+			if( !p.getParticipantId().equals( this.activeRoom.getParticipantId(client.getCurrentPlayerId()))){
+				remotes.add(p);
+			}
+		}
+		
+		return remotes;
 	}
 
 	@Override

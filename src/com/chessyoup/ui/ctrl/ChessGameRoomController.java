@@ -49,6 +49,8 @@ public class ChessGameRoomController implements RoomUpdateListener,
 			return;
 		}
 		
+		GameController.getInstance().getRealTimeChessGame().setRoom(room);
+		GameController.getInstance().getRealTimeChessGame().setListener(this.chessGameRoomUI.getRealTimeChessGameController());
 		GameModel gameModel = chessGameRoomUI.getGameModel();
 		gameModel.setRoom(room);		
 		
@@ -70,7 +72,7 @@ public class ChessGameRoomController implements RoomUpdateListener,
 		
 		if( gameModel.getRemotePlayer() != null ){
 			gameModel.setGameVariant(Util.getGameVariant(room.getVariant()));
-			chessGameRoomUI.roomIsFull();
+			GameController.getInstance().getRealTimeChessGame().ready();			
 		}
 	}
 
@@ -83,10 +85,7 @@ public class ChessGameRoomController implements RoomUpdateListener,
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
 			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
-		}
-
-		GameModel gameModel = chessGameRoomUI.getGameModel();
-		gameModel.setRoom(room);			
+		}		
 	}
 
 	@Override

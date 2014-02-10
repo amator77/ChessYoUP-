@@ -30,9 +30,9 @@
 	    android:layout_height="match_parent"
 	    android:layout_alignParentTop="true" >
 
-	    <!--include
+	    <include
 	        android:id="@+id/include1"
-	        layout="@layout/player" /-->
+	        layout="@layout/player"/>
 
 	    <Button
 	        android:id="@+id/button_invite_players"
@@ -42,18 +42,18 @@
 	        android:text="@string/invite_players" />
 
 	    <Button
+	        android:id="@+id/button_sign_out"
+	        style="@style/SignOutButton"
+	        android:layout_alignParentRight="true"
+	        android:layout_below="@+id/button_invite_players"
+	        android:text="@string/sign_out" />
+
+	    <Button
 	        android:id="@+id/button_see_invitations"
 	        style="@style/MainScreenButton"
 	        android:layout_alignLeft="@+id/button_invite_players"
 	        android:layout_alignParentBottom="true"
 	        android:text="@string/see_invitations" />
-
-	    <Button
-	        android:id="@+id/button_sign_out"
-	        style="@style/SignOutButton"
-	        android:layout_alignRight="@+id/include1"
-	        android:layout_below="@+id/button_invite_players"
-	        android:text="@string/sign_out" />
 
 	</RelativeLayout>
 

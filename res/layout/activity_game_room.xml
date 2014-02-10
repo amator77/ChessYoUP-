@@ -1,13 +1,69 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"    
+    android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
-	
+
     <view
         android:id="@+id/chessboard"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"      
-        android:layout_centerInParent="true"      
+        android:layout_height="fill_parent"
+        android:layout_centerInParent="true"
+        android:layout_margin="2dp"
         class="com.chessyoup.game.view.ChessBoardPlayView" />
+	
+    <ImageView
+        android:id="@+id/playerAvatar1"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_above="@+id/chessboard"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/playerAvatar2"
+        android:layout_marginLeft="2dp"
+        android:src="@drawable/loader" />
+
+    <TextView
+        android:id="@+id/chessboard_clock_1"
+        style="@style/GameClock"
+        android:layout_above="@+id/chessboard"
+        android:layout_alignRight="@+id/chessboard"
+        android:text="00:00:00"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
     
- </RelativeLayout>
+    <TextView
+        android:id="@+id/chessboard_clock_2"
+        style="@style/GameClock"
+        android:layout_alignBaseline="@+id/playerDisplayName2"
+        android:layout_alignBottom="@+id/playerDisplayName2"
+        android:layout_alignRight="@+id/chessboard"
+        android:text="00:00:00"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <ImageView
+        android:id="@+id/playerAvatar2"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_below="@+id/chessboard"
+        android:layout_marginLeft="2dp"
+        android:src="@drawable/loader" />
+
+    <TextView
+        android:id="@+id/playerDisplayName2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/playerAvatar2"
+        android:layout_toRightOf="@+id/playerAvatar2"
+        android:layout_marginLeft="4dp"
+        android:text="player2"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/playerDisplayName1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/playerAvatar1"
+        android:layout_marginLeft="4dp"
+        android:layout_alignLeft="@+id/playerDisplayName2"
+        android:text="player1"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</RelativeLayout>

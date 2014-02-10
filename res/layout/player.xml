@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp" >
+
+    <ImageView
+        android:id="@+id/playerAvatar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:src="@drawable/general_avatar_unknown" />
+
+    <TextView
+        android:id="@+id/playerName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/playerAvatar"
+        android:layout_marginLeft="5dp"        
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/playerRating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/playerAvatar"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/playerName"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@+id/playerAvatar" />
+
+    <TextView
+        android:id="@+id/playerRank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/playerRating"
+        android:layout_below="@+id/playerRating"
+        />
+
+</RelativeLayout>

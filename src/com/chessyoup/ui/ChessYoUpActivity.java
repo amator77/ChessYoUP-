@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import com.chessyoup.ui.fragment.NewGameDialog;
 import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
+import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
@@ -743,20 +745,13 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	}
 
 	private void updatePlayerStateView() {
-		// ((TextView)
-		// findViewById(R.id.playerName)).setText(getGamesClient().getCurrentPlayer().getDisplayName());
-		// ((TextView) findViewById(R.id.playerRating)).setText( "Rating:" +
-		// Math.round(gameState.getOwner().getRating()));
-//		System.out.println(getGamesClient().getCurrentPlayer().getHiResImageUri().toString());
-		// ImageManager.create(this.getApplicationContext()).loadImage((ImageView)
-		// findViewById(R.id.playerAvatar),
-		// getGamesClient().getCurrentPlayer().getIconImageUri());
-		// ((ImageView)
-		// findViewById(R.id.playerAvatar)).setImageURI(getGamesClient().getCurrentPlayer().hasHiResImage()
-		// ? getGamesClient().getCurrentPlayer().getHiResImageUri() :
-		// getGamesClient().getCurrentPlayer().getIconImageUri());
-		// new DownloadImageTask((ImageView)
-		// findViewById(R.id.playerAvatar)).execute(getGamesClient().getCurrentPlayer().getHiResImageUri().toString());
+		 ((TextView)
+		 findViewById(R.id.playerName)).setText(GameController.getInstance().getGamesClient().getCurrentPlayer().getDisplayName());
+		 ((TextView) findViewById(R.id.playerRating)).setText( "Rating:" +
+		 Math.round(GameController.getInstance().getLocalPlayer().getRating()));
+		 ImageManager.create(this.getApplicationContext()).loadImage((ImageView)
+		 findViewById(R.id.playerAvatar),
+		 GameController.getInstance().getGamesClient().getCurrentPlayer().getIconImageUri());
 	}
 
 	@Override

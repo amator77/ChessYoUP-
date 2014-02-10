@@ -4,7 +4,6 @@ import android.util.Log;
 
 import com.chessyoup.game.GameController;
 import com.chessyoup.game.GameVariant;
-import com.chessyoup.game.RealTimeChessGame;
 import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
 import com.chessyoup.ui.ChessGameRoomUI;
 
@@ -32,13 +31,18 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
 	@Override
 	public void onReadyRecevied(double remoteRating, double remoteRD,
 			double volatility) {
-		
 		Log.d(TAG, "onReadyRecevied :: remoteRating="+remoteRating+",remoteRD="+remoteRD+",volatility"+volatility);		
+		
+		chessGameRoomUI.getGameModel().getRemotePlayer().setRating(remoteRating);
+		chessGameRoomUI.getGameModel().getRemotePlayer().setRatingDeviation(remoteRD);
+		chessGameRoomUI.getGameModel().getRemotePlayer().setVolatility(volatility);
+		chessGameRoomUI.roomReady();				
 	}
 
 	@Override
 	public void onMoveRecevied(String move, int thinkingTime) {
 		Log.d(TAG, "onMoveRecevied :: move="+move+",thinkingTime="+thinkingTime);
+		chessGameRoomUI.getChessboardController().makeRemoteMove(move);
 	}
 
 	@Override
