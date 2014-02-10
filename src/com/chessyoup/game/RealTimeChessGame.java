@@ -33,7 +33,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
 	public interface RealTimeChessGameListener {
 
-		public void onChallangeRecevied(GameVariant gameVariant,String whiteId,String blackId);
+		public void onChallangeRecevied(GameVariant gameVariant);
 
 		public void onStartRecevied();
 
@@ -56,8 +56,8 @@ public class RealTimeChessGame extends RealTimeGame {
 		public void onChatReceived(String message);
 	}
 
-	public RealTimeChessGame(GamesClient client, GameState gameState) {
-		super(client, gameState);
+	public RealTimeChessGame(GamesClient client) {
+		super(client);
 	}
 
 	@Override
@@ -122,9 +122,9 @@ public class RealTimeChessGame extends RealTimeGame {
 		JSONObject json = new JSONObject();
 
 		try {
-			json.put(ELO_KEY, this.gameState.getOwner().getRating());
-			json.put(RD_KEY, this.gameState.getOwner().getRatingDeviation());
-			json.put(VOLATILITY_KEY, this.gameState.getOwner().getVolatility());
+			json.put(ELO_KEY, GameController.getInstance().getLocalPlayer().getRating());
+			json.put(RD_KEY, GameController.getInstance().getLocalPlayer().getRatingDeviation());
+			json.put(VOLATILITY_KEY, GameController.getInstance().getLocalPlayer().getVolatility());
 		} catch (JSONException e) {
 			Log.e(TAG, "Error on creating json object!", e);
 		}
@@ -142,8 +142,7 @@ public class RealTimeChessGame extends RealTimeGame {
 		} catch (JSONException e) {
 			Log.e(TAG, "Error on creating json object!", e);
 		}
-
-		this.gameState.setGameVariant(Util.getGameVariant(gv));
+		
 		this.sendChessGameMessage(CHALLANGE, json.toString());
 	}
 
@@ -289,9 +288,8 @@ public class RealTimeChessGame extends RealTimeGame {
 
 		if (this.listener != null) {
 			try {
-				GameVariant gameVariant = Util.getGameVariant(Integer.parseInt(jsonPayload.getString(GAME_VARIANT)));
-				this.gameState.setGameVariant(gameVariant, false);				
-				this.listener.onChallangeRecevied(gameVariant,this.gameState.getWhitePlayerId(),this.gameState.getBlackPlayerId());
+				GameVariant gameVariant = Util.getGameVariant(Integer.parseInt(jsonPayload.getString(GAME_VARIANT)));						
+				this.listener.onChallangeRecevied(gameVariant);
 			} catch (JSONException e) {
 				Log.e(TAG, "Invalid start message!", e);
 				this.listener.onException("Invalid ready message!");
@@ -328,8 +326,7 @@ public class RealTimeChessGame extends RealTimeGame {
 			try {
 				double remoteElo = jsonPayload.getDouble(ELO_KEY);
 				double remoteRd = jsonPayload.getDouble(RD_KEY);
-				double volatility = jsonPayload.getDouble(VOLATILITY_KEY);
-				this.gameState.setRemoteRating(remoteElo, remoteRd,volatility);				
+				double volatility = jsonPayload.getDouble(VOLATILITY_KEY);					
 				this.listener.onReadyRecevied(remoteElo, remoteRd,volatility);
 			} catch (JSONException e) {
 				Log.e(TAG, "Invalid ready message!", e);

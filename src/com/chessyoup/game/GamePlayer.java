@@ -3,8 +3,12 @@ package com.chessyoup.game;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PlayerState {
-			
+import com.google.android.gms.games.multiplayer.Participant;
+
+public class GamePlayer {
+	
+	private Participant participant; 
+	
 	private double rating;
 	
 	private double ratingDeviation;
@@ -17,10 +21,22 @@ public class PlayerState {
 
 	private int loses;
 
-	public PlayerState(String playerId) {		
+	public GamePlayer() {
+		this.rating = 1500;
+		this.ratingDeviation = 150;
+		this.volatility = 0;
 		this.wins = 0;
 		this.draws = 0;
 		this.loses = 0;
+		
+	}
+	
+	public Participant getParticipant() {
+		return participant;
+	}
+
+	public void setParticipant(Participant participant) {
+		this.participant = participant;
 	}
 
 	public double getRating() {

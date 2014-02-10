@@ -76,4 +76,9 @@ public class Util {
 		
 		return sb.append(value).toString();
 	}
+
+	public static void showGameError() {
+		// TODO Auto-generated method stub
+		
+	}
 }

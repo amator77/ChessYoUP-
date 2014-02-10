@@ -30,9 +30,9 @@
 	    android:layout_height="match_parent"
 	    android:layout_alignParentTop="true" >
 
-	    <include
+	    <!--include
 	        android:id="@+id/include1"
-	        layout="@layout/player" />
+	        layout="@layout/player" /-->
 
 	    <Button
 	        android:id="@+id/button_invite_players"

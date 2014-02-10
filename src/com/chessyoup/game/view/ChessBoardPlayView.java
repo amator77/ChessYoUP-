@@ -35,11 +35,11 @@ import com.chessyoup.model.TextIO;
 import com.chessyoup.model.pgn.PGNOptions;
 
 /** Chess board widget suitable for play mode. */
-public class ChessBoardPlay extends ChessBoard {
+public class ChessBoardPlayView extends ChessBoardView {
     private PGNOptions pgnOptions = null;
     boolean oneTouchMoves;
     
-    public ChessBoardPlay(Context context, AttributeSet attrs) {
+    public ChessBoardPlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
         oneTouchMoves = false;
     }

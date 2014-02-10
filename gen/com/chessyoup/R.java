@@ -307,51 +307,54 @@ containing a value of this type.
         public static final int white_round_corner=0x7f020035;
     }
     public static final class id {
+        public static final int abort=0x7f050030;
         public static final int abortGameButton=0x7f05001b;
-        public static final int button_accept_popup_invitation=0x7f05000e;
+        public static final int button_accept_popup_invitation=0x7f05000f;
         public static final int button_invite_players=0x7f050009;
         public static final int button_see_invitations=0x7f05000a;
-        public static final int button_sign_in=0x7f050006;
-        public static final int button_sign_out=0x7f05000b;
-        public static final int chatDisplay=0x7f050012;
-        public static final int chatScroll=0x7f050010;
+        public static final int button_sign_in=0x7f050007;
+        public static final int button_sign_out=0x7f05000c;
+        public static final int chatDisplay=0x7f050013;
+        public static final int chatScroll=0x7f050011;
         public static final int checkBox1=0x7f050029;
         public static final int chessBoardViewPager=0x7f05001e;
-        public static final int chessboard=0x7f050015;
+        public static final int chessboard=0x7f050005;
         public static final int chessboardButtons=0x7f050016;
         public static final int chessboard_black_clock=0x7f050019;
         public static final int chessboard_black_player_image_view=0x7f050020;
         public static final int chessboard_vs_text=0x7f050021;
         public static final int chessboard_white_clock=0x7f050017;
         public static final int chessboard_white_player_image_view=0x7f05001f;
+        public static final int draw=0x7f050031;
         public static final int drawGameButton=0x7f050018;
-        public static final int editChatText=0x7f050011;
+        public static final int editChatText=0x7f050012;
+        public static final int exit=0x7f050034;
         public static final int exitGameButton=0x7f05001d;
         public static final int gameDetails=0x7f050025;
         public static final int hybrid=0x7f050004;
-        public static final int include1=0x7f050008;
-        public static final int incoming_invitation_text=0x7f05000d;
-        public static final int invitation_popup=0x7f05000c;
+        public static final int include1=0x7f05000b;
+        public static final int incoming_invitation_text=0x7f05000e;
+        public static final int invitation_popup=0x7f05000d;
         public static final int moveList=0x7f050023;
         public static final int moveListScroll=0x7f050022;
+        public static final int next=0x7f05002f;
         public static final int none=0x7f050000;
         public static final int normal=0x7f050001;
-        public static final int playerAvatar=0x7f05002e;
-        public static final int playerName=0x7f05002f;
-        public static final int playerRank=0x7f050031;
-        public static final int playerRating=0x7f050030;
+        public static final int previous=0x7f05002e;
         public static final int progressBar1=0x7f050024;
         public static final int radio0=0x7f050027;
         public static final int radio1=0x7f050028;
         public static final int radioGroup1=0x7f050026;
+        public static final int rematch=0x7f050033;
         public static final int rematchGameButton=0x7f05001c;
+        public static final int resign=0x7f050032;
         public static final int resignGameButton=0x7f05001a;
         public static final int satellite=0x7f050002;
-        public static final int screen_game=0x7f050014;
-        public static final int screen_main=0x7f050007;
-        public static final int screen_sign_in=0x7f050005;
-        public static final int screen_wait=0x7f05000f;
-        public static final int sendChatButton=0x7f050013;
+        public static final int screen_game=0x7f050015;
+        public static final int screen_main=0x7f050008;
+        public static final int screen_sign_in=0x7f050006;
+        public static final int screen_wait=0x7f050010;
+        public static final int sendChatButton=0x7f050014;
         public static final int spinner1=0x7f05002b;
         public static final int spinner2=0x7f05002d;
         public static final int terrain=0x7f050003;
@@ -362,13 +365,16 @@ containing a value of this type.
         public static final int google_play_services_version=0x7f070000;
     }
     public static final class layout {
-        public static final int activity_main=0x7f030000;
-        public static final int chat=0x7f030001;
-        public static final int chessboard=0x7f030002;
-        public static final int chessboard_game=0x7f030003;
-        public static final int game_request_dialog=0x7f030004;
-        public static final int new_game_dialog=0x7f030005;
-        public static final int player=0x7f030006;
+        public static final int activity_game_room=0x7f030000;
+        public static final int activity_main=0x7f030001;
+        public static final int chat=0x7f030002;
+        public static final int chessboard=0x7f030003;
+        public static final int chessboard_game=0x7f030004;
+        public static final int game_request_dialog=0x7f030005;
+        public static final int new_game_dialog=0x7f030006;
+    }
+    public static final class menu {
+        public static final int game_menu=0x7f0b0000;
     }
     public static final class string {
         public static final int accept_popup_invite=0x7f06002d;
@@ -378,7 +384,7 @@ containing a value of this type.
         public static final int analysis=0x7f060088;
         public static final int analysis_mode=0x7f060083;
         public static final int analyzing=0x7f0600b4;
-        public static final int app_id=0x7f06001e;
+        public static final int app_id=0x7f06001a;
         public static final int app_name=0x7f060021;
         /**   Title for notification shown when GooglePlayServices needs to be
         enabled for a application to work. [CHAR LIMIT=70] 
@@ -563,10 +569,10 @@ containing a value of this type.
         public static final int game_problem=0x7f060034;
         public static final int game_saved=0x7f0600d6;
         public static final int game_title=0x7f060022;
-        public static final int gamehelper_app_misconfigured=0x7f06001b;
-        public static final int gamehelper_license_failed=0x7f06001c;
-        public static final int gamehelper_sign_in_failed=0x7f06001a;
-        public static final int gamehelper_unknown_error=0x7f06001d;
+        public static final int gamehelper_app_misconfigured=0x7f06001c;
+        public static final int gamehelper_license_failed=0x7f06001d;
+        public static final int gamehelper_sign_in_failed=0x7f06001b;
+        public static final int gamehelper_unknown_error=0x7f06001e;
         public static final int go_back=0x7f06008c;
         public static final int go_forward=0x7f06008d;
         public static final int goto_end_variation=0x7f060092;

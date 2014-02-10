@@ -1,4 +1,4 @@
-package com.chessyoup.ui;
+package com.chessyoup.game.view;
 
 import java.util.ArrayList;
 
@@ -24,8 +24,6 @@ import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardController;
 import com.chessyoup.chessboard.ChessboardStatus;
 import com.chessyoup.chessboard.ChessboardUIInterface;
-import com.chessyoup.game.view.ChessBoardPlay;
-import com.chessyoup.game.view.PgnScreenTextView;
 import com.chessyoup.model.Game;
 import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.Move;
@@ -63,7 +61,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 
 	private ChessTableUIListener chessTableUIListener;
 
-	private ChessBoardPlay boardPlay;
+	private ChessBoardPlayView boardPlay;
 
 	private ChessboardController ctrl;
 
@@ -96,7 +94,7 @@ public class ChessTableUI implements ChessboardUIInterface,Runnable {
 	public ChessTableUI(FragmentActivity parent) {
 		this.parent = parent;
 		this.handlerTimer = new Handler();
-		this.boardPlay = (ChessBoardPlay) parent.findViewById(R.id.chessboard);
+		this.boardPlay = (ChessBoardPlayView) parent.findViewById(R.id.chessboard);
 		this.abortButton = (ImageButton) parent
 				.findViewById(R.id.abortGameButton);
 		this.resignButton = (ImageButton) parent
