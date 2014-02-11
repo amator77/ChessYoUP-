@@ -12,58 +12,62 @@
         class="com.chessyoup.game.view.ChessBoardPlayView" />
 	
     <ImageView
-        android:id="@+id/playerAvatar1"
+        android:id="@+id/remotePlayerAvatarView"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_above="@+id/chessboard"
         android:layout_alignParentLeft="true"
-        android:layout_alignRight="@+id/playerAvatar2"
+        android:layout_alignRight="@+id/localPlayerAvatarView"
         android:layout_marginLeft="2dp"
-        android:src="@drawable/loader" />
+        android:padding="3dp"
+        android:background="@drawable/avatar_background_shape"
+        android:src="@drawable/general_avatar_unknown" />
 
     <TextView
-        android:id="@+id/chessboard_clock_1"
+        android:id="@+id/remotePlayerClockView"
         style="@style/GameClock"
         android:layout_above="@+id/chessboard"
         android:layout_alignRight="@+id/chessboard"
-        android:text="00:00:00"
+        android:text="00:00"
         android:textAppearance="?android:attr/textAppearanceMedium" />
     
     <TextView
-        android:id="@+id/chessboard_clock_2"
+        android:id="@+id/localPlayerClockView"
         style="@style/GameClock"
-        android:layout_alignBaseline="@+id/playerDisplayName2"
-        android:layout_alignBottom="@+id/playerDisplayName2"
+        android:layout_alignBaseline="@+id/localPlayerDisplayNameView"
+        android:layout_alignBottom="@+id/localPlayerDisplayNameView"
         android:layout_alignRight="@+id/chessboard"
-        android:text="00:00:00"
+        android:text="00:00"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <ImageView
-        android:id="@+id/playerAvatar2"
+        android:id="@+id/localPlayerAvatarView"
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_below="@+id/chessboard"
         android:layout_marginLeft="2dp"
-        android:src="@drawable/loader" />
+        android:padding="3dp"
+        android:background="@drawable/avatar_background_shape"
+        android:src="@drawable/general_avatar_unknown" />
 
     <TextView
-        android:id="@+id/playerDisplayName2"
+        android:id="@+id/localPlayerDisplayNameView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/playerAvatar2"
-        android:layout_toRightOf="@+id/playerAvatar2"
+        android:layout_alignTop="@+id/localPlayerAvatarView"
+        android:layout_toRightOf="@+id/localPlayerAvatarView"
         android:layout_marginLeft="4dp"
-        android:text="player2"
+        android:text="localPlayer"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <TextView
-        android:id="@+id/playerDisplayName1"
+        android:id="@+id/remotePlayerDisplayNameView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/playerAvatar1"
+        android:layout_alignBottom="@+id/remotePlayerAvatarView"
         android:layout_marginLeft="4dp"
-        android:layout_alignLeft="@+id/playerDisplayName2"
-        android:text="player1"
+        android:layout_alignLeft="@+id/localPlayerDisplayNameView"
+        android:text="remotePlayer"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
 </RelativeLayout>

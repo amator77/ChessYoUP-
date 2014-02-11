@@ -2,12 +2,16 @@ package com.chessyoup.game;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Log;
+import android.view.WindowManager;
 
 import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.realtime.Room;
+import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
+import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.android.gms.plus.PlusClient;
 
@@ -64,6 +68,26 @@ public class GameController {
 			this.initilized = true;
 		}
 	}
+	
+	public void createRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String remotePlayer, int gameVariant){	    
+        RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(roomUpdatelistener);
+        rtmConfigBuilder.addPlayersToInvite(new String[] {remotePlayer});
+        rtmConfigBuilder.setVariant(gameVariant);
+        rtmConfigBuilder.setMessageReceivedListener(this.realTimeChessGame);
+        rtmConfigBuilder.setRoomStatusUpdateListener(roomStatusUpdateListener);  
+        mHelper.getGamesClient().createRoom(rtmConfigBuilder.build());        
+	}
+	
+	public void joinRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String invitationId){
+	    RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(roomUpdatelistener);
+        roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeChessGame).setRoomStatusUpdateListener(roomStatusUpdateListener);        
+        GameController.getInstance().getGamesClient().joinRoom(roomConfigBuilder.build());
+    }
+	
+	public void leaveRoom(RoomUpdateListener roomUpdatelistener,String roomId){
+	    Log.d(mDebugTag, "leaveRoom ::"+roomId);	    
+        mHelper.getGamesClient().leaveRoom(roomUpdatelistener, roomId);
+    }
 	
 	public void showAlert(String title, String message) {
         mHelper.showAlert(title, message);
@@ -156,9 +180,5 @@ public class GameController {
 
 	public boolean isSignedIn() {
 		return this.mHelper.isSignedIn();
-	}
-
-	public void leaveRoom(Room room,RoomUpdateListener listener) {
-		this.mHelper.getGamesClient().leaveRoom(listener, room.getRoomId());		
 	}	
 }

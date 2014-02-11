@@ -670,6 +670,7 @@ public class GameTree {
     public final void goForward(int variation) {
         goForward(variation, true);
     }
+    
     public final void goForward(int variation, boolean updateDefault) {
         if (currentNode.verifyChildren(currentPos))
             updateListener();

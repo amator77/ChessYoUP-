@@ -448,109 +448,6 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	// *********************************************************************
 	// *********************************************************************
 
-	private void handleGameFinished(Game game, String whitePlayerId,
-			String blackPlayerId) {
-		Log.d(TAG, "handleGameFinished :: game state :" + game.getGameState()
-				+ " , wp :" + whitePlayerId + ",bp:" + blackPlayerId);
-
-		if (game.isRated()) {
-			switch (game.getGameState()) {
-			case ABORTED:
-				updateLocalPlayerLevel();
-				break;
-			case BLACK_MATE:
-				updateRatingOnResult(blackPlayerId, whitePlayerId);
-				break;
-			case WHITE_MATE:
-				updateRatingOnResult(whitePlayerId, blackPlayerId);
-				break;
-			case DRAW_50:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case DRAW_AGREE:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case DRAW_NO_MATE:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case DRAW_REP:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case WHITE_STALEMATE:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case BLACK_STALEMATE:
-				updateRatingOnDraw(whitePlayerId, blackPlayerId);
-				break;
-			case RESIGN_WHITE:
-				Log.d(TAG, "RESIGN_WHITE");
-				updateRatingOnResult(blackPlayerId, whitePlayerId);
-				break;
-			case RESIGN_BLACK:
-				Log.d(TAG, "RESIGN_BLACK");
-				updateRatingOnResult(whitePlayerId, blackPlayerId);
-				break;
-			case ALIVE:
-				Log.d(TAG, "Game not finished!");
-				break;
-			default:
-				Log.d(TAG, "Game not finished!");
-				break;
-			}
-		} else {
-			Log.d(TAG, "Frendly game.Increment only level");
-			updateLocalPlayerLevel();
-		}
-	}
-
-	private void updateRatingOnResult(String winerId, String loserId) {
-//		Rating winerRating = winerId.equals(gameState.getMyId()) ? gameState
-//				.getOwnerRating() : gameState.getRemoteRating();
-//		Rating loserRating = loserId.equals(gameState.getMyId()) ? gameState
-//				.getOwnerRating() : gameState.getRemoteRating();
-//
-//		Log.d(TAG, "Initial ratings :winer " + winerRating.toString());
-//		Log.d(TAG, "Initial ratings :loserRating " + loserRating.toString());
-//
-//		Util.computeRatingOnResult(winerRating, loserRating);
-//
-//		Log.d(TAG, "Updated ratings :winer " + winerRating.toString());
-//		Log.d(TAG, "Updated ratings :loserRating " + loserRating.toString());
-//
-//		if (winerRating.getUid().equals(gameState.getMyId())) {
-//			gameState.getOwner().setRating(winerRating.getRating());
-//			gameState.getOwner().setRatingDeviation(
-//					winerRating.getRatingDeviation());
-//			gameState.getOwner().setVolatility(winerRating.getVolatility());
-//			gameState.setRemoteRating(loserRating.getRating(),
-//					loserRating.getRatingDeviation(),
-//					loserRating.getVolatility());
-//			gameState.getOwner().setWins(gameState.getOwner().getWins() + 1);
-//		} else {
-//			gameState.getOwner().setRating(loserRating.getRating());
-//			gameState.getOwner().setRatingDeviation(
-//					loserRating.getRatingDeviation());
-//			gameState.getOwner().setVolatility(loserRating.getVolatility());
-//			gameState.setRemoteRating(winerRating.getRating(),
-//					winerRating.getRatingDeviation(),
-//					winerRating.getVolatility());
-//			gameState.getOwner().setLoses(gameState.getOwner().getLoses() + 1);
-//		}
-//
-//		updatePlayerStateView();
-//		getAppStateClient().updateState(0,
-//				gameState.getOwner().toJSON().getBytes());
-	}
-
-	private void updateRatingOnDraw(String whitePlayerId, String blackPlayerId) {
-
-	}
-
-	private void updateLocalPlayerLevel() {
-		// TODO Auto-generated method stub
-
-	}
-
 	private int getTimeControllValue(int index) {
 
 		String[] tcv = getResources().getStringArray(
@@ -609,7 +506,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 						ChessGameRoomUI.class);
 				chessRoomUIIntent.putExtra("remotePlayer", invitees.get(0));
 				chessRoomUIIntent.putExtra("gameVariant", gameVariant);
-				chessRoomUIIntent.putExtra("isRoomCreator", true);
+				chessRoomUIIntent.putExtra("isChallanger", true);
 				startActivity(chessRoomUIIntent);				
 			}
 		});
@@ -643,69 +540,8 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		chessRoomUIIntent.putExtra("remotePlayer", inv.getInviter().getParticipantId());
 		chessRoomUIIntent.putExtra("gameVariant", inv.getVariant());
 		chessRoomUIIntent.putExtra("invitationId", inv.getInvitationId());		
-		chessRoomUIIntent.putExtra("isRoomCreator", false);
+		chessRoomUIIntent.putExtra("isChallanger", false);
 		startActivity(chessRoomUIIntent);
-	}
-
-	private void startGame() {
-//		System.out.println("isLocalOwner :"
-//				+ gameState.isLocalPlayerRoomOwner() + " ,wp :"
-//				+ gameState.getWhitePlayerId() + " ,bp "
-//				+ gameState.getBlackPlayerId() + " , myd "
-//				+ gameState.getMyId());
-//
-//		this.chessTableUI.getCtrl().setTimeLimit(
-//				gameState.getGameVariant().getTime() * 1000, 0,
-//				gameState.getGameVariant().getIncrement() * 1000);
-//		this.chessTableUI.getCtrl().newGame(
-//				getChessboardMode(gameState.getWhitePlayerId(),
-//						gameState.getBlackPlayerId()),
-//				gameState.getGameVariant().isRated());
-//		this.chessTableUI.getCtrl().startGame();
-//		this.chessTableUI.flipBoard(!gameState.getMyId().equals(
-//				gameState.getWhitePlayerId()));
-//		displayShortMessage("Game started!");
-//		this.gameState.setStarted(true);
-	}
-
-//	private ChessboardMode getChessboardMode(String whitePlayerId,
-//			String blackPlayerId) {
-//		if (gameState.getMyId().equals(whitePlayerId)) {
-//			return new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE);
-//		} else {
-//			return new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE);
-//		}
-//	}
-
-//	private void showNewGameRequestDialog(final String whitePlayerId,
-//			final String blackPlayerId, final boolean isRated,
-//			final int timeControll, final int increment) {
-//
-//		GameRequestDialog grd = new GameRequestDialog();
-//		grd.setGameDetails(gameState.getDisplayName(whitePlayerId) + " vs "
-//				+ gameState.getDisplayName(blackPlayerId) + " , "
-//				+ (isRated ? "rated" : "friendly") + " game.");
-//
-//		grd.setListener(new GameRequestDialogListener() {
-//
-//			@Override
-//			public void onGameRequestRejected() {
-//				realTimeChessGame.abort();
-//			}
-//
-//			@Override
-//			public void onGameRequestAccepted() {
-//				realTimeChessGame.start();
-//				startGame();
-//			}
-//		});
-//
-//		grd.show(this.getSupportFragmentManager(), TAG);
-//	}
-
-	private void displayShortMessage(String string) {
-		Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT)
-				.show();
 	}
 
 	private void switchToScreen(int screenId) {
@@ -730,13 +566,6 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		switchToScreen(GameController.getInstance().isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
-	private void keepScreenOn() {
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-	}
-
-	private void stopKeepingScreenOn() {
-		getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-	}
 
 	private void showNewGameDialog() {
 		NewGameDialog d = new NewGameDialog();

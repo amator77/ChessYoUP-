@@ -49,16 +49,18 @@ public class ChessGameRoomController implements RoomUpdateListener,
 			return;
 		}
 		
-		GameController.getInstance().getRealTimeChessGame().setRoom(room);
-		GameController.getInstance().getRealTimeChessGame().setListener(this.chessGameRoomUI.getRealTimeChessGameController());
-		GameModel gameModel = chessGameRoomUI.getGameModel();
-		gameModel.setRoom(room);		
+		
 		
 		for (Participant p : room.getParticipants()) {
 			if(p.getParticipantId().equals(room.getCreatorId())){
 				GameController.getInstance().getLocalPlayer().setParticipant(p);
 			}
 		}
+		
+		GameModel gameModel = chessGameRoomUI.getGameModel();
+		GameController.getInstance().getRealTimeChessGame().setRoom(room);
+        GameController.getInstance().getRealTimeChessGame().setListener(this.chessGameRoomUI.getRealTimeChessGameController());        
+        gameModel.setRoom(room);
 		
 		for (Participant p : room.getParticipants()) {
 									
@@ -86,6 +88,11 @@ public class ChessGameRoomController implements RoomUpdateListener,
 			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
 		}		
+				
+		if( room != null ){ 
+		    GameController.getInstance().getRealTimeChessGame().setRoom(room);
+		    chessGameRoomUI.getGameModel().setRoom(room);
+		}
 	}
 
 	@Override
@@ -159,9 +166,14 @@ public class ChessGameRoomController implements RoomUpdateListener,
 	}
 
 	private void printRoom(Room room) {
+	    if( room != null){
 		Log.d(TAG,
 				" Room : id=" + room.getRoomId() + ",creator="
 						+ room.getCreatorId() + ",status=" + room.getStatus()
 						+ ",variant=" + room.getVariant() + ",participants="+room.getParticipantIds());
+	    }
+	    else{
+	        Log.d(TAG,"Room :: "+null);
+	    }
 	}
 }
