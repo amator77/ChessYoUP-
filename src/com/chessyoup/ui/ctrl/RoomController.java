@@ -48,12 +48,6 @@ public class RoomController implements RoomUpdateListener,
 			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
 		}
-						
-		for (Participant p : room.getParticipants()) {
-			if(p.getParticipantId().equals(room.getCreatorId())){
-				GameController.getInstance().getLocalPlayer().setParticipant(p);
-			}			
-		}
 		
 		GameModel gameModel = chessGameRoomUI.getGameModel();
 		GameController.getInstance().getRealTimeChessGame().setRoom(room);
@@ -61,8 +55,11 @@ public class RoomController implements RoomUpdateListener,
         gameModel.setRoom(room);
 		
 		for (Participant p : room.getParticipants()) {
-									
-			if (!p.getParticipantId().equals(room.getCreatorId())) {
+			
+			if(p.getParticipantId().equals(room.getCreatorId())){
+				GameController.getInstance().getLocalPlayer().setParticipant(p);
+			}	
+			else{
 				GamePlayer remotePlayer = new GamePlayer();
 				remotePlayer.setParticipant(p);
 				gameModel.setRemotePlayer(remotePlayer);
@@ -70,15 +67,10 @@ public class RoomController implements RoomUpdateListener,
 				if( gameModel.getGameVariant() == null ){
     				gameModel.setGameVariant(Util.getGameVariant(room.getVariant()));
 				}
-				
-				Log.d(TAG, "Remote participant set to :"+p.toString());
-				break;
 			}
 		}
 		
-		if( gameModel.getRemotePlayer() != null ){			
-			GameController.getInstance().getRealTimeChessGame().ready();			
-		}
+		GameController.getInstance().getRealTimeChessGame().ready();	
 	}
 
 	@Override

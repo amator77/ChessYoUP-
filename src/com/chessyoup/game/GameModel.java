@@ -67,7 +67,7 @@ public class GameModel {
 		return gameVariant;
 	}
 
-	public void setGameVariant(GameVariant gameVariant) {
+	public void setGameVariant(GameVariant gameVariant) {		
 		this.gameVariant = gameVariant;
 	}
 

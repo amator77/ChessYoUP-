@@ -27,9 +27,12 @@ public class RoomGameController implements RealTimeChessGameListener {
     public void onChallangeRecevied(GameVariant gameVariant,boolean isRematch) {
         Log.d(TAG, "onChallangeRecevied :: gameVariant=" + gameVariant);
                 
-        if( isRematch ){
-            this.chessGameRoomUI.getGameModel().setGameVariant(gameVariant);
-            GameController.getInstance().getRealTimeChessGame().ready();
+        if( isRematch ){        	
+        	//switch side	        	
+            GameVariant gv = this.chessGameRoomUI.getGameModel().getGameVariant();
+            gv.setWhite(gv.isWhite() ? false : true);
+            GameController.getInstance().getRealTimeChessGame().ready();      
+            chessGameRoomUI.roomReady();
         }
         else{
             this.chessGameRoomUI.acceptChallange(gameVariant);

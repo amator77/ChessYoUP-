@@ -45,6 +45,18 @@ public class Util {
 		return getGameVariant( gv.getGameType() , gv.getTime() , gv.getIncrement() , gv.getMoves() , gv.isRated() ,gv.isWhite());
 	}
 	
+	public static int switchSide(int gameVariant){
+		GameVariant gv = Util.getGameVariant(gameVariant);
+		gv.setWhite(gv.isWhite() ? false : true );
+		return gameVariantToInt(gv);
+	}
+	
+	public static int switchSide(GameVariant gameVariant){
+		GameVariant gv = getGameVariant(Util.gameVariantToInt(gameVariant));
+		gv.setWhite(gv.isWhite() ? false : true );
+		return gameVariantToInt(gv);
+	}
+	
 	public static GameVariant getGameVariant(int variant){
 		String s = String.valueOf(variant);
 		int gameType = Integer.parseInt(s.substring(0, 1));
