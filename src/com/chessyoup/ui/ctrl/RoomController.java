@@ -16,14 +16,14 @@ import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 
-public class ChessGameRoomController implements RoomUpdateListener,
+public class RoomController implements RoomUpdateListener,
 		RoomStatusUpdateListener {
 
 	private final static String TAG = "ChessGameRoomController";
 
 	private ChessGameRoomUI chessGameRoomUI;
 
-	public ChessGameRoomController(ChessGameRoomUI chessGameRoomUI) {
+	public RoomController(ChessGameRoomUI chessGameRoomUI) {
 		this.chessGameRoomUI = chessGameRoomUI;		
 	}
 
@@ -35,7 +35,7 @@ public class ChessGameRoomController implements RoomUpdateListener,
 
 	@Override
 	public void onLeftRoom(int statusCode, String roomId) {
-		Log.d(TAG, "onJoinedRoom :: statusCode="+statusCode+", roomdId="+roomId);
+		Log.d(TAG, "onLeftRoom :: statusCode="+statusCode+", roomdId="+roomId);
 	}
 
 	@Override
@@ -48,13 +48,11 @@ public class ChessGameRoomController implements RoomUpdateListener,
 			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
 		}
-		
-		
-		
+						
 		for (Participant p : room.getParticipants()) {
 			if(p.getParticipantId().equals(room.getCreatorId())){
 				GameController.getInstance().getLocalPlayer().setParticipant(p);
-			}
+			}			
 		}
 		
 		GameModel gameModel = chessGameRoomUI.getGameModel();
@@ -68,12 +66,17 @@ public class ChessGameRoomController implements RoomUpdateListener,
 				GamePlayer remotePlayer = new GamePlayer();
 				remotePlayer.setParticipant(p);
 				gameModel.setRemotePlayer(remotePlayer);
+				
+				if( gameModel.getGameVariant() == null ){
+    				gameModel.setGameVariant(Util.getGameVariant(room.getVariant()));
+				}
+				
+				Log.d(TAG, "Remote participant set to :"+p.toString());
 				break;
 			}
 		}
 		
-		if( gameModel.getRemotePlayer() != null ){
-			gameModel.setGameVariant(Util.getGameVariant(room.getVariant()));
+		if( gameModel.getRemotePlayer() != null ){			
 			GameController.getInstance().getRealTimeChessGame().ready();			
 		}
 	}
@@ -139,6 +142,8 @@ public class ChessGameRoomController implements RoomUpdateListener,
 	public void onPeerLeft(Room arg0, List<String> arg1) {
 		Log.d(TAG, "onPeerLeft :: "+arg1);
 		printRoom(arg0);
+		
+		chessGameRoomUI.remotePlayerLeft();
 	}
 
 	@Override

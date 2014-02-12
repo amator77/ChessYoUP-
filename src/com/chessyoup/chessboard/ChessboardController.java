@@ -322,13 +322,9 @@ public class ChessboardController {
 			
 			if(!localTurn()){				
 				System.out.println("human null move done");
-//				makeHumanNullMove();
 			}
-			
-			System.out.println("is white to move "+game.currPos().whiteMove );
-			game.processString("resign");
-			
-			
+						
+			game.processString("resign");						
 			updateGUI();
 		}
 	}
@@ -339,7 +335,6 @@ public class ChessboardController {
 		if (game.getGameState() == GameState.ALIVE) {			
 			game.processString("draw accept");			
 			updateGUI();
-			System.out.println( "game state :"+ game.getGameState());
 		}				
 	}
 	
@@ -423,7 +418,18 @@ public class ChessboardController {
 			updateGUI();
 		}
 	}
-
+	
+	public final synchronized void gotoEndOfVariation() {
+        
+        while (game.canRedoMove()) {
+            redoMoveNoUpdate();
+                break;            
+        }
+        
+        setSelection();
+        updateGUI();        
+    }
+	
 	/** Go to given node in game tree. */
 	public final synchronized void goNode(Node node) {
 		if (node == null)

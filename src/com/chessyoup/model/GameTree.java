@@ -658,9 +658,9 @@ public class GameTree {
 
     /** Go backward in game tree. */
     public final void goBack() {
-        if (currentNode.parent != null) {
+        if (currentNode.parent != null) {            
             currentPos.unMakeMove(currentNode.move, currentNode.ui);
-            currentNode = currentNode.parent;
+            currentNode = currentNode.parent;           
         }
     }
 

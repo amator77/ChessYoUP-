@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/previous"          
-          android:title="&lt;"
-          android:showAsAction="ifRoom"/>
-    <item android:id="@+id/next"          
-          android:title="&gt;"
-          android:showAsAction="ifRoom"/>
-    <item android:id="@+id/abort"          
+    <item android:id="@+id/menu_start"          
+          android:icon="@drawable/arrow_left_double"          
+          android:showAsAction="always"/>
+    <item android:id="@+id/menu_previous"
+          android:icon="@drawable/arrow_left"
+          android:showAsAction="always"/>
+    <item android:id="@+id/menu_next"          
+          android:icon="@drawable/arrow_right"          
+          android:showAsAction="always"/>
+    <item android:id="@+id/menu_end"          
+          android:icon="@drawable/arrow_right_double"
+          android:showAsAction="always"/>
+    <item android:id="@+id/menu_abort"          
           android:title="Abort game" />        
-    <item android:id="@+id/draw"          
+    <item android:id="@+id/menu_draw"          
           android:title="Offer draw" />
-    <item android:id="@+id/resign"          
+    <item android:id="@+id/menu_resign"          
           android:title="Resign" />
-    <item android:id="@+id/rematch"          
+    <item android:id="@+id/menu_rematch"          
           android:title="Rematch" />
-    <item android:id="@+id/exit"          
+    <item android:id="@+id/menu_exit"          
           android:title="Exit" />
 </menu>

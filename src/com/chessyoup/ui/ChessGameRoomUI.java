@@ -30,27 +30,27 @@ import com.chessyoup.game.view.ChessBoardPlayView;
 import com.chessyoup.game.view.PgnScreenTextView;
 import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.pgn.PGNOptions;
-import com.chessyoup.ui.ctrl.ChessGameRoomController;
-import com.chessyoup.ui.ctrl.ChessGameUIController;
-import com.chessyoup.ui.ctrl.RealTimeChessGameController;
+import com.chessyoup.ui.ctrl.GameUIController;
+import com.chessyoup.ui.ctrl.RoomController;
+import com.chessyoup.ui.ctrl.RoomGameController;
 import com.chessyoup.ui.util.UIUtil;
 import com.google.android.gms.common.images.ImageManager;
 
 public class ChessGameRoomUI extends FragmentActivity {
 
     private final static String TAG = "ChessGameRoomUI";
-
+    
     private GameModel chessGameModel;
 
-    private ChessGameUIController gameRoomUIController;
+    private GameUIController gameUIController;
 
-    private RealTimeChessGameController realTimeChessGameController;
+    private RoomGameController roomGameController;
 
-    private ChessGameRoomController roomController;
+    private RoomController roomController;
 
     private ChessBoardPlayView chessBoardPlayView;
 
-    private ChessboardController chessBoardController;
+    private ChessboardController chessboardController;
 
     private PgnScreenTextView pgnScreenTextView;
 
@@ -59,13 +59,15 @@ public class ChessGameRoomUI extends FragmentActivity {
     private ProgressDialog pg;
 
     private TextView localClockView, remoteClockView, localPlayerView, remotePlayerView;
-
+    
+    private GameStartData gameStartData;
+    
     // *********************************************************************
     // *********************************************************************
     // Activity life cycle interface
     // *********************************************************************
     // *********************************************************************
-
+    
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate :: " + savedInstanceState);
         super.onCreate(savedInstanceState);
@@ -75,34 +77,36 @@ public class ChessGameRoomUI extends FragmentActivity {
         this.localPlayerView = (TextView) findViewById(R.id.localPlayerDisplayNameView);
         this.remotePlayerView = (TextView) findViewById(R.id.remotePlayerDisplayNameView);
         this.chessGameModel = new GameModel();
+        this.roomGameController = new RoomGameController(this);
         this.chessBoardPlayView = (ChessBoardPlayView) findViewById(R.id.chessboard);
-        this.realTimeChessGameController = new RealTimeChessGameController(this);
         this.pgnScreenTextView = new PgnScreenTextView(new PGNOptions());
-        this.roomController = new ChessGameRoomController(this);
-        this.gameRoomUIController = new ChessGameUIController(this);
-        this.chessBoardController = new ChessboardController(this.gameRoomUIController, this.pgnScreenTextView, new PGNOptions());
-        this.chessBoardController.newGame(new ChessboardMode(ChessboardMode.ANALYSIS), false);
+        this.roomController = new RoomController(this);
+        this.gameUIController = new GameUIController(this);
+        this.chessboardController = new ChessboardController(this.gameUIController, this.pgnScreenTextView, new PGNOptions());
+        this.chessboardController.newGame(new ChessboardMode(ChessboardMode.ANALYSIS), false);
         this.installChessBoardTouchListener();
-        this.boardIsEnabled = true;
+        this.boardIsEnabled = true;        
+        this.gameStartData = getRoomStartState(savedInstanceState);
     }
 
     protected void onStart() {
         super.onStart();
+        
+        if( this.gameStartData != null){            
+            Log.d(TAG, "onStart :: " + gameStartData.toString());
 
-        Intent intent = getIntent();
-        boolean isChallanger = intent.getBooleanExtra("isChallanger", true);
-        String remotePlayer = intent.getStringExtra("remotePlayer");
-        int gameVariant = intent.getIntExtra("gameVariant", 0);
+            if (this.gameStartData.isChallanger) {
+                this.createGameRoom(this.gameStartData.remotePlayer,this.gameStartData.gameVariant);
+            } else {
+                this.joinGameRoom(this.gameStartData.invitationId);
+            }
 
-        Log.d(TAG, "onStart :: isChallanger=" + isChallanger + ",remotePlayer=" + remotePlayer + ",gameVariant=" + gameVariant);
-
-        if (isChallanger) {
-            this.createGameRoom(remotePlayer, gameVariant);
-        } else {
-            this.joinGameRoom(intent.getStringExtra("invitationId"));
+            this.updateLocalPlayerView(this.gameStartData.gameVariant, this.gameStartData.isChallanger, true);
+            this.updateChessboard(this.gameStartData.gameVariant);
         }
-
-        this.updateLocalPlayerView(gameVariant, isChallanger, true);
+        else{
+            displayShortMessage("Empty board!");
+        }                
     }
 
     protected void onRestart() {
@@ -129,7 +133,7 @@ public class ChessGameRoomUI extends FragmentActivity {
         super.onDestroy();
         Log.d(TAG, "onDestroy :: ");
 
-        this.gameRoomUIController.stopClock();
+        this.gameUIController.stopClock();
 
         if (this.chessGameModel.getRoom() != null) {
             if (this.chessGameModel != null && this.chessGameModel.getRoom() != null) {
@@ -152,70 +156,39 @@ public class ChessGameRoomUI extends FragmentActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.d(TAG, "onOptionsItemSelected :: "+item.toString());
+        Log.d(TAG, "onOptionsItemSelected :: "+item.getItemId()+"");
         
         switch (item.getItemId()) {
-            case R.id.resignGameButton:
-                UIUtil.buildConfirmAlertDialog(this, getString(R.string.option_resign_game), new Runnable() {
-
-                    @Override
-                    public void run() {
-                        GameController.getInstance().getRealTimeChessGame().resign();
-                        gameFinished();
-                    }
-                });
-
+            case R.id.menu_resign:
+                this.handleRsignAction();
                 return true;
-            case R.id.exitGameButton:
-                handleExitAction(getString(R.string.close_room_message));
+            case R.id.menu_exit:                
+                this.handleExitAction(getString(R.string.close_room_message));
                 return true;
-            case R.id.rematchGameButton:
-                GameController.getInstance().getRealTimeChessGame().rematch();
-                displayShortMessage(getString(R.string.remtach_request_message));
+            case R.id.menu_rematch:
+                this.handleRematchAction();                
                 return true;
-            case R.id.drawGameButton:
-                GameController.getInstance().getRealTimeChessGame().draw();
-                displayShortMessage(getString(R.string.draw_request_message));
+            case R.id.menu_draw:
+                this.handleDrawAction();
                 return true;
-            case R.id.abortGameButton:
-                UIUtil.buildConfirmAlertDialog(this, getString(R.string.option_resign_game), new Runnable() {
-
-                    @Override
-                    public void run() {
-                        GameController.getInstance().getRealTimeChessGame().abort();
-                        displayShortMessage(getString(R.string.abort_request_message));
-                    }
-                });                
-                                
+            case R.id.menu_abort:
+                this.handleAbortAction();
                 return true;
-            case R.id.previous:
-                if( chessBoardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
-                    chessBoardController.getGame().tree.goBack();                    
-                }
+            case R.id.menu_previous:
+                this.handleGameGoBackAction();                
                 return true;
-            case R.id.next:
-                if( chessBoardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
-                    chessBoardController.getGame().tree.goForward(0);
-                }
+            case R.id.menu_next:
+                this.handleGameGoForwardAction();                         
+                return true;
+            case R.id.menu_start:
+                this.handleGameGoToStartAction();                         
+                return true;
+            case R.id.menu_end:
+                this.handleGameGoToEndAction();                         
                 return true;
         }
 
         return true;
-    }
-
-    private void handleExitAction(String message) {
-
-        if (chessBoardController.getGame().getGameState() == GameState.ALIVE) {
-            UIUtil.buildConfirmAlertDialog(this, message, new Runnable() {
-
-                @Override
-                public void run() {
-                    finish();
-                }
-            }).show();
-        } else {
-            finish();
-        }
     }
 
     // *********************************************************************
@@ -223,28 +196,57 @@ public class ChessGameRoomUI extends FragmentActivity {
     // Business interface
     // *********************************************************************
     // *********************************************************************
-
+    
+    public void remotePlayerLeft() {
+        
+        ((ImageView) findViewById(R.id.remotePlayerAvatarView)).setImageResource(R.drawable.general_avatar_unknown);
+        this.remotePlayerView.setText("");
+        
+        if( chessGameModel != null && chessGameModel.getRemotePlayer() != null ){
+            displayShortMessage(chessGameModel.getRemotePlayer().getParticipant().getDisplayName() +" left. You win!!!");
+        }
+        
+        if (chessboardController.getGame().getGameState() == GameState.ALIVE) {
+            if (chessGameModel.getBlackPlayer().getParticipant().getParticipantId().equals(chessGameModel.getRemotePlayer().getParticipant().getParticipantId())) {
+                this.getChessboardController().resignGameForBlack();            
+            } else {
+                this.getChessboardController().resignGameForWhite();
+            }            
+        }
+        
+        chessboardController.setGameMode(new ChessboardMode(ChessboardMode.ANALYSIS));
+    }
+    
+    public void rematchConfig() {
+        
+        if(GameController.getInstance().isInitilized() && this.chessGameModel != null ){
+            GameVariant gameVariant = this.chessGameModel.getGameVariant();
+            gameVariant.setWhite(gameVariant.isWhite() ? false : true);
+            GameController.getInstance().getRealTimeChessGame().sendChallange(Util.gameVariantToInt(gameVariant), true);
+        }        
+    }
+    
     public void roomReady() {
         if (pg != null && pg.isShowing()) {
             pg.dismiss();
         }
-
-        this.updateRemotePlayerView(true);
+        
+        this.updateChessboard(Util.gameVariantToInt(chessGameModel.getGameVariant()));
+        this.updateRemotePlayerView();
 
         Toast.makeText(getApplicationContext(), "Room is ready", Toast.LENGTH_LONG).show();
 
         if (chessBoardPlayView.isFlipped()) {
-            this.chessBoardController.newGame(new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE), false);
+            this.chessboardController.newGame(new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE), false);
         } else {
-            this.chessBoardController.newGame(new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE), false);
+            this.chessboardController.newGame(new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE), false);
         }
 
-        this.chessBoardController.startGame();
+        this.chessboardController.startGame();
     }
 
     public void gameFinished() {
-        this.chessBoardController.setGameMode(new ChessboardMode(ChessboardMode.ANALYSIS));
-
+        this.chessboardController.setGameMode(new ChessboardMode(ChessboardMode.ANALYSIS));        
     }
 
     public void updateClocks(String whiteTime, String blackTime) {
@@ -252,9 +254,9 @@ public class ChessGameRoomUI extends FragmentActivity {
         this.localClockView.setText(chessBoardPlayView.isFlipped() ? blackTime : whiteTime);
     }
 
-    public void updateRemotePlayerView(boolean loadAvatar) {
+    public void updateRemotePlayerView() {
 
-        if (loadAvatar && chessGameModel.getRemotePlayer().getParticipant().getIconImageUri() != null) {
+        if (chessGameModel.getRemotePlayer().getParticipant().getIconImageUri() != null) {
             ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.remotePlayerAvatarView), chessGameModel.getRemotePlayer().getParticipant().getIconImageUri());
         }
 
@@ -264,9 +266,7 @@ public class ChessGameRoomUI extends FragmentActivity {
     }
 
     public void updateLocalPlayerView(int gameVariant, boolean isChallanger, boolean loadAvatar) {
-
-        GameVariant gv = Util.getGameVariant(gameVariant);
-
+        
         if (loadAvatar) {
             ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.localPlayerAvatarView),
                             GameController.getInstance().getGamesClient().getCurrentPlayer().getIconImageUri());
@@ -274,24 +274,28 @@ public class ChessGameRoomUI extends FragmentActivity {
 
         StringBuffer sb = new StringBuffer(GameController.getInstance().getGamesClient().getCurrentPlayer().getDisplayName());
         sb.append(" (").append(Math.round(GameController.getInstance().getLocalPlayer().getRating())).append(")");
-        this.localPlayerView.setText(sb.toString());
-
-        chessBoardPlayView.setFlipped(false);
-
-        if (isChallanger) {
-            if (!gv.isWhite()) {
-                chessBoardPlayView.setFlipped(true);
-            }
-        } else {
-            if (gv.isWhite()) {
-                chessBoardPlayView.setFlipped(true);
-            }
-        }
-
-        chessBoardController.setTimeLimit(gv.getTime() * 1000, gv.getMoves(), gv.getIncrement() * 1000);
-        this.updateClocks(UIUtil.timeToString(gv.getTime() * 1000), UIUtil.timeToString(gv.getTime() * 1000));
+        this.localPlayerView.setText(sb.toString());        
     }
 
+    public void updateChessboard(int gameVariant){
+        GameVariant gv = Util.getGameVariant(gameVariant);
+        chessBoardPlayView.setFlipped(false);
+                
+        if (gv.isWhite()) {
+            chessGameModel.setWhitePlayer(GameController.getInstance().getLocalPlayer());
+            chessGameModel.setBlackPlayer(chessGameModel.getRemotePlayer());            
+        }
+        else{
+            chessGameModel.setWhitePlayer(chessGameModel.getRemotePlayer());
+            chessGameModel.setBlackPlayer(GameController.getInstance().getLocalPlayer());
+            chessBoardPlayView.setFlipped(true);
+        }
+                
+
+        chessboardController.setTimeLimit(gv.getTime() * 1000, gv.getMoves(), gv.getIncrement() * 1000);
+        this.updateClocks(UIUtil.timeToString(gv.getTime() * 1000), UIUtil.timeToString(gv.getTime() * 1000));
+    }
+    
     // *********************************************************************
     // *********************************************************************
     // Get and set methods
@@ -310,19 +314,19 @@ public class ChessGameRoomUI extends FragmentActivity {
         return "blackPlayer";
     }
 
-    public ChessGameUIController getGameRoomUIController() {
-        return gameRoomUIController;
+    public GameUIController getGameRoomUIController() {
+        return gameUIController;
     }
 
-    public void setGameRoomUIController(ChessGameUIController gameRoomUIController) {
-        this.gameRoomUIController = gameRoomUIController;
+    public void setGameRoomUIController(GameUIController gameRoomUIController) {
+        this.gameUIController = gameRoomUIController;
     }
 
-    public ChessGameRoomController getRoomController() {
+    public RoomController getRoomController() {
         return roomController;
     }
 
-    public void setRoomController(ChessGameRoomController roomController) {
+    public void setRoomController(RoomController roomController) {
         this.roomController = roomController;
     }
 
@@ -335,11 +339,11 @@ public class ChessGameRoomUI extends FragmentActivity {
     }
 
     public ChessboardController getChessboardController() {
-        return chessBoardController;
+        return chessboardController;
     }
 
     public void setChessboardController(ChessboardController chessboardController) {
-        this.chessBoardController = chessboardController;
+        this.chessboardController = chessboardController;
     }
 
     public PgnScreenTextView getPgnScreenTextView() {
@@ -355,18 +359,151 @@ public class ChessGameRoomUI extends FragmentActivity {
     // Private section
     // *********************************************************************
     // *********************************************************************
-
-    public RealTimeChessGameController getRealTimeChessGameController() {
-        return realTimeChessGameController;
+    
+    private void handleGameGoToEndAction() {        
+        if( chessboardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
+            Log.d(TAG, "game goToStart call :: ");                                        
+            chessboardController.gotoMove(10000);
+        }
     }
 
-    public void setRealTimeChessGameController(RealTimeChessGameController realTimeChessGameController) {
-        this.realTimeChessGameController = realTimeChessGameController;
+    private void handleGameGoToStartAction() {
+        if( chessboardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
+            Log.d(TAG, "game goToStart call :: ");                                        
+            chessboardController.gotoStartOfVariation();
+        }
+    }
+
+    private void handleGameGoForwardAction() { 
+        if( chessboardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
+            Log.d(TAG, "game goForward call :: ");                                        
+            chessboardController.gotoMove( chessboardController.getGame().currPos().fullMoveCounter+1 );
+        }
+    }
+
+    private void handleGameGoBackAction() { 
+        if( chessboardController.getGameMode().getModeNr() == ChessboardMode.ANALYSIS){
+            Log.d(TAG, "game goBack call :: ");                    
+            int nr = chessboardController.getGame().currPos().fullMoveCounter-1;                    
+            chessboardController.gotoMove( nr >= 0 ? nr : 0);
+        }
+    }
+
+    private void handleAbortAction() {
+        UIUtil.buildConfirmAlertDialog(this, getString(R.string.option_resign_game), new Runnable() {
+
+            @Override
+            public void run() {
+                GameController.getInstance().getRealTimeChessGame().abort();
+                displayShortMessage(getString(R.string.abort_request_message));
+            }
+        });                
+
+    }
+
+    private void handleDrawAction() {
+        if( chessboardController.isDrawRequested() ){
+            chessboardController.drawGame();
+        }
+        else{
+            
+            if(GameController.getInstance().isInitilized()){
+                GameController.getInstance().getRealTimeChessGame().draw();
+            }
+            
+            displayShortMessage(getString(R.string.draw_request_message));    
+        }
+    }
+
+    private void handleRematchAction() {
+        
+        if( this.chessboardController.isRemtachRequested() ){
+            if(GameController.getInstance().isInitilized()){
+                GameController.getInstance().getRealTimeChessGame().rematch();
+            }
+            displayShortMessage(getString(R.string.remtach_request_message));
+        }
+        else{
+            this.rematchConfig();
+        }
+    }
+
+    private void handleRsignAction() {        
+        UIUtil.buildConfirmAlertDialog(this, getString(R.string.option_resign_game), new Runnable() {
+
+            @Override
+            public void run() {
+                
+                if(GameController.getInstance().isInitilized()){
+                    GameController.getInstance().getRealTimeChessGame().resign();
+                }
+                                        
+                chessboardController.resignGame();                                                
+            }
+        }).show();        
+    }
+
+    private void handleExitAction(String message) {
+                
+        if (chessboardController.getGame().getGameState() == GameState.ALIVE) {
+            UIUtil.buildConfirmAlertDialog(this, message, new Runnable() {
+
+                @Override
+                public void run() {
+                    finish();
+                }
+            }).show();
+        } else {
+            finish();
+        }
+    }
+    
+    class GameStartData{
+        String remotePlayer;
+        boolean isChallanger;
+        String invitationId;
+        int gameVariant;
+    }
+    
+    public GameStartData getRoomStartState(Bundle savedInstanceState){
+        GameStartData data = new GameStartData(); 
+        
+        if( savedInstanceState != null ){            
+            //TODO restore from saved state
+            return null;            
+        }
+        else{                        
+            Intent intent = getIntent();
+            data.remotePlayer = intent.getStringExtra(ChessYoUpActivity.REMOTE_PLAYER_EXTRA);
+            
+            if( data.remotePlayer != null ){                 
+                data.isChallanger = intent.getBooleanExtra(ChessYoUpActivity.IS_CHALANGER_EXTRA, false);
+                data.gameVariant =  intent.getIntExtra(ChessYoUpActivity.GAME_VARIANT_EXTRA, 0);
+                data.invitationId = intent.getStringExtra(ChessYoUpActivity.INVITATION_ID_EXTRA);                                              
+                return data;
+            }
+            else{
+                return null;
+            }                       
+        }
+    }
+    
+    public RoomGameController getRealTimeChessGameController() {
+        return roomGameController;
+    }
+
+    public void setRealTimeChessGameController(RoomGameController realTimeChessGameController) {
+        this.roomGameController = realTimeChessGameController;
     }
 
     private void createGameRoom(String remotePlayer, int gameVariant) {
         Log.d(TAG, "createGameRoom :: remotePlayer=" + remotePlayer + ",gameVariant:" + Util.getGameVariant(gameVariant).toString());
-        GameController.getInstance().createRoom(this.roomController, this.roomController, remotePlayer, gameVariant);
+        GameVariant gv = Util.getGameVariant(gameVariant);
+        System.out.println("creator game variant :"+gv.toString());
+        this.chessGameModel.setGameVariant(gv);        
+        gv.setWhite(gv.isWhite() ? false : true); // switch side for remote player
+        System.out.println("remote game variant :"+gv.toString());
+        GameController.getInstance().createRoom(this.roomController, this.roomController, remotePlayer, Util.gameVariantToInt(gv));
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         Log.d(TAG, "Room created, waiting for it to be ready...");
@@ -379,7 +516,7 @@ public class ChessGameRoomUI extends FragmentActivity {
         });
     }
 
-    private void joinGameRoom(String invitationId) {
+    private void joinGameRoom(String invitationId) {       
         chessGameModel.setIncomingInvitationId(invitationId);
         GameController.getInstance().joinRoom(this.roomController, this.roomController, invitationId);
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -404,7 +541,7 @@ public class ChessGameRoomUI extends FragmentActivity {
     }
 
     private void installChessBoardTouchListener() {
-        final GestureDetector gd = new GestureDetector(this, gameRoomUIController);
+        final GestureDetector gd = new GestureDetector(this, gameUIController);
         chessBoardPlayView.setOnTouchListener(new OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
                 Log.d(TAG, "onTouch");
@@ -421,5 +558,10 @@ public class ChessGameRoomUI extends FragmentActivity {
 
     public void displayShortMessage(String string) {
         Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT).show();
+    }
+
+    public void acceptChallange(GameVariant gameVariant) {
+        // TODO accept new challange
+        
     }
 }

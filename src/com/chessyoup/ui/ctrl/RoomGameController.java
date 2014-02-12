@@ -9,20 +9,31 @@ import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
 import com.chessyoup.model.Game;
 import com.chessyoup.ui.ChessGameRoomUI;
 
-public class RealTimeChessGameController implements RealTimeChessGameListener {
+public class RoomGameController implements RealTimeChessGameListener {
 
     private final static String TAG = "RealTimeChessGameController";
 
     private ChessGameRoomUI chessGameRoomUI;
 
-    public RealTimeChessGameController(ChessGameRoomUI chessGameRoomUI) {
+    public RoomGameController(ChessGameRoomUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
-        GameController.getInstance().getRealTimeChessGame().setListener(this);
+        
+        if( GameController.getInstance().isInitilized()){
+            GameController.getInstance().getRealTimeChessGame().setListener(this);
+        }
     }
 
     @Override
-    public void onChallangeRecevied(GameVariant gameVariant) {
+    public void onChallangeRecevied(GameVariant gameVariant,boolean isRematch) {
         Log.d(TAG, "onChallangeRecevied :: gameVariant=" + gameVariant);
+                
+        if( isRematch ){
+            this.chessGameRoomUI.getGameModel().setGameVariant(gameVariant);
+            GameController.getInstance().getRealTimeChessGame().ready();
+        }
+        else{
+            this.chessGameRoomUI.acceptChallange(gameVariant);
+        }
     }
 
     @Override
@@ -33,7 +44,6 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     @Override
     public void onReadyRecevied(double remoteRating, double remoteRD, double volatility) {
         Log.d(TAG, "onReadyRecevied :: remoteRating=" + remoteRating + ",remoteRD=" + remoteRD + ",volatility" + volatility);
-
         chessGameRoomUI.getGameModel().getRemotePlayer().setRating(remoteRating);
         chessGameRoomUI.getGameModel().getRemotePlayer().setRatingDeviation(remoteRD);
         chessGameRoomUI.getGameModel().getRemotePlayer().setVolatility(volatility);
@@ -57,28 +67,51 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
             this.chessGameRoomUI.getChessboardController().resignGameForWhite();
         }
 
-        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" resigned!");
-        this.chessGameRoomUI.gameFinished();
+        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" resigned!");        
     }
 
     @Override
     public void onDrawRecevied() {
         Log.d(TAG, "onDrawRecevied ::");
+        if( chessGameRoomUI.getChessboardController().isDrawRequested() ){
+            chessGameRoomUI.getChessboardController().drawGame();
+        }
+        else{
+            chessGameRoomUI.displayShortMessage("Opponent ask for draw!");
+            chessGameRoomUI.getChessboardController().setDrawRequested(true);
+        }
     }
 
     @Override
     public void onFlagRecevied() {
         Log.d(TAG, "onFlagRecevied ::");
+        chessGameRoomUI.getChessboardController().resignGame();
+        chessGameRoomUI.displayShortMessage("Opponent run out of time!");
     }
 
     @Override
     public void onRematchRecevied() {
         Log.d(TAG, "onRematchRecevied ::");
+        
+        if( chessGameRoomUI.getChessboardController().isRemtachRequested() ){
+            chessGameRoomUI.rematchConfig();
+        }
+        else{
+            chessGameRoomUI.displayShortMessage("Opponent ask for rematch!");
+            chessGameRoomUI.getChessboardController().setRemtachRequested(true);
+        }
     }
 
     @Override
     public void onAbortRecevied() {
         Log.d(TAG, "onAbortRecevied ::");
+        if( chessGameRoomUI.getChessboardController().isAbortRequested() ){
+            chessGameRoomUI.getChessboardController().abortGame();
+        }
+        else{
+            chessGameRoomUI.displayShortMessage("Opponent ask for aborting the game!");
+            chessGameRoomUI.getChessboardController().setAbortRequested(true);
+        }
     }
 
     @Override

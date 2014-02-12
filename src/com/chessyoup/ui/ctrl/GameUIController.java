@@ -21,7 +21,7 @@ import com.chessyoup.model.Game.GameState;
 import com.chessyoup.ui.ChessGameRoomUI;
 import com.chessyoup.ui.util.UIUtil;
 
-public class ChessGameUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
+public class GameUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
 
     private final static String TAG = "ChessGameRoomUIController";
 
@@ -31,7 +31,7 @@ public class ChessGameUIController extends GestureDetector.SimpleOnGestureListen
 
     private Dialog promoteDialog;
     
-    public ChessGameUIController(ChessGameRoomUI chessGameRoomUI) {
+    public GameUIController(ChessGameRoomUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
         this.handlerTimer = new Handler();
         promoteDialog = createPromoteDialog();
@@ -73,7 +73,10 @@ public class ChessGameUIController extends GestureDetector.SimpleOnGestureListen
             if (m != null) {
                 Log.d(TAG, "Move :" + m);
                 chessGameRoomUI.getChessboardController().makeLocalMove(m);
-                GameController.getInstance().getRealTimeChessGame().move(TextIO.moveToUCIString(m), 0);
+                
+                if( GameController.getInstance().isInitilized()){
+                    GameController.getInstance().getRealTimeChessGame().move(TextIO.moveToUCIString(m), 0);
+                }
             }
         }
     }

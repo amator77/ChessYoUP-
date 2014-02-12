@@ -9,10 +9,8 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.chessyoup.R;
 import com.chessyoup.game.GameController;
@@ -20,7 +18,6 @@ import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.chessyoup.game.GamePlayer;
 import com.chessyoup.game.GameVariant;
 import com.chessyoup.game.Util;
-import com.chessyoup.model.Game;
 import com.chessyoup.ui.fragment.NewGameDialog;
 import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
 import com.google.android.gms.appstate.AppStateClient;
@@ -38,7 +35,12 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	private final static int RC_SELECT_PLAYERS = 10000;
 	private final static int RC_INVITATION_INBOX = 10001;
 	private final static int RC_WAITING_ROOM = 10002;
-
+	
+	public static final String REMOTE_PLAYER_EXTRA = "remotePlayer";
+	public static final String INVITATION_ID_EXTRA = "invitationId";
+	public static final String IS_CHALANGER_EXTRA = "isChalanger";
+	public static final String GAME_VARIANT_EXTRA = "gameVariant";
+	
 	private final static int[] CLICKABLES = {
 			R.id.button_accept_popup_invitation, R.id.button_invite_players,
 			R.id.button_see_invitations, R.id.button_sign_in,
@@ -504,9 +506,9 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 				Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
 						ChessGameRoomUI.class);
-				chessRoomUIIntent.putExtra("remotePlayer", invitees.get(0));
-				chessRoomUIIntent.putExtra("gameVariant", gameVariant);
-				chessRoomUIIntent.putExtra("isChallanger", true);
+				chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, invitees.get(0));
+				chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, gameVariant);
+				chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, true);
 				startActivity(chessRoomUIIntent);				
 			}
 		});
@@ -537,10 +539,10 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		
 		Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
 				ChessGameRoomUI.class);
-		chessRoomUIIntent.putExtra("remotePlayer", inv.getInviter().getParticipantId());
-		chessRoomUIIntent.putExtra("gameVariant", inv.getVariant());
-		chessRoomUIIntent.putExtra("invitationId", inv.getInvitationId());		
-		chessRoomUIIntent.putExtra("isChallanger", false);
+		chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, inv.getInviter().getParticipantId());
+		chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, inv.getVariant());
+		chessRoomUIIntent.putExtra(INVITATION_ID_EXTRA, inv.getInvitationId());		
+		chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, false);
 		startActivity(chessRoomUIIntent);
 	}
 
