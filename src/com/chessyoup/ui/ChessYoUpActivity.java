@@ -18,8 +18,8 @@ import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.chessyoup.game.GamePlayer;
 import com.chessyoup.game.GameVariant;
 import com.chessyoup.game.Util;
-import com.chessyoup.ui.fragment.NewGameDialog;
-import com.chessyoup.ui.fragment.NewGameDialog.NewGameDialogListener;
+import com.chessyoup.ui.dialogs.NewGameDialog;
+import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.images.ImageManager;
@@ -46,7 +46,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 			R.id.button_see_invitations, R.id.button_sign_in,
 			R.id.button_sign_out, };
 
-	private final static int[] SCREENS = { R.id.screen_game, R.id.screen_main,
+	private final static int[] SCREENS = { R.id.screen_main,
 			R.id.screen_sign_in, R.id.screen_wait };
 
 	private int mCurScreen = -1;

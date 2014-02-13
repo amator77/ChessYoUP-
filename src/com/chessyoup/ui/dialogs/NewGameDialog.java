@@ -1,4 +1,4 @@
-package com.chessyoup.ui.fragment;
+package com.chessyoup.ui.dialogs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

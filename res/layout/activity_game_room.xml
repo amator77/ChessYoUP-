@@ -3,71 +3,11 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
-    <view
-        android:id="@+id/chessboard"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_centerInParent="true"
-        android:layout_margin="2dp"
-        class="com.chessyoup.game.view.ChessBoardPlayView" />
-	
-    <ImageView
-        android:id="@+id/remotePlayerAvatarView"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_above="@+id/chessboard"
-        android:layout_alignParentLeft="true"
-        android:layout_alignRight="@+id/localPlayerAvatarView"
-        android:layout_marginLeft="2dp"
-        android:padding="3dp"
-        android:background="@drawable/avatar_background_shape"
-        android:src="@drawable/general_avatar_unknown" />
-
-    <TextView
-        android:id="@+id/remotePlayerClockView"
-        style="@style/GameClock"
-        android:layout_above="@+id/chessboard"
-        android:layout_alignRight="@+id/chessboard"
-        android:text="00:00"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-    
-    <TextView
-        android:id="@+id/localPlayerClockView"
-        style="@style/GameClock"
-        android:layout_alignBaseline="@+id/localPlayerDisplayNameView"
-        android:layout_alignBottom="@+id/localPlayerDisplayNameView"
-        android:layout_alignRight="@+id/chessboard"
-        android:text="00:00"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <ImageView
-        android:id="@+id/localPlayerAvatarView"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_below="@+id/chessboard"
-        android:layout_marginLeft="2dp"
-        android:padding="3dp"
-        android:background="@drawable/avatar_background_shape"
-        android:src="@drawable/general_avatar_unknown" />
-
-    <TextView
-        android:id="@+id/localPlayerDisplayNameView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/localPlayerAvatarView"
-        android:layout_toRightOf="@+id/localPlayerAvatarView"
-        android:layout_marginLeft="4dp"
-        android:text="localPlayer"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-    <TextView
-        android:id="@+id/remotePlayerDisplayNameView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/remotePlayerAvatarView"
-        android:layout_marginLeft="4dp"
-        android:layout_alignLeft="@+id/localPlayerDisplayNameView"
-        android:text="remotePlayer"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+    <android.support.v4.view.ViewPager
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </android.support.v4.view.ViewPager>
 
 </RelativeLayout>

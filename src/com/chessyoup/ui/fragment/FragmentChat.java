@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.chessyoup.R;
 
-public class FragmenChat extends Fragment {
+public class FragmentChat extends Fragment {
 	
 	public TextView chatDisplay;
 
@@ -31,11 +31,14 @@ public class FragmenChat extends Fragment {
 		this.chatEditText = (EditText) view.findViewById(R.id.editChatText);
 		this.chatSendMessageButton = (Button) view
 				.findViewById(R.id.sendChatButton);
-		
-		if( runInstallListener != null ){
-			runInstallListener.run();
-		}
-		
+				
         return view;
+    }
+	
+	public void onActivityCreated(Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
+        if( runInstallListener != null ){
+            runInstallListener.run();
+        }        
     }
 }

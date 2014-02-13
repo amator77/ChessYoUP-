@@ -1,25 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_start"          
-          android:icon="@drawable/arrow_left_double"          
-          android:showAsAction="always"/>
-    <item android:id="@+id/menu_previous"
-          android:icon="@drawable/arrow_left"
-          android:showAsAction="always"/>
-    <item android:id="@+id/menu_next"          
-          android:icon="@drawable/arrow_right"          
-          android:showAsAction="always"/>
-    <item android:id="@+id/menu_end"          
-          android:icon="@drawable/arrow_right_double"
-          android:showAsAction="always"/>
-    <item android:id="@+id/menu_abort"          
-          android:title="Abort game" />        
-    <item android:id="@+id/menu_draw"          
-          android:title="Offer draw" />
-    <item android:id="@+id/menu_resign"          
-          android:title="Resign" />
-    <item android:id="@+id/menu_rematch"          
-          android:title="Rematch" />
-    <item android:id="@+id/menu_exit"          
-          android:title="Exit" />
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_game"
+        android:icon="@drawable/chessboard"
+        android:showAsAction="always"        
+        android:titleCondensed="G"
+        android:title="Game"/>
+    <item
+        android:id="@+id/menu_moves"
+        android:showAsAction="always"
+        android:icon="@drawable/moves"
+        android:titleCondensed="M"
+        android:title="Moves"/>
+    <item
+        android:id="@+id/menu_chat"
+        android:showAsAction="always"
+        android:icon="@drawable/chat"
+        android:titleCondensed="C"
+        android:title="Moves"/>
+    <item
+        android:id="@+id/menu_abort"        
+        android:title="Abort game"/>
+    <item
+        android:id="@+id/menu_draw"
+        android:title="Offer draw"/>
+    <item
+        android:id="@+id/menu_resign"
+        android:title="Resign"/>
+    <item
+        android:id="@+id/menu_rematch"
+        android:title="Rematch"/>
+    <item
+        android:id="@+id/menu_exit"
+        android:title="Exit"/>
+
 </menu>

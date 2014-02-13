@@ -27,7 +27,7 @@
 
     <dimen name="TitleSize">30sp</dimen>
 
-    <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen" />
+    <style name="AppTheme" parent="android:Theme.NoTitleBar" />
 
     <style name="GameScreen">
         <item name="android:layout_width">match_parent</item>

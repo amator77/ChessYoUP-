@@ -90,6 +90,4 @@
         <TextView style="@style/Blurb" android:text="@string/please_wait" />
     </LinearLayout>
 
-    <!-- GAMEPLAY SCREEN -->
-    <include layout="@layout/chessboard"/>    
 </RelativeLayout>
