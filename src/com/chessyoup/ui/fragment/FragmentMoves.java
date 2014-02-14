@@ -34,6 +34,7 @@ public class FragmentMoves extends Fragment {
         super.onActivityCreated(savedInstanceState);
         if( runInstallListener != null ){
             runInstallListener.run();
+            runInstallListener = null;
         }        
     }
 }

@@ -42,7 +42,7 @@ public class ChessboardController {
 
 	private boolean abortRequested;
 	
-	private boolean remtachRequested;
+	private boolean remtachRequested;	
 	
 	public ChessboardController(ChessboardUIInterface gui,
 			PgnTokenReceiver gameTextListener, PGNOptions options) {
@@ -101,7 +101,7 @@ public class ChessboardController {
 		ret[2] = timeIncrement;
 		return ret;
 	}
-
+	
 	/** The chess clocks are stopped when the GUI is paused. */
 	public final synchronized void setGuiPaused(boolean paused) {
 		guiPaused = paused;
@@ -213,7 +213,7 @@ public class ChessboardController {
 			if (doMove(m)) {
 				gui.localMoveMade(m);
 				setAnimMove(oldPos, m, true);
-				updateGUI();
+				updateGUI();				
 			} else {
 				gui.setSelection(-1);
 			}
@@ -597,14 +597,14 @@ public class ChessboardController {
 		updateGUI();
 	}
 	
-	public void makeRemoteMove(final String cmd) {
+	public void makeRemoteMove(final String cmd , int thinkingTime) {	    
+	    this.getGame().timeController.setRemoteElapsed(thinkingTime);
 		Position oldPos = new Position(game.currPos());
 		game.processString(cmd);		
 		updateGameMode();		
 		setSelection();
 		setAnimMove(oldPos, game.getLastMove(), true);
-		updateGUI();
-		System.out.println( "game state :"+ game.getGameState() + " after command :"+cmd);
+		updateGUI();		
 	}
 			
 	public boolean isDrawRequested() {

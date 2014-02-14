@@ -19,7 +19,7 @@ import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 public class RoomController implements RoomUpdateListener,
 		RoomStatusUpdateListener {
 
-	private final static String TAG = "ChessGameRoomController";
+	private final static String TAG = "RoomController";
 
 	private ChessGameRoomUI chessGameRoomUI;
 

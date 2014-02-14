@@ -11,7 +11,7 @@ import com.chessyoup.ui.ChessGameRoomUI;
 
 public class RoomGameController implements RealTimeChessGameListener {
 
-    private final static String TAG = "RealTimeChessGameController";
+    private final static String TAG = "RoomGameController";
 
     private ChessGameRoomUI chessGameRoomUI;
 
@@ -56,7 +56,7 @@ public class RoomGameController implements RealTimeChessGameListener {
     @Override
     public void onMoveRecevied(String move, int thinkingTime) {
         Log.d(TAG, "onMoveRecevied :: move=" + move + ",thinkingTime=" + thinkingTime);
-        chessGameRoomUI.getChessboardController().makeRemoteMove(move);
+        chessGameRoomUI.getChessboardController().makeRemoteMove(move,thinkingTime);
     }
 
     @Override

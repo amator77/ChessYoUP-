@@ -23,7 +23,7 @@ import com.chessyoup.ui.util.UIUtil;
 
 public class GameUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
 
-    private final static String TAG = "ChessGameRoomUIController";
+    private final static String TAG = "GameUIController";
 
     private ChessGameRoomUI chessGameRoomUI;
 
@@ -72,11 +72,7 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
 
             if (m != null) {
                 Log.d(TAG, "Move :" + m);
-                chessGameRoomUI.getChessboardController().makeLocalMove(m);
-                
-                if( GameController.getInstance().isInitilized()){
-                    GameController.getInstance().getRealTimeChessGame().move(TextIO.moveToUCIString(m), 0);
-                }
+                chessGameRoomUI.getChessboardController().makeLocalMove(m);                                
             }
         }
     }
@@ -191,25 +187,28 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
 
     @Override
     public void setRemainingTime(int wTime, int bTime, int nextUpdate) {
-        Log.d(TAG, "setRemainingTime :: wTime=" + wTime + ",bTime" + bTime + ",nextUpdate=" + nextUpdate);
+        Log.d(TAG, "setRemainingTime :: wTime=" + UIUtil.timeToString(wTime) + ",bTime" + UIUtil.timeToString(bTime) + ",nextUpdate=" + nextUpdate);
 
 
         if (chessGameRoomUI.getChessboardController().localTurn()) {
-            if (wTime <= 0 && chessGameRoomUI.getChessboardController().getGame().currPos().whiteMove) {
-                chessGameRoomUI.getChessboardController().resignGame();
-                GameController.getInstance().getRealTimeChessGame().flag();
+            
+            if( chessGameRoomUI.getChessboardController().getGame().currPos().whiteMove ){
+                if( wTime <= 0 ){
+                    chessGameRoomUI.getChessboardController().resignGame();
+                    GameController.getInstance().getRealTimeChessGame().flag();
+                }
             }
-
-            if (bTime <= 0 && !chessGameRoomUI.getChessboardController().getGame().currPos().whiteMove) {
-                chessGameRoomUI.getChessboardController().resignGame();
-                GameController.getInstance().getRealTimeChessGame().flag();
+            else{
+                if( bTime <= 0 ){
+                    chessGameRoomUI.getChessboardController().resignGame();
+                    GameController.getInstance().getRealTimeChessGame().flag();
+                }
             }
         }
 
-        if (chessGameRoomUI.getChessboardController().getGameMode().clocksActive()) {
-            chessGameRoomUI.updateClocks(UIUtil.timeToString(wTime), UIUtil.timeToString(bTime));
-        }
-
+        
+        chessGameRoomUI.updateClocks(UIUtil.timeToString(wTime), UIUtil.timeToString(bTime));
+        
         handlerTimer.removeCallbacks(this);
         if (nextUpdate > 0)
             handlerTimer.postDelayed(this, nextUpdate);
@@ -242,7 +241,11 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
 
     @Override
     public void localMoveMade(Move m) {
-        Log.d(TAG, "localMoveMade :: m=" + m);
+        Log.d(TAG, "localMoveMade :: m=" + m +" , thinking time :"+chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed()+" ms");
+        
+        if( GameController.getInstance().isInitilized()){
+            GameController.getInstance().getRealTimeChessGame().move(TextIO.moveToUCIString(m), (int)chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed());
+        }
     }
 
     @Override

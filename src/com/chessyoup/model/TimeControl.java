@@ -1,5 +1,7 @@
 package com.chessyoup.model;
 
+import android.util.Log;
+
 public class TimeControl {
     private long timeControl;
     private int movesPerSession;
@@ -10,7 +12,9 @@ public class TimeControl {
 
     int currentMove;
     boolean whiteToMove;
-
+    
+    long localElapsed;
+    int remoteElapsed;
     long elapsed; // Accumulated elapsed time for this move.
     long timerT0; // Time when timer started. 0 if timer is stopped.
 
@@ -25,6 +29,7 @@ public class TimeControl {
         currentMove = 1;
         whiteToMove = true;
         elapsed = 0;
+        remoteElapsed  = 0;
         timerT0 = 0;
     }
 
@@ -42,6 +47,7 @@ public class TimeControl {
         this.blackBaseTime = blackBaseTime;
         timerT0 = 0;
         elapsed = 0;
+        remoteElapsed = 0;
     }
 
     public final boolean clockRunning() {
@@ -68,13 +74,27 @@ public class TimeControl {
     /** Compute new remaining time after a move is made. */
     public final int moveMade(long now, boolean useIncrement) {
         stopTimer(now);
+        localElapsed = this.elapsed;
+        long lag   = 0;
+        Log.d("TimeControll","localElapsed:="+localElapsed+",remoteElapsed:"+remoteElapsed);
+        if( this.remoteElapsed > 0 &&  (this.localElapsed > this.remoteElapsed)){
+            lag = this.localElapsed - remoteElapsed;
+        }
+        
+        if( lag > 0 ){
+            Log.d("TimeControll","Lag detected :"+lag+" ms.");
+        }
+        
         long remaining = getRemainingTime(whiteToMove, now);
+        remaining -= lag;
+        
         if (useIncrement) {
-            remaining += increment;
+            remaining += increment;           
             if (getMovesToTC() == 1)
                 remaining += timeControl;
         }
         elapsed = 0;
+        remoteElapsed = 0;
         return (int)remaining;
     }
 
@@ -109,5 +129,13 @@ public class TimeControl {
 
     public final int getMovesPerSession() {
         return movesPerSession;
+    }
+    
+    public long getLocalElapsed(){
+        return this.localElapsed;
+    }
+    
+    public void setRemoteElapsed(int thinkingTime) {
+        this.remoteElapsed = thinkingTime;        
     }
 }

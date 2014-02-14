@@ -47,6 +47,7 @@ public class FragmentGame extends Fragment {
 	    super.onActivityCreated(savedInstanceState);
 	    if( runInstallListeners != null ){
             runInstallListeners.run();
+            runInstallListeners = null;
         }        
     }
 }

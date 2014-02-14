@@ -39,6 +39,7 @@ public class FragmentChat extends Fragment {
         super.onActivityCreated(savedInstanceState);
         if( runInstallListener != null ){
             runInstallListener.run();
+            runInstallListener = null;
         }        
     }
 }
