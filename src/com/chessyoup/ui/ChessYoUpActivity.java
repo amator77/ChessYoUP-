@@ -15,8 +15,10 @@ import android.widget.TextView;
 import com.chessyoup.R;
 import com.chessyoup.game.GameController;
 import com.chessyoup.game.GameHelper.GameHelperListener;
+import com.chessyoup.game.chess.ChessGameController;
+import com.chessyoup.game.chess.ChessGamePlayer;
+import com.chessyoup.game.chess.ChessGameVariant;
 import com.chessyoup.game.GamePlayer;
-import com.chessyoup.game.GameVariant;
 import com.chessyoup.game.Util;
 import com.chessyoup.ui.dialogs.NewGameDialog;
 import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
@@ -36,6 +38,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	private final static int RC_INVITATION_INBOX = 10001;
 	private final static int RC_WAITING_ROOM = 10002;
 	
+	public static final String ROOM_ID_EXTRA = "roomId";
 	public static final String REMOTE_PLAYER_EXTRA = "remotePlayer";
 	public static final String INVITATION_ID_EXTRA = "invitationId";
 	public static final String IS_CHALANGER_EXTRA = "isChalanger";
@@ -51,6 +54,9 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 	private int mCurScreen = -1;
 
+	
+	private ChessGameController chessGameController;
+	
 	private Invitation incomingInvitationId;
 	
 
@@ -62,7 +68,9 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		GameController.getInstance().initialize(this, this);
+	    chessGameController = ChessGameController.getController(); 
+	    ChessGameController.getController().initialize(this, this);
+	     
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		for (int id : CLICKABLES) {
@@ -73,7 +81,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	@Override
 	public void onStart() {		
 		super.onStart();
-		GameController.getInstance().start();
+		chessGameController.start();
 		switchToScreen(R.id.screen_main);
 	}
 	
@@ -87,7 +95,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	public void onDestroy() {
 		Log.d(TAG, "**** got onDestroy");
 		super.onStop();		
-		GameController.getInstance().stop();
+		chessGameController.stop();
 	}	
 	
 	@Override
@@ -96,19 +104,19 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 		switch (v.getId()) {
 		case R.id.button_sign_in:
-			GameController.getInstance().beginUserInitiatedSignIn();
+		    chessGameController.beginUserInitiatedSignIn();
 			break;
 		case R.id.button_sign_out:
-			GameController.getInstance().signOut();
+		    chessGameController.signOut();
 			switchToScreen(R.id.screen_sign_in);
 			break;
 		case R.id.button_invite_players:
-			intent = GameController.getInstance().getGamesClient().getSelectPlayersIntent(1, 3);
+			intent =chessGameController.getGamesClient().getSelectPlayersIntent(1, 3);
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_SELECT_PLAYERS);
 			break;
 		case R.id.button_see_invitations:
-			intent = GameController.getInstance().getGamesClient().getInvitationInboxIntent();
+			intent = chessGameController.getGamesClient().getInvitationInboxIntent();
 			switchToScreen(R.id.screen_wait);
 			startActivityForResult(intent, RC_INVITATION_INBOX);
 			break;
@@ -122,7 +130,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	public void onActivityResult(int requestCode, int responseCode,
 			Intent intent) {
 		super.onActivityResult(requestCode, responseCode, intent);		
-		GameController.getInstance().onActivityResult(requestCode, responseCode, intent);		
+		chessGameController.onActivityResult(requestCode, responseCode, intent);		
 		
 		switch (requestCode) {
 		case RC_SELECT_PLAYERS:
@@ -150,29 +158,29 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		Log.d(TAG, "onStateLoaded :: statusCode:" + statusCode + " , stateKey:"
 				+ stateKey + " localData:"
 				+ (localData != null ? new String(localData) : "null data"));
-		GamePlayer localPlayer = null;
+		ChessGamePlayer localPlayer = null;
 
 		switch (statusCode) {
 		case AppStateClient.STATUS_OK:
 			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_OK");
 
 			if (localData == null) {
-				localPlayer = new GamePlayer();
-				GameController.getInstance().getAppStateClient().updateState(0,
+				localPlayer = new ChessGamePlayer();
+				chessGameController.getAppStateClient().updateState(0,
 						localPlayer.toJSON().getBytes());
 			} else {
-				localPlayer = new GamePlayer();
+				localPlayer = new ChessGamePlayer();
 				localPlayer.updateFromJSON(new String(localData));
 			}
 
-			GameController.getInstance().setLocalPlayer(localPlayer);
+			chessGameController.setLocalPlayer(localPlayer);
 			this.updatePlayerStateView();
 			break;
 		case AppStateClient.STATUS_STATE_KEY_NOT_FOUND:
 			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_STATE_KEY_NOT_FOUND");
-			localPlayer = new GamePlayer();
-			GameController.getInstance().getAppStateClient().updateState(0, localPlayer.toJSON().getBytes());
-			GameController.getInstance().setLocalPlayer(localPlayer);
+			localPlayer = new ChessGamePlayer();
+			chessGameController.getAppStateClient().updateState(0, localPlayer.toJSON().getBytes());
+			chessGameController.setLocalPlayer(localPlayer);
 			this.updatePlayerStateView();
 			break;
 		default:
@@ -205,9 +213,9 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
 
-		GameController.getInstance().getAppStateClient().loadState(this, 0);
-		GameController.getInstance().getGamesClient().registerInvitationListener(this);
-		Invitation invitation = GameController.getInstance().getInvitation();
+		chessGameController.getAppStateClient().loadState(this, 0);
+		chessGameController.getGamesClient().registerInvitationListener(this);
+		Invitation invitation = chessGameController.getInvitation();
 		
 		if (invitation != null) {
 			acceptInviteToRoom(invitation);
@@ -232,7 +240,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 	private String getInviationDisplayInfo(Invitation invitation) {
 		StringBuffer sb = new StringBuffer();
-		GameVariant gv = Util.getGameVariant(invitation.getVariant());
+		ChessGameVariant gv = Util.getGameVariant(invitation.getVariant());
 
 		sb.append(invitation.getInviter().getDisplayName()).append(" ")
 				.append(getString(R.string.is_inviting_you));
@@ -438,7 +446,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		Log.d(TAG, "onNewGameCreated :: color :" + color + " , isRated :"
 				+ isRated + " , timeControll" + timeControll);
 		
-		GameController.getInstance().getRealTimeChessGame().sendChallange(1,
+		chessGameController.getRealTimeGameClient().sendChallange(1,
 				getTimeControllValue(timeControll / 1000),
 				getIncrementValue(increment / 1000), 0, isRated,
 				color.equals("white"));
@@ -565,7 +573,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	}
 
 	private void switchToMainScreen() {
-		switchToScreen(GameController.getInstance().isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
+		switchToScreen(chessGameController.isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
 	}
 
 
@@ -577,12 +585,12 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 	private void updatePlayerStateView() {
 		 ((TextView)
-		 findViewById(R.id.playerName)).setText(GameController.getInstance().getGamesClient().getCurrentPlayer().getDisplayName());
+		 findViewById(R.id.playerName)).setText(chessGameController.getGamesClient().getCurrentPlayer().getDisplayName());
 		 ((TextView) findViewById(R.id.playerRating)).setText( "Rating:" +
-		 Math.round(GameController.getInstance().getLocalPlayer().getRating()));
+		 Math.round(chessGameController.getLocalPlayer().getRating()));
 		 ImageManager.create(this.getApplicationContext()).loadImage((ImageView)
 		 findViewById(R.id.playerAvatar),
-		 GameController.getInstance().getGamesClient().getCurrentPlayer().getIconImageUri());
+		 chessGameController.getGamesClient().getCurrentPlayer().getIconImageUri());
 	}
 
 	@Override

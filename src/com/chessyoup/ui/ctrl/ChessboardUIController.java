@@ -13,15 +13,15 @@ import android.view.MotionEvent;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardStatus;
 import com.chessyoup.chessboard.ChessboardUIInterface;
-import com.chessyoup.game.GameController;
+import com.chessyoup.game.chess.ChessGameController;
+import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.Move;
 import com.chessyoup.model.Position;
 import com.chessyoup.model.TextIO;
-import com.chessyoup.model.Game.GameState;
 import com.chessyoup.ui.ChessGameRoomUI;
 import com.chessyoup.ui.util.UIUtil;
 
-public class GameUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
+public class ChessboardUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
 
     private final static String TAG = "GameUIController";
 
@@ -31,7 +31,7 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
 
     private Dialog promoteDialog;
     
-    public GameUIController(ChessGameRoomUI chessGameRoomUI) {
+    public ChessboardUIController(ChessGameRoomUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
         this.handlerTimer = new Handler();
         promoteDialog = createPromoteDialog();
@@ -195,13 +195,13 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
             if( chessGameRoomUI.getChessboardController().getGame().currPos().whiteMove ){
                 if( wTime <= 0 ){
                     chessGameRoomUI.getChessboardController().resignGame();
-                    GameController.getInstance().getRealTimeChessGame().flag();
+                    ChessGameController.getController().getRealTimeGameClient().flag();
                 }
             }
             else{
                 if( bTime <= 0 ){
                     chessGameRoomUI.getChessboardController().resignGame();
-                    GameController.getInstance().getRealTimeChessGame().flag();
+                    ChessGameController.getController().getRealTimeGameClient().flag();
                 }
             }
         }
@@ -242,9 +242,9 @@ public class GameUIController extends GestureDetector.SimpleOnGestureListener im
     @Override
     public void localMoveMade(Move m) {
         Log.d(TAG, "localMoveMade :: m=" + m +" , thinking time :"+chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed()+" ms");
-        
-        if( GameController.getInstance().isInitilized()){
-            GameController.getInstance().getRealTimeChessGame().move(TextIO.moveToUCIString(m), (int)chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed());
+                
+        if( ChessGameController.getController().isInitilized()){
+            ChessGameController.getController().getRealTimeGameClient().move(TextIO.moveToUCIString(m), (int)chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed());
         }
     }
 

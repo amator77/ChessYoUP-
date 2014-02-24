@@ -1,15 +1,17 @@
-package com.chessyoup.game;
+package com.chessyoup.game.chess;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.util.Log;
 
+import com.chessyoup.game.RealTimeGameClient;
+import com.chessyoup.game.Util;
 import com.google.android.gms.games.GamesClient;
 
-public class RealTimeChessGame extends RealTimeGame {
+public class ChessRealTimeGameClient extends RealTimeGameClient {
 
-    private static final String TAG = "RealTimeChessGame";
+    private static final String TAG = "ChessRealTimeGame";
 
     private static final byte READY = 0;
     private static final byte START = 1;
@@ -34,7 +36,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
     public interface RealTimeChessGameListener {
 
-        public void onChallangeRecevied(GameVariant gameVariant,boolean isRematch);
+        public void onChallangeRecevied(ChessGameVariant gameVariant,boolean isRematch);
 
         public void onStartRecevied();
 
@@ -57,7 +59,7 @@ public class RealTimeChessGame extends RealTimeGame {
         public void onChatReceived(String message);
     }
 
-    public RealTimeChessGame(GamesClient client) {
+    public ChessRealTimeGameClient(GamesClient client) {
         super(client);
     }
 
@@ -119,13 +121,13 @@ public class RealTimeChessGame extends RealTimeGame {
         this.listener = listener;
     }
 
-    public void ready() {
+    public void ready(ChessGamePlayer player) {
         JSONObject json = new JSONObject();
 
         try {
-            json.put(ELO_KEY, GameController.getInstance().getLocalPlayer().getRating());
-            json.put(RD_KEY, GameController.getInstance().getLocalPlayer().getRatingDeviation());
-            json.put(VOLATILITY_KEY, GameController.getInstance().getLocalPlayer().getVolatility());
+            json.put(ELO_KEY, player.getRating());
+            json.put(RD_KEY, player.getRatingDeviation());
+            json.put(VOLATILITY_KEY,player.getVolatility());
         } catch (JSONException e) {
             Log.e(TAG, "Error on creating json object!", e);
         }
@@ -290,7 +292,7 @@ public class RealTimeChessGame extends RealTimeGame {
 
         if (this.listener != null) {
             try {
-                GameVariant gameVariant = Util.getGameVariant(Integer.parseInt(jsonPayload.getString(GAME_VARIANT)));
+                ChessGameVariant gameVariant = Util.getGameVariant(Integer.parseInt(jsonPayload.getString(GAME_VARIANT)));
                 this.listener.onChallangeRecevied(gameVariant,Boolean.parseBoolean(jsonPayload.getString(GAME_REMATCH)));
             } catch (JSONException e) {
                 Log.e(TAG, "Invalid start message!", e);

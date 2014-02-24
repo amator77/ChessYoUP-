@@ -54,7 +54,19 @@ public class ChessboardController {
 		this.movesPerSession = 60;
 		this.timeIncrement = 0;
 	}
-
+	
+	/** Start a new game. */
+    public void newGame(Game game , ChessboardMode gameMode) {        
+        this.resetFlags();
+        this.gameMode = gameMode;
+        this.game = game;
+        this.game.setGameTextListener(gameTextListener);
+        game.currPos().whiteMove = true;
+        updateGUI();
+        setPlayerNames(game);
+        updateGameMode();
+    }
+	
 	/** Start a new game. */
 	public void newGame(ChessboardMode gameMode,boolean rated) {
 		this.resetFlags();		

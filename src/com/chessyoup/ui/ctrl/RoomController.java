@@ -5,10 +5,10 @@ import java.util.List;
 import android.util.Log;
 
 import com.chessyoup.R;
-import com.chessyoup.game.GameController;
 import com.chessyoup.game.GameModel;
 import com.chessyoup.game.GamePlayer;
 import com.chessyoup.game.Util;
+import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.ui.ChessGameRoomUI;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Participant;
@@ -45,19 +45,19 @@ public class RoomController implements RoomUpdateListener,
 				
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomConnected, status " + statusCode);
-			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
+			ChessGameController.getController().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
 		}
 		
 		GameModel gameModel = chessGameRoomUI.getGameModel();
-		GameController.getInstance().getRealTimeChessGame().setRoom(room);
-        GameController.getInstance().getRealTimeChessGame().setListener(this.chessGameRoomUI.getRealTimeChessGameController());        
+		ChessGameController.getController().getRealTimeGameClient().setRoom(room);
+		ChessGameController.getController().getRealTimeGameClient().setListener(this.chessGameRoomUI.getRealTimeChessGameController());        
         gameModel.setRoom(room);
 		
 		for (Participant p : room.getParticipants()) {
 			
 			if(p.getParticipantId().equals(room.getCreatorId())){
-				GameController.getInstance().getLocalPlayer().setParticipant(p);
+			    ChessGameController.getController().getLocalPlayer().setParticipant(p);
 			}	
 			else{
 				GamePlayer remotePlayer = new GamePlayer();
@@ -70,7 +70,7 @@ public class RoomController implements RoomUpdateListener,
 			}
 		}
 		
-		GameController.getInstance().getRealTimeChessGame().ready();	
+//		ChessGameController.getController().getRealTimeGameClient().ready();	
 	}
 
 	@Override
@@ -80,12 +80,12 @@ public class RoomController implements RoomUpdateListener,
 						
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
-			GameController.getInstance().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
+			ChessGameController.getController().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
 			return;
 		}		
 				
 		if( room != null ){ 
-		    GameController.getInstance().getRealTimeChessGame().setRoom(room);
+//		    GameController.getInstance().getRealTimeChessGame().setRoom(room);
 		    chessGameRoomUI.getGameModel().setRoom(room);
 		}
 	}

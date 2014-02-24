@@ -12,7 +12,7 @@ import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceived
 import com.google.android.gms.games.multiplayer.realtime.RealTimeReliableMessageSentListener;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 
-public abstract class RealTimeGame implements RealTimeMessageReceivedListener,
+public abstract class RealTimeGameClient implements RealTimeMessageReceivedListener,
 		RealTimeReliableMessageSentListener {
 
 	private static final String TAG = "RealTimeGame";
@@ -21,7 +21,7 @@ public abstract class RealTimeGame implements RealTimeMessageReceivedListener,
 	
 	private Room activeRoom;
 	
-	public RealTimeGame(GamesClient client) {
+	public RealTimeGameClient(GamesClient client) {
 		this.client = client;		
 	}
 		

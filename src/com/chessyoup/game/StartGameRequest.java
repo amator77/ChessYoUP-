@@ -1,12 +1,14 @@
 package com.chessyoup.game;
 
+import com.chessyoup.game.chess.ChessGameVariant;
+
 public class StartGameRequest {
 			
 	private String whitePlayerId;
 	
 	private String blackPlayerId;
 	
-	private GameVariant gameVariant;	
+	private ChessGameVariant gameVariant;	
 	
 	public StartGameRequest(String whitePlayerId,String blackPlayerId,int gameVariant){
 		this.whitePlayerId = whitePlayerId;
@@ -14,7 +16,7 @@ public class StartGameRequest {
 		this.gameVariant = Util.getGameVariant(gameVariant);
 	}
 	
-	public StartGameRequest(String whitePlayerId,String blackPlayerId,GameVariant gameVariant){
+	public StartGameRequest(String whitePlayerId,String blackPlayerId,ChessGameVariant gameVariant){
 		this.whitePlayerId = whitePlayerId;
 		this.blackPlayerId = blackPlayerId;
 		this.gameVariant = gameVariant;
@@ -36,11 +38,11 @@ public class StartGameRequest {
 		this.blackPlayerId = blackPlayerId;
 	}
 
-	public GameVariant getGameVariant() {
+	public ChessGameVariant getGameVariant() {
 		return gameVariant;
 	}
 
-	public void setGameVariant(GameVariant gameVariant) {
+	public void setGameVariant(ChessGameVariant gameVariant) {
 		this.gameVariant = gameVariant;
 	}
 

@@ -4,6 +4,8 @@ import org.goochjs.glicko2.Rating;
 import org.goochjs.glicko2.RatingCalculator;
 import org.goochjs.glicko2.RatingPeriodResults;
 
+import com.chessyoup.game.chess.ChessGameVariant;
+
 public class Util {
 	
 	public static RatingCalculator ratingSystem = new RatingCalculator(0.06, 0.5);
@@ -41,23 +43,23 @@ public class Util {
 		return Integer.parseInt(sb.toString());
 	}
 	
-	public static int gameVariantToInt(GameVariant gv){		
-		return getGameVariant( gv.getGameType() , gv.getTime() , gv.getIncrement() , gv.getMoves() , gv.isRated() ,gv.isWhite());
+	public static int gameVariantToInt(ChessGameVariant gv){		
+		return getGameVariant( gv.getType() , gv.getTime() , gv.getIncrement() , gv.getMoves() , gv.isRated() ,gv.isWhite());
 	}
 	
 	public static int switchSide(int gameVariant){
-		GameVariant gv = Util.getGameVariant(gameVariant);
+		ChessGameVariant gv = Util.getGameVariant(gameVariant);
 		gv.setWhite(gv.isWhite() ? false : true );
 		return gameVariantToInt(gv);
 	}
 	
-	public static int switchSide(GameVariant gameVariant){
-		GameVariant gv = getGameVariant(Util.gameVariantToInt(gameVariant));
+	public static int switchSide(ChessGameVariant gameVariant){
+		ChessGameVariant gv = getGameVariant(Util.gameVariantToInt(gameVariant));
 		gv.setWhite(gv.isWhite() ? false : true );
 		return gameVariantToInt(gv);
 	}
 	
-	public static GameVariant getGameVariant(int variant){
+	public static ChessGameVariant getGameVariant(int variant){
 		String s = String.valueOf(variant);
 		int gameType = Integer.parseInt(s.substring(0, 1));
 		int time = Integer.parseInt(s.substring(1, 4));
@@ -66,8 +68,8 @@ public class Util {
 		boolean isRated = Integer.parseInt(s.substring(8, 9)) == 1;
 		boolean isWhite = Integer.parseInt(s.substring(9, 10)) == 1;
 		
-		GameVariant gv = new GameVariant();
-		gv.setGameType(gameType);
+		ChessGameVariant gv = new ChessGameVariant();		
+		gv.setType(gameType);
 		gv.setTime(time);
 		gv.setIncrement(increment);
 		gv.setMoves(moves);

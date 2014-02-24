@@ -2,36 +2,33 @@ package com.chessyoup.ui.ctrl;
 
 import android.util.Log;
 
-import com.chessyoup.game.GameController;
-import com.chessyoup.game.GameModel;
-import com.chessyoup.game.GameVariant;
-import com.chessyoup.game.RealTimeChessGame.RealTimeChessGameListener;
+import com.chessyoup.game.chess.ChessGameController;
+import com.chessyoup.game.chess.ChessGameModel;
+import com.chessyoup.game.chess.ChessGameVariant;
+import com.chessyoup.game.chess.ChessRealTimeGameClient.RealTimeChessGameListener;
 import com.chessyoup.model.Game;
 import com.chessyoup.ui.ChessGameRoomUI;
 
-public class RoomGameController implements RealTimeChessGameListener {
+public class RealTimeChessGameController implements RealTimeChessGameListener {
 
     private final static String TAG = "RoomGameController";
 
     private ChessGameRoomUI chessGameRoomUI;
-
-    public RoomGameController(ChessGameRoomUI chessGameRoomUI) {
+    
+    private ChessGameController chessGameController = ChessGameController.getController();
+    
+    public RealTimeChessGameController(ChessGameRoomUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
-        
-        if( GameController.getInstance().isInitilized()){
-            GameController.getInstance().getRealTimeChessGame().setListener(this);
-        }
+        chessGameController.getRealTimeGameClient().setListener(this);                
     }
 
     @Override
-    public void onChallangeRecevied(GameVariant gameVariant,boolean isRematch) {
+    public void onChallangeRecevied(ChessGameVariant gameVariant,boolean isRematch) {
         Log.d(TAG, "onChallangeRecevied :: gameVariant=" + gameVariant);
                 
-        if( isRematch ){        	
-        	//switch side	        	
-            GameVariant gv = this.chessGameRoomUI.getGameModel().getGameVariant();
-            gv.setWhite(gv.isWhite() ? false : true);
-            GameController.getInstance().getRealTimeChessGame().ready();      
+        if( isRematch ){    
+            this.chessGameRoomUI.getGameModel().switchSides();            
+            chessGameController.getRealTimeGameClient().ready(chessGameController.getLocalPlayer());      
             chessGameRoomUI.roomReady();
         }
         else{
@@ -62,7 +59,7 @@ public class RoomGameController implements RealTimeChessGameListener {
     @Override
     public void onResignRecevied() {
         Log.d(TAG, "onResignRecevied ::");
-        GameModel model = this.chessGameRoomUI.getGameModel();
+        ChessGameModel model = this.chessGameRoomUI.getGameModel();
 
         if (model.getBlackPlayer().getParticipant().getParticipantId().equals(model.getRemotePlayer().getParticipant().getParticipantId())) {
             this.chessGameRoomUI.getChessboardController().resignGameForBlack();            

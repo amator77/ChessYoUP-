@@ -27,6 +27,20 @@ public class Game {
         gamePaused = false;
         newGame();
     }
+    
+    
+    
+    public PgnTokenReceiver getGameTextListener() {
+        return gameTextListener;
+    }
+
+
+
+    public void setGameTextListener(PgnTokenReceiver gameTextListener) {
+        this.gameTextListener = gameTextListener;
+    }
+
+
 
     /** De-serialize from byte array. */
     public final void fromByteArray(byte[] data) {

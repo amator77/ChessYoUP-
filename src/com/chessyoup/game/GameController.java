@@ -3,20 +3,18 @@ package com.chessyoup.game;
 import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
-import android.view.WindowManager;
 
 import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
-import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.android.gms.plus.PlusClient;
 
-public class GameController {
-	
+public abstract class GameController {
+	  
     protected GameHelper mHelper;
     
     public static final int CLIENT_GAMES = GameHelper.CLIENT_GAMES;
@@ -29,64 +27,40 @@ public class GameController {
 
     protected int mRequestedClients = CLIENT_ALL;
     
-    private String[] mAdditionalScopes;
+    protected String[] mAdditionalScopes;
 
     protected String mDebugTag = "GameController";
     
-    protected boolean mDebugLog = true;
+    protected boolean mDebugLog = true;	
 	
-	private static GameController instance = new GameController();
+    protected GamePlayer localPlayer;
 	
-	private GamePlayer localPlayer;
+	protected boolean initilized;
 	
-	private boolean initilized;
+	protected Activity activity;
 	
-	private Activity activity;
+	protected RealTimeGameClient realTimeGame;		
 	
-	private RealTimeChessGame realTimeChessGame;
-	
-	public RealTimeChessGame getRealTimeChessGame() {
-		return realTimeChessGame;
-	}
-
-	public void setRealTimeChessGame(RealTimeChessGame realTimeChessGame) {
-		this.realTimeChessGame = realTimeChessGame;
-	}
-
-	public static GameController getInstance(){
-		return GameController.instance;
-	}
-	
-	public void initialize(Activity activity,GameHelperListener listener){
-		
-		if( !this.initilized ){
-			this.activity = activity;
-			this.mHelper = new GameHelper(activity);			
-            mHelper.enableDebugLog(mDebugLog, mDebugTag);	        
-	        mHelper.setup(listener, mRequestedClients, mAdditionalScopes);
-	        this.realTimeChessGame = new RealTimeChessGame(getGamesClient());
-			this.initilized = true;
-		}
-	}
+	public abstract void initialize(Activity activity,GameHelperListener listener);
 	
 	public void createRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String remotePlayer, int gameVariant){	    
         RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(roomUpdatelistener);
         rtmConfigBuilder.addPlayersToInvite(new String[] {remotePlayer});
         rtmConfigBuilder.setVariant(gameVariant);
-        rtmConfigBuilder.setMessageReceivedListener(this.realTimeChessGame);
+        rtmConfigBuilder.setMessageReceivedListener(this.realTimeGame);
         rtmConfigBuilder.setRoomStatusUpdateListener(roomStatusUpdateListener);  
         mHelper.getGamesClient().createRoom(rtmConfigBuilder.build());        
 	}
 	
 	public void joinRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String invitationId){
 	    RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(roomUpdatelistener);
-        roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeChessGame).setRoomStatusUpdateListener(roomStatusUpdateListener);        
-        GameController.getInstance().getGamesClient().joinRoom(roomConfigBuilder.build());
+        roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeGame).setRoomStatusUpdateListener(roomStatusUpdateListener);        
+        getGamesClient().joinRoom(roomConfigBuilder.build());
     }
 	
-	public void leaveRoom(RoomUpdateListener roomUpdatelistener,String roomId){
+	public void leaveRoom(String roomId){
 	    Log.d(mDebugTag, "leaveRoom ::"+roomId);	    
-        mHelper.getGamesClient().leaveRoom(roomUpdatelistener, roomId);
+//        mHelper.getGamesClient().leaveRoom(roomUpdatelistener, roomId);
     }
 	
 	public void showAlert(String title, String message) {
