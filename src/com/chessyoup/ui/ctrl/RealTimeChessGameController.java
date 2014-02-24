@@ -7,19 +7,22 @@ import com.chessyoup.game.chess.ChessGameModel;
 import com.chessyoup.game.chess.ChessGameVariant;
 import com.chessyoup.game.chess.ChessRealTimeGameClient.RealTimeChessGameListener;
 import com.chessyoup.model.Game;
-import com.chessyoup.ui.ChessGameRoomUI;
+import com.chessyoup.ui.ChessOnlinePlayGameUI;
 
 public class RealTimeChessGameController implements RealTimeChessGameListener {
 
     private final static String TAG = "RoomGameController";
 
-    private ChessGameRoomUI chessGameRoomUI;
+    private ChessOnlinePlayGameUI chessGameRoomUI;
     
     private ChessGameController chessGameController = ChessGameController.getController();
     
-    public RealTimeChessGameController(ChessGameRoomUI chessGameRoomUI) {
+    public RealTimeChessGameController(ChessOnlinePlayGameUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
-        chessGameController.getRealTimeGameClient().setListener(this);                
+        
+        if( chessGameController.isInitilized() ){
+            chessGameController.getRealTimeGameClient().setListener(this);
+        }
     }
 
     @Override
@@ -124,11 +127,11 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
         Log.d(TAG, "onChatReceived :: message" + message);
     }
 
-    public ChessGameRoomUI getChessGameRoomUI() {
+    public ChessOnlinePlayGameUI getChessGameRoomUI() {
         return chessGameRoomUI;
     }
 
-    public void setChessGameRoomUI(ChessGameRoomUI chessGameRoomUI) {
+    public void setChessGameRoomUI(ChessOnlinePlayGameUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
     }
 

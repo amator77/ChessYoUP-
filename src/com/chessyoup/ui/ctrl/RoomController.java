@@ -9,7 +9,7 @@ import com.chessyoup.game.GameModel;
 import com.chessyoup.game.GamePlayer;
 import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGameController;
-import com.chessyoup.ui.ChessGameRoomUI;
+import com.chessyoup.ui.ChessOnlinePlayGameUI;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.Room;
@@ -21,9 +21,9 @@ public class RoomController implements RoomUpdateListener,
 
 	private final static String TAG = "RoomController";
 
-	private ChessGameRoomUI chessGameRoomUI;
+	private ChessOnlinePlayGameUI chessGameRoomUI;
 
-	public RoomController(ChessGameRoomUI chessGameRoomUI) {
+	public RoomController(ChessOnlinePlayGameUI chessGameRoomUI) {
 		this.chessGameRoomUI = chessGameRoomUI;		
 	}
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    	
+    <item
+        android:id="@+id/main_menu_outgoing"
+        android:showAsAction="always"
+        android:icon="@drawable/curvedarrowright"
+        android:titleCondensed="O"
+        android:title="Outgoing"/>
+    <item
+        android:id="@+id/main_menu_incoming"
+        android:icon="@drawable/curvedarrowrightdown"
+        android:showAsAction="always"        
+        android:titleCondensed="I"
+        android:title="Incoming"/>
+    <item
+        android:id="@+id/main_menu_invite"
+        android:title="Invite Friend"/>
+    <item
+        android:id="@+id/main_menu_quick"
+        android:title="Quick Game"/>        
+    <item
+        android:id="@+id/main_menu_logout"
+        android:title="Logout"/>
+    <item
+        android:id="@+id/main_menu_exit"
+        android:title="Exit"/>
+
+</menu>

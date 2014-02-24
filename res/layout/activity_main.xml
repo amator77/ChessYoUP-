@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
-    android:layout_gravity="top"
-    android:layout_height="fill_parent" >
+    android:layout_height="fill_parent"
+    android:layout_gravity="top" >
 
     <!-- SIGN-IN SCREEN -->
 
@@ -13,81 +12,39 @@
         style="@style/LLScreen"
         android:layout_width="wrap_content"
         android:layout_height="match_parent" >
-                                    
+
         <com.google.android.gms.common.SignInButton
             android:id="@+id/button_sign_in"
             style="@style/SignInButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
     </LinearLayout>
 
     <!-- MAIN SCREEN -->
 
-	<RelativeLayout
-	    android:id="@+id/screen_main"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:layout_alignParentTop="true" >
+    <RelativeLayout
+        android:id="@+id/screen_main"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true" >
 
-	    <include
-	        android:id="@+id/include1"
-	        layout="@layout/player"/>
+        <include            
+            android:id="@+id/player_view"
+            layout="@layout/player" />
 
-	    <Button
-	        android:id="@+id/button_invite_players"
-	        style="@style/MainScreenButton"
-	        android:layout_above="@+id/button_see_invitations"
-	        android:layout_alignLeft="@+id/include1"
-	        android:text="@string/invite_players" />
-
-	    <Button
-	        android:id="@+id/button_sign_out"
-	        style="@style/SignOutButton"
-	        android:layout_alignParentRight="true"
-	        android:layout_below="@+id/button_invite_players"
-	        android:text="@string/sign_out" />
-
-	    <Button
-	        android:id="@+id/button_see_invitations"
-	        style="@style/MainScreenButton"
-	        android:layout_alignLeft="@+id/button_invite_players"
-	        android:layout_alignParentBottom="true"
-	        android:text="@string/see_invitations" />
-
-	</RelativeLayout>
-
-    <!-- INVITATION POPUP -->
-
-    <LinearLayout
-        android:id="@+id/invitation_popup"
-        style="@style/InvPopup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
-
-        <TextView
-            android:id="@+id/incoming_invitation_text"
-            style="@style/InvPopupText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/button_accept_popup_invitation"
-            style="@style/InvPopupButton"
+        <android.support.v4.view.ViewPager
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/main_pager"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/accept_popup_invite" />
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/player_view" >
+                        
+        </android.support.v4.view.ViewPager>
 
-    </LinearLayout>
-
-    <!-- "PLEASE WAIT" SCREEN -->
-
-    <LinearLayout
-        android:id="@+id/screen_wait"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" >
-
-        <TextView style="@style/Blurb" android:text="@string/please_wait" />
-    </LinearLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

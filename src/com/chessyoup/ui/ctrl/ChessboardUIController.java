@@ -18,20 +18,20 @@ import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.Move;
 import com.chessyoup.model.Position;
 import com.chessyoup.model.TextIO;
-import com.chessyoup.ui.ChessGameRoomUI;
+import com.chessyoup.ui.ChessOnlinePlayGameUI;
 import com.chessyoup.ui.util.UIUtil;
 
 public class ChessboardUIController extends GestureDetector.SimpleOnGestureListener implements ChessboardUIInterface, Runnable {
 
     private final static String TAG = "GameUIController";
 
-    private ChessGameRoomUI chessGameRoomUI;
+    private ChessOnlinePlayGameUI chessGameRoomUI;
 
     private Handler handlerTimer;
 
     private Dialog promoteDialog;
     
-    public ChessboardUIController(ChessGameRoomUI chessGameRoomUI) {
+    public ChessboardUIController(ChessOnlinePlayGameUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
         this.handlerTimer = new Handler();
         promoteDialog = createPromoteDialog();

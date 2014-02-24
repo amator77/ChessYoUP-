@@ -40,7 +40,7 @@ import com.chessyoup.ui.fragment.FragmentMoves;
 import com.chessyoup.ui.util.UIUtil;
 import com.google.android.gms.common.images.ImageManager;
 
-public class ChessGameRoomUI extends FragmentActivity {
+public class ChessOnlinePlayGameUI extends FragmentActivity {
 
     private final static String TAG = "ChessGameRoomUI";
 
@@ -62,9 +62,7 @@ public class ChessGameRoomUI extends FragmentActivity {
 
     private ProgressDialog pg;
 
-    private TextView localClockView, remoteClockView, localPlayerView, remotePlayerView;   
-
-    private String[] tabs = {"Game", "Moves", "Chat"};
+    private TextView localClockView, remoteClockView, localPlayerView, remotePlayerView;
 
     private ViewPager viewPager;
 
@@ -118,7 +116,7 @@ public class ChessGameRoomUI extends FragmentActivity {
                     updateRemotePlayerView(true);
                     updateLocalPlayerView(true);
                 } else {
-                    chessboardController.newGame(chessGameModel.getGame(), new ChessboardMode(ChessboardMode.ANALYSIS));
+                    chessboardController.newGame(new ChessboardMode(ChessboardMode.ANALYSIS),false);
                     displayShortMessage("Empty board!");
                 }
             }

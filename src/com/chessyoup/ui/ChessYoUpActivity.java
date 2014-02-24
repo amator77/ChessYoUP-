@@ -6,22 +6,28 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.chessyoup.R;
-import com.chessyoup.game.GameController;
 import com.chessyoup.game.GameHelper.GameHelperListener;
+import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGamePlayer;
 import com.chessyoup.game.chess.ChessGameVariant;
-import com.chessyoup.game.GamePlayer;
-import com.chessyoup.game.Util;
 import com.chessyoup.ui.dialogs.NewGameDialog;
 import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
+import com.chessyoup.ui.fragment.FragmentAdapter;
+import com.chessyoup.ui.fragment.IncomingInvitationsFragment;
+import com.chessyoup.ui.fragment.InvitationsAdapter;
+import com.chessyoup.ui.fragment.OutgoingInvitationFragment;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.images.ImageManager;
@@ -35,30 +41,28 @@ public class ChessYoUpActivity extends FragmentActivity implements
 
 	private final static String TAG = "ChessYoUpActivity";
 	private final static int RC_SELECT_PLAYERS = 10000;
-	private final static int RC_INVITATION_INBOX = 10001;
-	private final static int RC_WAITING_ROOM = 10002;
+	private final static int RC_INVITATION_INBOX = 10001;	
 	
 	public static final String ROOM_ID_EXTRA = "roomId";
 	public static final String REMOTE_PLAYER_EXTRA = "remotePlayer";
 	public static final String INVITATION_ID_EXTRA = "invitationId";
 	public static final String IS_CHALANGER_EXTRA = "isChalanger";
 	public static final String GAME_VARIANT_EXTRA = "gameVariant";
-	
-	private final static int[] CLICKABLES = {
-			R.id.button_accept_popup_invitation, R.id.button_invite_players,
-			R.id.button_see_invitations, R.id.button_sign_in,
-			R.id.button_sign_out, };
-
+		
 	private final static int[] SCREENS = { R.id.screen_main,
-			R.id.screen_sign_in, R.id.screen_wait };
+			R.id.screen_sign_in };
 
 	private int mCurScreen = -1;
-
+	
+	 private FragmentAdapter adapter;
+	
+	private ViewPager viewPager;
 	
 	private ChessGameController chessGameController;
 	
 	private Invitation incomingInvitationId;
 	
+	private InvitationsAdapter invitationsAdapter;
 
 	// *********************************************************************
 	// *********************************************************************
@@ -67,15 +71,21 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	// *********************************************************************
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    chessGameController = ChessGameController.getController(); 
-	    ChessGameController.getController().initialize(this, this);
-	     
+	public void onCreate(Bundle savedInstanceState) {	    	    
 		super.onCreate(savedInstanceState);
+		chessGameController = ChessGameController.getController(); 
+        ChessGameController.getController().initialize(this, this);
 		setContentView(R.layout.activity_main);
-		for (int id : CLICKABLES) {
-			findViewById(id).setOnClickListener(this);
-		}
+		findViewById(R.id.button_sign_in).setOnClickListener(this);
+		adapter = new FragmentAdapter(this.getSupportFragmentManager());
+		invitationsAdapter = new InvitationsAdapter(getApplicationContext());
+		IncomingInvitationsFragment incomingFragment = new IncomingInvitationsFragment();
+		incomingFragment.setInvitationsAdapter(invitationsAdapter);
+		OutgoingInvitationFragment outgoingFragment = new OutgoingInvitationFragment();
+		adapter.addFragment(incomingFragment);
+		adapter.addFragment(outgoingFragment);
+		viewPager = (ViewPager) findViewById(R.id.main_pager);
+        viewPager.setAdapter(adapter);
 	}
 	
 	@Override
@@ -99,30 +109,67 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	}	
 	
 	@Override
-	public void onClick(View v) {
-		Intent intent;
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+        return true;
+    }
+	
+	 @Override
+	    public boolean onOptionsItemSelected(MenuItem item) {
+	        Log.d(TAG, "onOptionsItemSelected :: " + item.getItemId() + "");
+
+	        switch (item.getItemId()) {
+	            case R.id.main_menu_exit:
+	                this.handleExitAction();
+	                return true;
+	            case R.id.main_menu_logout:
+	                this.handleLogoutAction();
+	                return true;
+	            case R.id.main_menu_invite:
+	                this.handleInviteActiom();
+	                return true;
+	            case R.id.main_menu_quick:
+	                this.handleQuickAction();
+	                return true;
+	            case R.id.main_menu_incoming:
+	                this.viewPager.setCurrentItem(0);
+	                return true;
+	            case R.id.main_menu_outgoing:
+	                this.viewPager.setCurrentItem(1);
+	                return true;	            
+	        }
+
+	        return true;
+	    }
+	
+	private void handleQuickAction() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void handleInviteActiom() {        
+        Intent intent = chessGameController.getGamesClient().getSelectPlayersIntent(2, 2);        
+        startActivityForResult(intent, RC_SELECT_PLAYERS);
+    }
+
+    private void handleLogoutAction() {
+        chessGameController.getGamesClient().signOut();
+        switchToScreen(R.id.screen_sign_in);        
+    }
+
+    private void handleExitAction() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+	public void onClick(View v) {		
 
 		switch (v.getId()) {
 		case R.id.button_sign_in:
 		    chessGameController.beginUserInitiatedSignIn();
-			break;
-		case R.id.button_sign_out:
-		    chessGameController.signOut();
-			switchToScreen(R.id.screen_sign_in);
-			break;
-		case R.id.button_invite_players:
-			intent =chessGameController.getGamesClient().getSelectPlayersIntent(1, 3);
-			switchToScreen(R.id.screen_wait);
-			startActivityForResult(intent, RC_SELECT_PLAYERS);
-			break;
-		case R.id.button_see_invitations:
-			intent = chessGameController.getGamesClient().getInvitationInboxIntent();
-			switchToScreen(R.id.screen_wait);
-			startActivityForResult(intent, RC_INVITATION_INBOX);
-			break;
-		case R.id.button_accept_popup_invitation:
-			acceptInviteToRoom(incomingInvitationId);
-			break;
+			break;		
 		}
 	}
 
@@ -233,8 +280,9 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	public void onInvitationReceived(Invitation invitation) {
 		Log.d(TAG, "onInvitationReceived :: " + invitation.toString());
 		this.incomingInvitationId = invitation;		
-		((TextView) findViewById(R.id.incoming_invitation_text))
-				.setText(getInviationDisplayInfo(invitation));
+		
+		
+		
 		switchToScreen(mCurScreen);
 	}
 
@@ -513,7 +561,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 				Log.d(TAG, "Invitee: " + invitees.toString());
 
 				Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
-						ChessGameRoomUI.class);
+						ChessOnlinePlayGameUI.class);
 				chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, invitees.get(0));
 				chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, gameVariant);
 				chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, true);
@@ -546,7 +594,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		Log.d(TAG, "Accepting invitation: " + inv);
 		
 		Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
-				ChessGameRoomUI.class);
+				ChessOnlinePlayGameUI.class);
 		chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, inv.getInviter().getParticipantId());
 		chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, inv.getVariant());
 		chessRoomUIIntent.putExtra(INVITATION_ID_EXTRA, inv.getInvitationId());		
@@ -568,8 +616,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 			showInvPopup = (mCurScreen == R.id.screen_main);
 		}
 
-		findViewById(R.id.invitation_popup).setVisibility(
-				showInvPopup ? View.VISIBLE : View.GONE);
+		
 	}
 
 	private void switchToMainScreen() {
