@@ -7,6 +7,8 @@ import com.chessyoup.game.GamePlayer;
 
 public class ChessGamePlayer extends GamePlayer {
     
+    private double topRating;
+    
     private double rating;
     
     private double ratingDeviation;
@@ -85,6 +87,14 @@ public class ChessGamePlayer extends GamePlayer {
 
     public void setRank(long rank) {
         this.rank = rank;
+    }
+    
+    public double getTopRating() {
+        return topRating;
+    }
+
+    public void setTopRating(double topRating) {
+        this.topRating = topRating;
     }
 
     public void updateFromJSON(String jsonString) {

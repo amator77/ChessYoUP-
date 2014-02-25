@@ -656,14 +656,14 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
             ChessGamePlayer localPlayer = new ChessGamePlayer();
             
             if( score == null ){ 
-                chessGameController.getGamesClient().submitScore(getResources().getString(R.string.leaderboard_rating_id), rating,   rd+"-"+volatility);
+                chessGameController.getGamesClient().submitScore(getResources().getString(R.string.leaderboard_rating_id), rating,   rating+"-"+rd+"-"+volatility);
             }
-            else{
-                rating = (int)score.getRawScore();
+            else{                                                
                 String tag[] = score.getScoreTag().split("-");
-                rd = Double.parseDouble(tag[0]);
-                volatility = Double.parseDouble(tag[1]);
-                rank = score.getRank();                
+                rating = Integer.parseInt(tag[0]);
+                rd = Double.parseDouble(tag[1]);
+                volatility = Double.parseDouble(tag[2]);
+                rank = score.getRank();
             }
             
             localPlayer.setRating(rating);
