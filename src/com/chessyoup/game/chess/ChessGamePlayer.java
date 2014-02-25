@@ -19,6 +19,8 @@ public class ChessGamePlayer extends GamePlayer {
 
     private int loses;
     
+    private long rank;
+    
     public ChessGamePlayer(){
         this.rating = 1500;
         this.ratingDeviation = 150;
@@ -26,6 +28,7 @@ public class ChessGamePlayer extends GamePlayer {
         this.wins = 0;
         this.draws = 0;
         this.loses = 0;
+        this.rank = 0;
     }
     
     public double getRating() {
@@ -76,6 +79,14 @@ public class ChessGamePlayer extends GamePlayer {
         this.loses = loses;
     }
     
+    public long getRank() {
+        return rank;
+    }
+
+    public void setRank(long rank) {
+        this.rank = rank;
+    }
+
     public void updateFromJSON(String jsonString) {
 
         try {

@@ -33,10 +33,13 @@ import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.games.leaderboard.LeaderboardScore;
+import com.google.android.gms.games.leaderboard.LeaderboardVariant;
+import com.google.android.gms.games.leaderboard.OnPlayerLeaderboardScoreLoadedListener;
 import com.google.android.gms.games.multiplayer.Invitation;
 
 public class ChessYoUpActivity extends FragmentActivity implements View.OnClickListener,
-		NewGameDialogListener, OnStateLoadedListener , GameHelperListener {
+		NewGameDialogListener, OnStateLoadedListener , GameHelperListener, OnPlayerLeaderboardScoreLoadedListener {
 
 	private final static String TAG = "ChessYoUpActivity";
 	private final static int RC_SELECT_PLAYERS = 10000;
@@ -248,32 +251,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 				+ (localData != null ? new String(localData) : "null data"));
 		ChessGamePlayer localPlayer = null;
 
-		switch (statusCode) {
-		case AppStateClient.STATUS_OK:
-			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_OK");
-
-			if (localData == null) {
-				localPlayer = new ChessGamePlayer();
-				chessGameController.getAppStateClient().updateState(0,
-						localPlayer.toJSON().getBytes());
-			} else {
-				localPlayer = new ChessGamePlayer();
-				localPlayer.updateFromJSON(new String(localData));
-			}
-
-			chessGameController.setLocalPlayer(localPlayer);
-			this.updatePlayerStateView();
-			break;
-		case AppStateClient.STATUS_STATE_KEY_NOT_FOUND:
-			Log.d(TAG, "onStateLoaded :: statusCode:STATUS_STATE_KEY_NOT_FOUND");
-			localPlayer = new ChessGamePlayer();
-			chessGameController.getAppStateClient().updateState(0, localPlayer.toJSON().getBytes());
-			chessGameController.setLocalPlayer(localPlayer);
-			this.updatePlayerStateView();
-			break;
-		default:
-			break;
-		}
+		
 	}
 
 	@Override
@@ -311,16 +289,20 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 	public void onSignInSucceeded() {
 		Log.d(TAG, "Sign-in succeeded.");
 
-		chessGameController.getAppStateClient().loadState(this, 0);
-		chessGameController.getGamesClient().registerInvitationListener(this.roomController);
-		Invitation invitation = chessGameController.getInvitation();
-		
-		if (invitation != null) {
-			acceptInviteToRoom(invitation);
-			return;
-		}
-		
 		switchToMainScreen();
+					
+		chessGameController.getGamesClient().loadCurrentPlayerLeaderboardScore(this, getResources().getString(R.string.leaderboard_rating_id) , LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
+		chessGameController.getGamesClient().registerInvitationListener(this.roomController);
+//      chessGameController.getAppStateClient().loadState(this, 0);
+		
+//		Invitation invitation = chessGameController.getInvitation();
+//		
+//		if (invitation != null) {
+//			acceptInviteToRoom(invitation);
+//			return;
+//		}
+		
+		
 	}
 
 	// *********************************************************************
@@ -657,17 +639,48 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 		d.show(this.getSupportFragmentManager(), TAG);
 	}
 
-	private void updatePlayerStateView() {
-		 ((TextView)
-		 findViewById(R.id.playerName)).setText(chessGameController.getGamesClient().getCurrentPlayer().getDisplayName());
-		 ((TextView) findViewById(R.id.playerRating)).setText( "Rating:" +
-		 Math.round(chessGameController.getLocalPlayer().getRating()));
-		 ImageManager.create(this.getApplicationContext()).loadImage((ImageView)
-		 findViewById(R.id.playerAvatar),
-		 chessGameController.getGamesClient().getCurrentPlayer().getIconImageUri());
-	}
-
     public void setSelectedTab(int i) {
         this.viewPager.setCurrentItem(i);        
     }
+
+    @Override
+    public void onPlayerLeaderboardScoreLoaded(int statusCode, LeaderboardScore score) {
+        Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: statusCode"+statusCode+", , score :"+score);
+        
+        if( statusCode == GamesClient.STATUS_OK ){
+            int rating = 1500;
+            double rd = 150;
+            double volatility = 0;
+            long rank=1;
+            
+            ChessGamePlayer localPlayer = new ChessGamePlayer();
+            
+            if( score == null ){ 
+                chessGameController.getGamesClient().submitScore(getResources().getString(R.string.leaderboard_rating_id), rating,   rd+"-"+volatility);
+            }
+            else{
+                rating = (int)score.getRawScore();
+                String tag[] = score.getScoreTag().split("-");
+                rd = Double.parseDouble(tag[0]);
+                volatility = Double.parseDouble(tag[1]);
+                rank = score.getRank();                
+            }
+            
+            localPlayer.setRating(rating);
+            localPlayer.setRatingDeviation(rd);
+            localPlayer.setVolatility(volatility);
+            localPlayer.setPlayer(chessGameController.getGamesClient().getCurrentPlayer());
+            localPlayer.setRank(rank);
+            chessGameController.setLocalPlayer(localPlayer);                        
+            this.updatePlayerStateView(localPlayer);            
+        }
+    }
+    
+    private void updatePlayerStateView(ChessGamePlayer player ) {
+        System.out.println("aici"+player.getPlayer().getDisplayName());
+        ((TextView)findViewById(R.id.playerName)).setText(player.getPlayer().getDisplayName());
+        ((TextView) findViewById(R.id.playerRating)).setText( "Rating: " +
+        Math.round(player.getRating())+" , Rank: "+player.getRank());
+        ImageManager.create(this.getApplicationContext()).loadImage((ImageView)findViewById(R.id.playerAvatar),chessGameController.getGamesClient().getCurrentPlayer().getIconImageUri());
+   }
 }

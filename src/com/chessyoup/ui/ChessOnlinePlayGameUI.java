@@ -219,11 +219,11 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
         this.remotePlayerView.setText("");
 
         if (chessGameModel != null && chessGameModel.getRemotePlayer() != null) {
-            displayShortMessage(chessGameModel.getRemotePlayer().getParticipant().getDisplayName() + " left. You win!!!");
+            displayShortMessage(chessGameModel.getRemotePlayer().getPlayer().getDisplayName() + " left. You win!!!");
         }
 
         if (chessboardController.getGame().getGameState() == GameState.ALIVE) {
-            if (chessGameModel.getBlackPlayer().getParticipant().getParticipantId().equals(chessGameModel.getRemotePlayer().getParticipant().getParticipantId())) {
+            if (chessGameModel.getBlackPlayer().getPlayer().getPlayerId().equals(chessGameModel.getRemotePlayer().getPlayer().getPlayerId())) {
                 this.getChessboardController().resignGameForBlack();
             } else {
                 this.getChessboardController().resignGameForWhite();
@@ -273,11 +273,11 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
     public void updateRemotePlayerView(boolean loadAvatar) {
 
-        if (loadAvatar && chessGameModel.getRemotePlayer().getParticipant().getIconImageUri() != null) {
-            ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.remotePlayerAvatarView), chessGameModel.getRemotePlayer().getParticipant().getIconImageUri());
+        if (loadAvatar && chessGameModel.getRemotePlayer().getPlayer().getIconImageUri() != null) {
+            ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.remotePlayerAvatarView), chessGameModel.getRemotePlayer().getPlayer().getIconImageUri());
         }
 
-        StringBuffer sb = new StringBuffer(chessGameModel.getRemotePlayer().getParticipant().getDisplayName());
+        StringBuffer sb = new StringBuffer(chessGameModel.getRemotePlayer().getPlayer().getDisplayName());
         sb.append(" (").append(Math.round(chessGameModel.getRemotePlayer().getRating())).append(")");
         this.remotePlayerView.setText(sb.toString());
     }
@@ -285,17 +285,17 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     public void updateLocalPlayerView(boolean loadAvatar) {
         if (loadAvatar) {
 
-            ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.localPlayerAvatarView), chessGameController.getLocalPlayer().getParticipant().getIconImageUri());
+            ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.localPlayerAvatarView), chessGameController.getLocalPlayer().getPlayer().getIconImageUri());
 
         }
 
-        StringBuffer sb = new StringBuffer(chessGameController.getLocalPlayer().getParticipant().getDisplayName());
+        StringBuffer sb = new StringBuffer(chessGameController.getLocalPlayer().getPlayer().getDisplayName());
         sb.append(" (").append(Math.round(chessGameController.getLocalPlayer().getRating())).append(")");
         this.localPlayerView.setText(sb.toString());
     }
 
     public void updateChessboard() {
-        chessBoardPlayView.setFlipped(chessGameModel.getBlackPlayer().getParticipant().getParticipantId().equals(chessGameController.getLocalPlayer().getParticipant().getParticipantId()));
+        chessBoardPlayView.setFlipped(chessGameModel.getBlackPlayer().getPlayer().getPlayerId().equals(chessGameController.getLocalPlayer().getPlayer().getPlayerId()));
         ChessGameVariant gv = chessGameModel.getGameVariant();
         chessboardController.setTimeLimit(gv.getTime() * 1000, gv.getMoves(), gv.getIncrement() * 1000);
         this.updateClocks(UIUtil.timeToString(gv.getTime() * 1000), UIUtil.timeToString(gv.getTime() * 1000));

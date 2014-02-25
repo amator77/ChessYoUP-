@@ -65,13 +65,13 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
         Log.d(TAG, "onResignRecevied ::");
         ChessGameModel model = this.chessGameRoomUI.getGameModel();
 
-        if (model.getBlackPlayer().getParticipant().getParticipantId().equals(model.getRemotePlayer().getParticipant().getParticipantId())) {
+        if (model.getBlackPlayer().getPlayer().getPlayerId().equals(model.getRemotePlayer().getPlayer().getPlayerId())) {
             this.chessGameRoomUI.getChessboardController().resignGameForBlack();            
         } else {
             this.chessGameRoomUI.getChessboardController().resignGameForWhite();
         }
 
-        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" resigned!");        
+        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" resigned!");        
     }
 
     @Override
@@ -124,16 +124,16 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
 
         if( this.chessGameRoomUI.getChessboardController().getGame().getGameState() == GameState.ALIVE){
             
-            if (model.getBlackPlayer().getParticipant().getParticipantId().equals(model.getRemotePlayer().getParticipant().getParticipantId())) {
+            if (model.getBlackPlayer().getPlayer().getPlayerId().equals(model.getRemotePlayer().getPlayer().getPlayerId())) {
                 this.chessGameRoomUI.getChessboardController().resignGameForBlack();            
             } else {
                 this.chessGameRoomUI.getChessboardController().resignGameForWhite();
             }                        
             
-            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" has lost by disconect!");   
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" has lost by disconect!");   
         }
         else{
-            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" left the room!");            
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" left the room!");            
         }                           
     }
     
