@@ -7,6 +7,7 @@ import com.chessyoup.game.chess.ChessGameModel;
 import com.chessyoup.game.chess.ChessGameVariant;
 import com.chessyoup.game.chess.ChessRealTimeGameClient.RealTimeChessGameListener;
 import com.chessyoup.model.Game;
+import com.chessyoup.model.Game.GameState;
 import com.chessyoup.ui.ChessOnlinePlayGameUI;
 
 public class RealTimeChessGameController implements RealTimeChessGameListener {
@@ -114,9 +115,28 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
         else{
             chessGameRoomUI.displayShortMessage("Opponent ask for aborting the game!");
             chessGameRoomUI.getChessboardController().setAbortRequested(true);
-        }
+        }    
     }
+    
+    @Override
+    public void onExitRecevied() { 
+        ChessGameModel model = this.chessGameRoomUI.getGameModel();
 
+        if( this.chessGameRoomUI.getChessboardController().getGame().getGameState() == GameState.ALIVE){
+            
+            if (model.getBlackPlayer().getParticipant().getParticipantId().equals(model.getRemotePlayer().getParticipant().getParticipantId())) {
+                this.chessGameRoomUI.getChessboardController().resignGameForBlack();            
+            } else {
+                this.chessGameRoomUI.getChessboardController().resignGameForWhite();
+            }                        
+            
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" has lost by disconect!");   
+        }
+        else{
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getParticipant().getDisplayName() +" left the room!");            
+        }                           
+    }
+    
     @Override
     public void onException(String message) {
         Log.d(TAG, "onException :: message" + message);
@@ -237,4 +257,5 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
 
     }
 
+   
 }

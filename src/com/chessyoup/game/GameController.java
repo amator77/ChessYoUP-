@@ -43,7 +43,11 @@ public abstract class GameController {
 	
 	public abstract void initialize(Activity activity,GameHelperListener listener);
 	
-	public void createRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String remotePlayer, int gameVariant){	    
+	private RoomUpdateListener roomUpdatelistener;
+	
+	private RoomStatusUpdateListener roomStatusUpdateListener;
+	
+	public void createRoom(String remotePlayer, int gameVariant){	    
         RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(roomUpdatelistener);
         rtmConfigBuilder.addPlayersToInvite(new String[] {remotePlayer});
         rtmConfigBuilder.setVariant(gameVariant);
@@ -52,7 +56,7 @@ public abstract class GameController {
         mHelper.getGamesClient().createRoom(rtmConfigBuilder.build());        
 	}
 	
-	public void joinRoom(RoomUpdateListener roomUpdatelistener,RoomStatusUpdateListener roomStatusUpdateListener,String invitationId){
+	public void joinRoom(String invitationId){
 	    RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(roomUpdatelistener);
         roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeGame).setRoomStatusUpdateListener(roomStatusUpdateListener);        
         getGamesClient().joinRoom(roomConfigBuilder.build());
@@ -60,7 +64,7 @@ public abstract class GameController {
 	
 	public void leaveRoom(String roomId){
 	    Log.d(mDebugTag, "leaveRoom ::"+roomId);	    
-//        mHelper.getGamesClient().leaveRoom(roomUpdatelistener, roomId);
+        mHelper.getGamesClient().leaveRoom(roomUpdatelistener, roomId);
     }
 	
 	public void showAlert(String title, String message) {
@@ -78,8 +82,24 @@ public abstract class GameController {
             mHelper.enableDebugLog(enabled, tag);
         }
     }
+	
+	public RoomUpdateListener getRoomUpdatelistener() {
+        return roomUpdatelistener;
+    }
 
-	public void reconnectClients(int whichClients) {
+    public void setRoomUpdatelistener(RoomUpdateListener roomUpdatelistener) {
+        this.roomUpdatelistener = roomUpdatelistener;
+    }
+
+    public RoomStatusUpdateListener getRoomStatusUpdateListener() {
+        return roomStatusUpdateListener;
+    }
+
+    public void setRoomStatusUpdateListener(RoomStatusUpdateListener roomStatusUpdateListener) {
+        this.roomStatusUpdateListener = roomStatusUpdateListener;
+    }
+
+    public void reconnectClients(int whichClients) {
         mHelper.reconnectClients(whichClients);
     }
 

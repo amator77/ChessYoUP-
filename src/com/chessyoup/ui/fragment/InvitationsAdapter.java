@@ -21,7 +21,7 @@ import com.google.android.gms.games.multiplayer.Invitation;
 
 public class InvitationsAdapter extends BaseAdapter {
     
-    private List<Invitation> challenges;
+    private List<Invitation> invitations;
     
     private LayoutInflater layoutInflater;
     
@@ -38,33 +38,33 @@ public class InvitationsAdapter extends BaseAdapter {
     
     public InvitationsAdapter(Context context){
         this.context = context;
-        this.challenges = new LinkedList<Invitation>();
+        this.invitations = new LinkedList<Invitation>();
         this.layoutInflater = LayoutInflater.from(context);
     }
     
-    public void addChallenge(Invitation challenge) {
-        this.challenges.add(challenge);        
+    public void addInvitation(Invitation challenge) {
+        this.invitations.add(challenge);        
         this.notifyDataSetChanged();
     }
     
-    public void removeChallenge(Invitation challenge) {
-        this.challenges.remove(challenge);        
+    public void removeInvitation(Invitation invitation) {
+        this.invitations.remove(invitation);        
         this.notifyDataSetChanged();
     }
     
     @Override
     public int getCount() {
-        return this.challenges.size();
+        return this.invitations.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return this.challenges.get(position);
+        return this.invitations.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-        return this.challenges.get(position).getCreationTimestamp();
+        return this.invitations.get(position).getCreationTimestamp();
     }
 
     @Override
@@ -85,26 +85,34 @@ public class InvitationsAdapter extends BaseAdapter {
             holder = (ItemViewHolder) convertView.getTag();
         }
 
-        Invitation challenge = (Invitation)getItem(position);
+        Invitation invitation = (Invitation)getItem(position);
                                 
-        if (challenge.getInviter().getIconImageUri() != null) {
-            ImageManager.create(this.context).loadImage(holder.contactAvatar, challenge.getInviter().getIconImageUri());
+        if (invitation.getInviter().getIconImageUri() != null) {
+            ImageManager.create(this.context).loadImage(holder.contactAvatar, invitation.getInviter().getIconImageUri());
         }
         
-        holder.challangeDetails.setText( getInvitationDetails(challenge));
+        holder.challangeDetails.setText( getInvitationDetails(invitation));
                                 
         return convertView;
     }
 
-    private CharSequence getInvitationDetails(Invitation challenge) {
-        
+    private CharSequence getInvitationDetails(Invitation invitation) {
+                
         StringBuffer sb = new StringBuffer();
-        sb.append(challenge.getInviter().getDisplayName()).append("\n");
-        ChessGameVariant gv = Util.getGameVariant(challenge.getVariant());
+        sb.append(invitation.getInviter().getDisplayName()).append("\n");
+        ChessGameVariant gv = Util.getGameVariant(invitation.getVariant());
         sb.append( gv.isRated() ? "Rated Game ," : "Frednly Game").append(" ");
         sb.append(gv.getTime()).append("'+").append(gv.getIncrement()).append("''");
         
         return sb.toString();
+    }
+
+    public void removeChallenge(String invitationId) {
+        for(Invitation inv : invitations){
+            if( inv.getInvitationId().equals(invitationId) ){
+                removeInvitation(inv);
+            }
+        }        
     }
     
 }

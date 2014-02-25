@@ -1,5 +1,7 @@
 package com.chessyoup.ui.fragment;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -20,7 +22,9 @@ public class IncomingInvitationsFragment extends Fragment {
     
     private Invitation selectedInvitation;
     
-    private Runnable onInvitationSelected;
+    private Runnable onInvitationAccepted;
+    
+    private Runnable onInvitationRejectd;
     
     public IncomingInvitationsFragment(){
     }
@@ -34,7 +38,7 @@ public class IncomingInvitationsFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, 
+    public View onCreateView(LayoutInflater inflater,final ViewGroup container, 
         Bundle savedInstanceState) {
         
         View view = inflater.inflate(R.layout.incoming, container, false);
@@ -48,9 +52,39 @@ public class IncomingInvitationsFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view,
                     int position, long id) {
                 selectedInvitation = (Invitation)invitationsAdapter.getItem(position);
+                
+                if (selectedInvitation != null) {
 
-                if (onInvitationSelected != null) {
-                    onInvitationSelected.run();                  
+                    AlertDialog.Builder builder = new AlertDialog.Builder(container.getContext());
+                    builder.setTitle("Cancel Invitation");
+                    builder.setItems(new String[] {"Accept", "Reject","Ignore"}, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int item) {
+                            switch (item) {
+                                case 0:
+                                    if (onInvitationAccepted != null) {
+                                        onInvitationAccepted.run();
+                                    }
+                                    dialog.dismiss();
+                                    break;
+                                case 1:
+                                    if (onInvitationRejectd != null) {
+                                        onInvitationRejectd.run();
+                                    }
+                                    dialog.dismiss();
+                                    break;  
+                                default:
+                                    dialog.dismiss();
+                                    break;
+                            }
+                        }
+                    });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
+                
+                if (onInvitationAccepted != null) {
+                    onInvitationAccepted.run();                  
                 }
             }
         });
@@ -60,5 +94,21 @@ public class IncomingInvitationsFragment extends Fragment {
 
     public Invitation getSelectedInvitation() {
         return selectedInvitation;
+    }
+
+    public Runnable getOnInvitationAccepted() {
+        return onInvitationAccepted;
+    }
+
+    public void setOnInvitationAccepted(Runnable onInvitationAccepted) {
+        this.onInvitationAccepted = onInvitationAccepted;
+    }
+
+    public Runnable getOnInvitationRejectd() {
+        return onInvitationRejectd;
+    }
+
+    public void setOnInvitationRejectd(Runnable onInvitationRejectd) {
+        this.onInvitationRejectd = onInvitationRejectd;
     }
 }

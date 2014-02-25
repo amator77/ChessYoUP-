@@ -54,6 +54,8 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
 
         public void onAbortRecevied();
 
+        public void onExitRecevied();
+        
         public void onException(String message);
 
         public void onChatReceived(String message);
@@ -200,7 +202,13 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
     public void abort() {
         this.sendChessGameMessage(ABORT, null);
     }
-
+    
+    public void remoteLeft(){
+        if( this.listener != null ){
+            this.listener.onExitRecevied();
+        }
+    }
+    
     private void sendChessGameMessage(byte command, String jsonPayload) {
 
         Log.d(TAG, "sendChessGameMessage :: command :" + command + " json :" + jsonPayload);

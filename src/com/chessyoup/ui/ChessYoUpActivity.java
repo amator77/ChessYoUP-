@@ -21,23 +21,22 @@ import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGamePlayer;
-import com.chessyoup.game.chess.ChessGameVariant;
+import com.chessyoup.ui.ctrl.RoomController;
 import com.chessyoup.ui.dialogs.NewGameDialog;
 import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
 import com.chessyoup.ui.fragment.FragmentAdapter;
 import com.chessyoup.ui.fragment.IncomingInvitationsFragment;
 import com.chessyoup.ui.fragment.InvitationsAdapter;
 import com.chessyoup.ui.fragment.OutgoingInvitationFragment;
+import com.chessyoup.ui.fragment.RoomsAdapter;
 import com.google.android.gms.appstate.AppStateClient;
 import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
-import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 
-public class ChessYoUpActivity extends FragmentActivity implements
-		View.OnClickListener, OnInvitationReceivedListener,
-		NewGameDialogListener, OnStateLoadedListener , GameHelperListener{
+public class ChessYoUpActivity extends FragmentActivity implements View.OnClickListener,
+		NewGameDialogListener, OnStateLoadedListener , GameHelperListener {
 
 	private final static String TAG = "ChessYoUpActivity";
 	private final static int RC_SELECT_PLAYERS = 10000;
@@ -63,7 +62,15 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	private Invitation incomingInvitationId;
 	
 	private InvitationsAdapter invitationsAdapter;
-
+	
+	private RoomsAdapter roomsAdapter;
+	
+	private RoomController roomController;
+	
+	private OutgoingInvitationFragment outgoingFragment; 
+	
+	private IncomingInvitationsFragment incomingFragment; 
+	
 	// *********************************************************************
 	// *********************************************************************
 	// Activity methods
@@ -73,22 +80,56 @@ public class ChessYoUpActivity extends FragmentActivity implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {	    	    
 		super.onCreate(savedInstanceState);
-		chessGameController = ChessGameController.getController(); 
-        ChessGameController.getController().initialize(this, this);
 		setContentView(R.layout.activity_main);
 		findViewById(R.id.button_sign_in).setOnClickListener(this);
+		roomController = new RoomController(this);
+		chessGameController = ChessGameController.getController(); 
+        ChessGameController.getController().initialize(this, this);
+        ChessGameController.getController().setRoomStatusUpdateListener(roomController);
+        ChessGameController.getController().setRoomUpdatelistener(roomController);				
 		adapter = new FragmentAdapter(this.getSupportFragmentManager());
 		invitationsAdapter = new InvitationsAdapter(getApplicationContext());
-		IncomingInvitationsFragment incomingFragment = new IncomingInvitationsFragment();
+		this.roomsAdapter = new RoomsAdapter(getApplicationContext());
+		incomingFragment = new IncomingInvitationsFragment();
 		incomingFragment.setInvitationsAdapter(invitationsAdapter);
-		OutgoingInvitationFragment outgoingFragment = new OutgoingInvitationFragment();
+		outgoingFragment = new OutgoingInvitationFragment();
+		outgoingFragment.setRoomsAdapter(roomsAdapter);
 		adapter.addFragment(incomingFragment);
 		adapter.addFragment(outgoingFragment);
 		viewPager = (ViewPager) findViewById(R.id.main_pager);
         viewPager.setAdapter(adapter);
+        installListeners();               
 	}
 	
-	@Override
+	private void installListeners() {
+	    outgoingFragment.setOnRoomCanceled(new Runnable() {
+            
+            @Override
+            public void run() {                
+                ChessGameController.getController().leaveRoom(outgoingFragment.getSelectedRoom().getRoomId());                
+            }
+        });
+	    
+	    incomingFragment.setOnInvitationAccepted(new Runnable() {
+            
+            @Override
+            public void run() {
+                // TODO Auto-generated method stub
+                
+            }
+        });
+	    
+	    incomingFragment.setOnInvitationRejectd(new Runnable() {
+            
+            @Override
+            public void run() {
+                ChessGameController.getController().getGamesClient().declineRoomInvitation(incomingFragment.getSelectedInvitation().getInvitationId());                
+            }
+        });
+    }
+	
+
+    @Override
 	public void onStart() {		
 		super.onStart();
 		chessGameController.start();
@@ -149,7 +190,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
     }
 
     private void handleInviteActiom() {        
-        Intent intent = chessGameController.getGamesClient().getSelectPlayersIntent(2, 2);        
+        Intent intent = chessGameController.getGamesClient().getSelectPlayersIntent(1, 1);        
         startActivityForResult(intent, RC_SELECT_PLAYERS);
     }
 
@@ -243,14 +284,24 @@ public class ChessYoUpActivity extends FragmentActivity implements
 //		}
 		return super.onKeyDown(keyCode, e);
 	}
-
+	
+	
+	
 	// *********************************************************************
 	// *********************************************************************
 	// GameHelperListener methods
 	// *********************************************************************
 	// *********************************************************************
 
-	@Override
+	public InvitationsAdapter getInvitationsAdapter() {
+        return invitationsAdapter;
+    }
+
+    public RoomsAdapter getRoomsAdapter() {
+        return roomsAdapter;
+    }
+
+    @Override
 	public void onSignInFailed() {
 		Log.d(TAG, "Sign-in failed.");
 		switchToScreen(R.id.screen_sign_in);
@@ -261,7 +312,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		Log.d(TAG, "Sign-in succeeded.");
 
 		chessGameController.getAppStateClient().loadState(this, 0);
-		chessGameController.getGamesClient().registerInvitationListener(this);
+		chessGameController.getGamesClient().registerInvitationListener(this.roomController);
 		Invitation invitation = chessGameController.getInvitation();
 		
 		if (invitation != null) {
@@ -270,32 +321,6 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		}
 		
 		switchToMainScreen();
-	}
-
-	// *********************************************************************
-	// OnInvitationReceivedListener methods
-	// *********************************************************************
-
-	@Override
-	public void onInvitationReceived(Invitation invitation) {
-		Log.d(TAG, "onInvitationReceived :: " + invitation.toString());
-		this.incomingInvitationId = invitation;		
-		
-		
-		
-		switchToScreen(mCurScreen);
-	}
-
-	private String getInviationDisplayInfo(Invitation invitation) {
-		StringBuffer sb = new StringBuffer();
-		ChessGameVariant gv = Util.getGameVariant(invitation.getVariant());
-
-		sb.append(invitation.getInviter().getDisplayName()).append(" ")
-				.append(getString(R.string.is_inviting_you));
-		sb.append(" to play an ").append(gv.getTime()).append("'")
-				.append(gv.getIncrement()).append("'' game!");
-
-		return sb.toString();
 	}
 
 	// *********************************************************************
@@ -559,13 +584,15 @@ public class ChessYoUpActivity extends FragmentActivity implements
 						.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
 				Log.d(TAG, "Invitee count: " + invitees.size());
 				Log.d(TAG, "Invitee: " + invitees.toString());
-
-				Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
-						ChessOnlinePlayGameUI.class);
-				chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, invitees.get(0));
-				chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, gameVariant);
-				chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, true);
-				startActivity(chessRoomUIIntent);				
+				
+				ChessGameController.getController().createRoom(invitees.get(0), gameVariant);
+//				
+//				Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
+//						ChessOnlinePlayGameUI.class);
+//				chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, invitees.get(0));
+//				chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, gameVariant);
+//				chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, true);
+//				startActivity(chessRoomUIIntent);				
 			}
 		});
 
@@ -640,9 +667,7 @@ public class ChessYoUpActivity extends FragmentActivity implements
 		 chessGameController.getGamesClient().getCurrentPlayer().getIconImageUri());
 	}
 
-	@Override
-	public void onInvitationRemoved(String invitationId) {
-		// TODO Auto-generated method stub
-		this.incomingInvitationId = null;		
-	}
+    public void setSelectedTab(int i) {
+        this.viewPager.setCurrentItem(i);        
+    }
 }

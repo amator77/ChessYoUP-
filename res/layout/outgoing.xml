@@ -5,13 +5,22 @@
     >
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/outgoingView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:text="Outgoing invitations"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        />
+	
+     <ListView
+        android:id="@+id/roomsListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/outgoingView1" >
 
+    </ListView>
+    
 </RelativeLayout>

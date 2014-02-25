@@ -5,26 +5,24 @@ import java.util.List;
 import android.util.Log;
 
 import com.chessyoup.R;
-import com.chessyoup.game.GameModel;
-import com.chessyoup.game.GamePlayer;
-import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGameController;
-import com.chessyoup.ui.ChessOnlinePlayGameUI;
+import com.chessyoup.ui.ChessYoUpActivity;
 import com.google.android.gms.games.GamesClient;
-import com.google.android.gms.games.multiplayer.Participant;
+import com.google.android.gms.games.multiplayer.Invitation;
+import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 
 public class RoomController implements RoomUpdateListener,
-		RoomStatusUpdateListener {
+		RoomStatusUpdateListener , OnInvitationReceivedListener {
 
 	private final static String TAG = "RoomController";
 
-	private ChessOnlinePlayGameUI chessGameRoomUI;
+	private ChessYoUpActivity chessYoUpActivity;
 
-	public RoomController(ChessOnlinePlayGameUI chessGameRoomUI) {
-		this.chessGameRoomUI = chessGameRoomUI;		
+	public RoomController(ChessYoUpActivity chessYoUpActivity) {
+		this.chessYoUpActivity = chessYoUpActivity;		
 	}
 
 	@Override
@@ -36,6 +34,7 @@ public class RoomController implements RoomUpdateListener,
 	@Override
 	public void onLeftRoom(int statusCode, String roomId) {
 		Log.d(TAG, "onLeftRoom :: statusCode="+statusCode+", roomdId="+roomId);
+		chessYoUpActivity.getRoomsAdapter().removeRoom(roomId);
 	}
 
 	@Override
@@ -45,32 +44,11 @@ public class RoomController implements RoomUpdateListener,
 				
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomConnected, status " + statusCode);
-			ChessGameController.getController().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
+			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
 			return;
 		}
 		
-		GameModel gameModel = chessGameRoomUI.getGameModel();
-		ChessGameController.getController().getRealTimeGameClient().setRoom(room);
-		ChessGameController.getController().getRealTimeGameClient().setListener(this.chessGameRoomUI.getRealTimeChessGameController());        
-        gameModel.setRoom(room);
-		
-		for (Participant p : room.getParticipants()) {
-			
-			if(p.getParticipantId().equals(room.getCreatorId())){
-			    ChessGameController.getController().getLocalPlayer().setParticipant(p);
-			}	
-			else{
-				GamePlayer remotePlayer = new GamePlayer();
-				remotePlayer.setParticipant(p);
-				gameModel.setRemotePlayer(remotePlayer);
-				
-				if( gameModel.getGameVariant() == null ){
-    				gameModel.setGameVariant(Util.getGameVariant(room.getVariant()));
-				}
-			}
-		}
-		
-//		ChessGameController.getController().getRealTimeGameClient().ready();	
+		//TODO start game activity		
 	}
 
 	@Override
@@ -80,14 +58,12 @@ public class RoomController implements RoomUpdateListener,
 						
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
-			ChessGameController.getController().showGameError(chessGameRoomUI.getString(R.string.error), chessGameRoomUI.getString(R.string.game_problem));			
+			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
 			return;
 		}		
-				
-		if( room != null ){ 
-//		    GameController.getInstance().getRealTimeChessGame().setRoom(room);
-		    chessGameRoomUI.getGameModel().setRoom(room);
-		}
+		
+		chessYoUpActivity.setSelectedTab(1);
+		chessYoUpActivity.getRoomsAdapter().addRoom(room);		
 	}
 
 	@Override
@@ -131,11 +107,11 @@ public class RoomController implements RoomUpdateListener,
 	}
 
 	@Override
-	public void onPeerLeft(Room arg0, List<String> arg1) {
+	public void onPeerLeft(Room room, List<String> arg1) {
 		Log.d(TAG, "onPeerLeft :: "+arg1);
-		printRoom(arg0);
-		
-		chessGameRoomUI.remotePlayerLeft();
+		printRoom(room);
+				 
+		ChessGameController.getController().getRealTimeGameClient().remoteLeft();						
 	}
 
 	@Override
@@ -160,17 +136,28 @@ public class RoomController implements RoomUpdateListener,
 	public void onRoomConnecting(Room room) {
 		Log.d(TAG, "onRoomConnecting");
 		printRoom(room);
-	}
+	}	
+	
+    @Override
+    public void onInvitationReceived(Invitation invitation) {
+        chessYoUpActivity.setSelectedTab(0);
+        chessYoUpActivity.getInvitationsAdapter().addInvitation(invitation);      
+    }
 
-	private void printRoom(Room room) {
-	    if( room != null){
-		Log.d(TAG,
-				" Room : id=" + room.getRoomId() + ",creator="
-						+ room.getCreatorId() + ",status=" + room.getStatus()
-						+ ",variant=" + room.getVariant() + ",participants="+room.getParticipantIds());
-	    }
-	    else{
-	        Log.d(TAG,"Room :: "+null);
-	    }
-	}
+    @Override
+    public void onInvitationRemoved(String invitationId) {
+        chessYoUpActivity.getInvitationsAdapter().removeChallenge(invitationId);
+    }
+    
+    private void printRoom(Room room) {
+        if( room != null){
+        Log.d(TAG,
+                " Room : id=" + room.getRoomId() + ",creator="
+                        + room.getCreatorId() + ",status=" + room.getStatus()
+                        + ",variant=" + room.getVariant() + ",participants="+room.getParticipantIds());
+        }
+        else{
+            Log.d(TAG,"Room :: "+null);
+        }
+    }
 }
