@@ -107,7 +107,7 @@ public class InvitationsAdapter extends BaseAdapter {
         return sb.toString();
     }
 
-    public void removeChallenge(String invitationId) {
+    public void removeInvitation(String invitationId) {
         for(Invitation inv : invitations){
             if( inv.getInvitationId().equals(invitationId) ){
                 removeInvitation(inv);

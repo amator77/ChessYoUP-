@@ -56,9 +56,10 @@ public class IncomingInvitationsFragment extends Fragment {
                 if (selectedInvitation != null) {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(container.getContext());
-                    builder.setTitle("Cancel Invitation");
+                    builder.setTitle("Invitation");
                     builder.setItems(new String[] {"Accept", "Reject","Ignore"}, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int item) {
+                           
                             switch (item) {
                                 case 0:
                                     if (onInvitationAccepted != null) {
@@ -81,10 +82,6 @@ public class IncomingInvitationsFragment extends Fragment {
 
                     AlertDialog alert = builder.create();
                     alert.show();
-                }
-                
-                if (onInvitationAccepted != null) {
-                    onInvitationAccepted.run();                  
                 }
             }
         });

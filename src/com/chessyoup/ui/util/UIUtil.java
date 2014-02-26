@@ -6,6 +6,7 @@ import com.chessyoup.game.view.ChessTableUI;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.widget.Toast;
 
 public class UIUtil {
     public static String timeToString(int time) {
@@ -54,5 +55,9 @@ public class UIUtil {
         ad.setCancelable(true);
         ad.setCanceledOnTouchOutside(true);
         return ad;
+    }
+    
+    public static void displayShortMessage(Context context, String string) {
+        Toast.makeText(context, string, Toast.LENGTH_SHORT).show();
     }
 }

@@ -7,6 +7,7 @@ import android.app.Activity;
 
 import com.chessyoup.game.GameController;
 import com.chessyoup.game.GameHelper;
+import com.chessyoup.game.Util;
 import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 
@@ -44,10 +45,11 @@ public class ChessGameController extends GameController {
         return (ChessRealTimeGameClient)this.realTimeGame;
     }
     
-    public ChessGameModel newChessGameModel(Room gameRoom, ChessGamePlayer remotePlayer , ChessGameVariant gameVariant , boolean isOwner){
+    public ChessGameModel newChessGameModel(Room gameRoom, ChessGamePlayer remotePlayer , boolean isOwner){
         ChessGameModel model = new ChessGameModel();
+        ChessGameVariant gameVariant = Util.getGameVariant(gameRoom.getVariant());
         model.setRoom(gameRoom);
-        model.setRemotePlayer(remotePlayer);
+        model.setRemotePlayer(remotePlayer);        
         model.setGameVariant(gameVariant);
         model.setLocalPlayerOwner(isOwner);
         

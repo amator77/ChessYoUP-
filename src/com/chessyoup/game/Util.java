@@ -4,22 +4,74 @@ import org.goochjs.glicko2.Rating;
 import org.goochjs.glicko2.RatingCalculator;
 import org.goochjs.glicko2.RatingPeriodResults;
 
+import com.chessyoup.game.chess.ChessGamePlayer;
 import com.chessyoup.game.chess.ChessGameVariant;
 
 public class Util {
 	
+    public static long TOP_RATING_BASE = 1500;
+    public static long LOW_RATING_BASE = 2000000000;
+    public static long DEFAULT_RATING_DEVIATION = 150;
+    public static long DEFAULT_RATING_VOLATILITY = 0;
+    
 	public static RatingCalculator ratingSystem = new RatingCalculator(0.06, 0.5);
 	
-	public static final void computeRatingOnResult(Rating winner, Rating loser ){				
-		RatingPeriodResults results = new RatingPeriodResults();
-		results.addResult(winner, loser);
-		ratingSystem.updateRatings(results);
-	}
+	public static final void updateRatingsOnResult(ChessGamePlayer winner, ChessGamePlayer louser ){                      
+        Rating winnerRating = getRating(winner);
+        Rating louserRating = getRating(louser);
+        RatingPeriodResults results = new RatingPeriodResults();
+        results.addResult(winnerRating, louserRating);
+        ratingSystem.updateRatings(results);        
+        int winnerGain =  (int)winnerRating.getRating() - winner.getRating();
+        int louserLoss = louser.getRating() - (int)louser.getRating();
+        winner.setTopScore(winner.getTopScore()+winnerGain);                
+        winner.setRatingDeviation(winnerRating.getRatingDeviation());
+        winner.setVolatility(winnerRating.getVolatility());
+        winner.setRatingChange(winnerGain);
+        
+        louser.setLowScore(louser.getLowScore()-louserLoss);
+        louser.setRatingDeviation(louserRating.getRatingDeviation());
+        louser.setVolatility(louserRating.getVolatility());      
+        louser.setRatingChange(louserLoss);
+    }
 	
-	public static final void computeRatingOnDraw(Rating player1, Rating player2 ){				
-		RatingPeriodResults results = new RatingPeriodResults();
-		results.addDraw(player1, player2);
-		ratingSystem.updateRatings(results);
+	public static final void updateRatingsOnDraw(ChessGamePlayer whitePlayer, ChessGamePlayer blackPlayer ){
+	    Rating whiteRating = getRating(whitePlayer);
+        Rating blackRating = getRating(blackPlayer);
+        RatingPeriodResults results = new RatingPeriodResults();
+        results.addDraw(whiteRating, blackRating);
+        ratingSystem.updateRatings(results);        
+        int whiteDiff =  (int)whiteRating.getRating() - whitePlayer.getRating();
+        int blackDiff = blackPlayer.getRating() - (int)blackRating.getRating();
+        
+        if( whiteDiff > 0 ){
+            whitePlayer.setTopScore(whitePlayer.getTopScore()+whiteDiff);
+        }
+        else{
+            whitePlayer.setLowScore(whitePlayer.getLowScore()-whiteDiff);
+        }
+        
+        whitePlayer.setRatingChange(whiteDiff);
+        whitePlayer.setRatingDeviation(whiteRating.getRatingDeviation());
+        whitePlayer.setVolatility(whiteRating.getVolatility());
+        
+        if( blackDiff > 0 ){
+            blackPlayer.setTopScore(blackPlayer.getTopScore()+blackDiff);
+        }
+        else{
+            blackPlayer.setLowScore(blackPlayer.getLowScore()-blackDiff);
+        }
+        
+        blackPlayer.setRatingChange(blackDiff);
+        blackPlayer.setRatingDeviation(blackRating.getRatingDeviation());
+        blackPlayer.setVolatility(blackRating.getVolatility());
+	}	
+	
+	public static final int computeRating(long topScore,long lowScore){	    
+	    long gainedPoints = topScore - TOP_RATING_BASE;
+	    long lostPoints = LOW_RATING_BASE - lowScore;
+	    long netPoints = gainedPoints - lostPoints;	    
+	    return (int)(TOP_RATING_BASE + netPoints);
 	}
 	
 	/**
@@ -90,9 +142,13 @@ public class Util {
 		
 		return sb.append(value).toString();
 	}
-
-	public static void showGameError() {
-		// TODO Auto-generated method stub
-		
+	
+	private static Rating getRating(ChessGamePlayer player){
+	    Rating rating = new Rating(player.getPlayer().getPlayerId(), ratingSystem);
+        rating.setRating(player.getRating());
+        rating.setRatingDeviation(player.getRatingDeviation());
+        rating.setVolatility(player.getVolatility());        
+        
+        return rating;
 	}
 }

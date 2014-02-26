@@ -453,33 +453,33 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
         }
     }
 
-    class GameStartData {
-        String remotePlayer;
-        boolean isChallanger;
-        String invitationId;
-        int gameVariant;
-    }
+//    class GameStartData {
+//        String remotePlayer;
+//        boolean isChallanger;
+//        String invitationId;
+//        int gameVariant;
+//    }
 
-    public GameStartData getRoomStartState(Bundle savedInstanceState) {
-        GameStartData data = new GameStartData();
-
-        if (savedInstanceState != null) {
-            // TODO restore from saved state
-            return null;
-        } else {
-            Intent intent = getIntent();
-            data.remotePlayer = intent.getStringExtra(ChessYoUpActivity.REMOTE_PLAYER_EXTRA);
-
-            if (data.remotePlayer != null) {
-                data.isChallanger = intent.getBooleanExtra(ChessYoUpActivity.IS_CHALANGER_EXTRA, false);
-                data.gameVariant = intent.getIntExtra(ChessYoUpActivity.GAME_VARIANT_EXTRA, 0);
-                data.invitationId = intent.getStringExtra(ChessYoUpActivity.INVITATION_ID_EXTRA);
-                return data;
-            } else {
-                return null;
-            }
-        }
-    }
+//    public GameStartData getRoomStartState(Bundle savedInstanceState) {
+//        GameStartData data = new GameStartData();
+//
+//        if (savedInstanceState != null) {
+//            // TODO restore from saved state
+//            return null;
+//        } else {
+//            Intent intent = getIntent();
+//            data.remotePlayer = intent.getStringExtra(ChessYoUpActivity.REMOTE_PLAYER_EXTRA);
+//
+//            if (data.remotePlayer != null) {
+//                data.isChallanger = intent.getBooleanExtra(ChessYoUpActivity.IS_CHALANGER_EXTRA, false);
+//                data.gameVariant = intent.getIntExtra(ChessYoUpActivity.GAME_VARIANT_EXTRA, 0);
+//                data.invitationId = intent.getStringExtra(ChessYoUpActivity.INVITATION_ID_EXTRA);
+//                return data;
+//            } else {
+//                return null;
+//            }
+//        }
+//    }
 
     public RealTimeChessGameController getRealTimeChessGameController() {
         return roomGameController;

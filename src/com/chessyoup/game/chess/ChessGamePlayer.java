@@ -4,12 +4,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.chessyoup.game.GamePlayer;
+import com.chessyoup.game.Util;
 
 public class ChessGamePlayer extends GamePlayer {
     
-    private double topRating;
+    private long topScore;
     
-    private double rating;
+    private long lowScore;
+    
+    private double liveRating;
     
     private double ratingDeviation;
     
@@ -21,24 +24,20 @@ public class ChessGamePlayer extends GamePlayer {
 
     private int loses;
     
-    private long rank;
-    
-    public ChessGamePlayer(){
-        this.rating = 1500;
-        this.ratingDeviation = 150;
-        this.volatility = 0;
+    private int ratingChange;
+        
+    public ChessGamePlayer(){  
+        this.topScore = Util.TOP_RATING_BASE;
+        this.lowScore = Util.LOW_RATING_BASE;
+        this.ratingDeviation = Util.DEFAULT_RATING_DEVIATION;        
+        this.volatility = Util.DEFAULT_RATING_DEVIATION;
         this.wins = 0;
         this.draws = 0;
         this.loses = 0;
-        this.rank = 0;
     }
     
-    public double getRating() {
-        return rating;
-    }
-
-    public void setRating(double rating) {
-        this.rating = rating;
+    public int getRating() {
+        return Util.computeRating(topScore, lowScore);
     }
 
     public double getRatingDeviation() {
@@ -80,28 +79,11 @@ public class ChessGamePlayer extends GamePlayer {
     public void setLoses(int loses) {
         this.loses = loses;
     }
-    
-    public long getRank() {
-        return rank;
-    }
-
-    public void setRank(long rank) {
-        this.rank = rank;
-    }
-    
-    public double getTopRating() {
-        return topRating;
-    }
-
-    public void setTopRating(double topRating) {
-        this.topRating = topRating;
-    }
 
     public void updateFromJSON(String jsonString) {
 
         try {
-            JSONObject json = new JSONObject(jsonString);
-            this.rating = json.getDouble("elo");
+            JSONObject json = new JSONObject(jsonString);            
             this.ratingDeviation = json.getDouble("rd");
             this.volatility = json.getDouble("vol");
             this.wins = json.getInt("wins");
@@ -111,12 +93,28 @@ public class ChessGamePlayer extends GamePlayer {
             e.printStackTrace();
         }
     }
+    
+    public long getTopScore() {
+        return topScore;
+    }
+
+    public void setTopScore(long topScore) {
+        this.topScore = topScore;
+    }
+
+    public long getLowScore() {
+        return lowScore;
+    }
+
+    public void setLowScore(long lowScore) {
+        this.lowScore = lowScore;
+    }
 
     public String toJSON() {
         JSONObject json = new JSONObject();
 
         try {
-            json.put("elo", this.rating);
+            json.put("elo", this.getRating());
             json.put("rd", this.ratingDeviation);
             json.put("vol", this.volatility);
             json.put("wins", this.wins);
@@ -128,4 +126,28 @@ public class ChessGamePlayer extends GamePlayer {
             return toString();
         }
     }
+
+    public void setLiveRating(double liveRating) {
+        this.liveRating = liveRating;        
+    }
+
+    public double getLiveRating() {
+        return liveRating;
+    }
+
+    
+    
+    public int getRatingChange() {
+        return ratingChange;
+    }
+
+    public void setRatingChange(int ratingChange) {
+        this.ratingChange = ratingChange;
+    }
+
+    @Override
+    public String toString() {
+        return "ChessGamePlayer [topScore=" + topScore + ", lowScore=" + lowScore + ", liveRating=" + liveRating + ", ratingDeviation=" + ratingDeviation + ", volatility=" + volatility + ", wins="
+                        + wins + ", draws=" + draws + ", loses=" + loses + ", ratingChange=" + ratingChange + "]";
+    }  
 }

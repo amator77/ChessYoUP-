@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_id">1043629825001</string>   
+
+    <string name="app_id">1043629825001</string>
+    <string name="achievement_pawn">CgkI6be96a8eEAIQBA</string>
+    <string name="achievement_knight">CgkI6be96a8eEAIQBQ</string>
+    <string name="achievement_bishop">CgkI6be96a8eEAIQBg</string>
+    <string name="achievement_rook">CgkI6be96a8eEAIQBw</string>
+    <string name="achievement_queen">CgkI6be96a8eEAIQCA</string>
+    <string name="achievement_king">CgkI6be96a8eEAIQCQ</string>
+    <string name="leaderboard_top_rating">CgkI6be96a8eEAIQAg</string>
+    <string name="leaderboard_low_rating">CgkI6be96a8eEAIQCg</string>	
+	
 </resources>

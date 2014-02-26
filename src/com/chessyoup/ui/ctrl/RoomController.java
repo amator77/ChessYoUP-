@@ -2,14 +2,20 @@ package com.chessyoup.ui.ctrl;
 
 import java.util.List;
 
+import android.content.Intent;
 import android.util.Log;
 
 import com.chessyoup.R;
+import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGameController;
+import com.chessyoup.game.chess.ChessGamePlayer;
+import com.chessyoup.ui.ChessOnlinePlayGameUI;
 import com.chessyoup.ui.ChessYoUpActivity;
+import com.chessyoup.ui.util.UIUtil;
 import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
+import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
@@ -38,7 +44,8 @@ public class RoomController implements RoomUpdateListener,
 	}
 
 	@Override
-	public void onRoomConnected(int statusCode, Room room) {		
+	public void onRoomConnected(int statusCode, Room room) {
+	    
 		Log.d(TAG, "onRoomConnected :: statusCode="+statusCode+",");
 		printRoom(room);
 				
@@ -47,15 +54,20 @@ public class RoomController implements RoomUpdateListener,
 			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
 			return;
 		}
-		
-		//TODO start game activity		
+				
+		ChessGameController.getController().getRealTimeGameClient().setRoom(room);
+		ChessGameController.getController().newChessGameModel(room, getRemotePlayer(room), isLocalPlayerRoomCreator(room));
+		Intent chessRoomUIIntent = new Intent(chessYoUpActivity, ChessOnlinePlayGameUI.class);
+        chessRoomUIIntent.putExtra(ChessYoUpActivity.ROOM_ID_EXTRA, room.getRoomId());        
+        chessYoUpActivity.startActivity(chessRoomUIIntent);
 	}
 
-	@Override
+    @Override
 	public void onRoomCreated(int statusCode, Room room) {
 		Log.d(TAG, "onRoomCreated :: statusCode="+statusCode+",");
 		printRoom(room);
-						
+		System.out.println(room.getCreatorId());				
+		
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
 			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
@@ -89,9 +101,20 @@ public class RoomController implements RoomUpdateListener,
 	}
 
 	@Override
-	public void onPeerDeclined(Room arg0, List<String> arg1) {
+	public void onPeerDeclined(Room room, List<String> arg1) {
 		Log.d(TAG, "onPeerDeclined :: "+arg1);
-		printRoom(arg0);
+		printRoom(room);
+						
+		chessYoUpActivity.getRoomsAdapter().removeRoom(room);
+		
+		for(String pid : arg1){
+		    for(Participant p : room.getParticipants()){
+		        if(p.getParticipantId().equals(pid)){
+		            UIUtil.displayShortMessage(chessYoUpActivity, p.getDisplayName()+" reject your invitation!");
+		            return;
+		        }
+		    }
+		}				
 	}
 
 	@Override
@@ -140,13 +163,15 @@ public class RoomController implements RoomUpdateListener,
 	
     @Override
     public void onInvitationReceived(Invitation invitation) {
+        Log.d(TAG, "onInvitationReceived :: "+invitation);
         chessYoUpActivity.setSelectedTab(0);
         chessYoUpActivity.getInvitationsAdapter().addInvitation(invitation);      
     }
 
     @Override
     public void onInvitationRemoved(String invitationId) {
-        chessYoUpActivity.getInvitationsAdapter().removeChallenge(invitationId);
+        Log.d(TAG, "onInvitationRemoved :: "+invitationId);
+        chessYoUpActivity.getInvitationsAdapter().removeInvitation(invitationId);
     }
     
     private void printRoom(Room room) {
@@ -159,5 +184,24 @@ public class RoomController implements RoomUpdateListener,
         else{
             Log.d(TAG,"Room :: "+null);
         }
+    }
+    
+    private ChessGamePlayer getRemotePlayer(Room room) {
+        
+        //TODO get this player from gameController( after leaderbord search)
+        
+        for(Participant p : room.getParticipants()){
+            if( !p.getPlayer().getPlayerId().equals(room.getCreatorId())){
+                ChessGamePlayer remotePlayer = new ChessGamePlayer();
+                remotePlayer.setPlayer(p.getPlayer());
+                return remotePlayer;
+            }
+        }
+        
+        return null;
+    }
+
+    private boolean isLocalPlayerRoomCreator(Room room) {        
+        return room.getCreatorId().equals(ChessGameController.getController().getLocalPlayer().getPlayer().getPlayerId());              
     }
 }

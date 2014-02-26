@@ -54,7 +54,7 @@ public class ChessGameModel extends GameModel {
     }
 
     public void setRemotePlayer(ChessGamePlayer remotePlayer) {
-        this.setRemotePlayer(remotePlayer);
+        super.setRemotePlayer(remotePlayer);
     }
     
     public void setWhitePlayer(ChessGamePlayer whitePlayer) {
@@ -82,11 +82,11 @@ public class ChessGameModel extends GameModel {
     }
 
     public void setGameVariant(ChessGameVariant gameVariant) {
-        this.setGameVariant(gameVariant);
+        super.setGameVariant(gameVariant);
     }
 
     public void setRemoteRating(double remoteElo, double remoteRd, double volatility) {
-        this.getRemotePlayer().setRating(remoteElo);
+        this.getRemotePlayer().setLiveRating(remoteElo);
         this.getRemotePlayer().setRatingDeviation(remoteRd);
         this.getRemotePlayer().setVolatility(volatility);
     }

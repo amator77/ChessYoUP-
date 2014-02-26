@@ -48,7 +48,7 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     @Override
     public void onReadyRecevied(double remoteRating, double remoteRD, double volatility) {
         Log.d(TAG, "onReadyRecevied :: remoteRating=" + remoteRating + ",remoteRD=" + remoteRD + ",volatility" + volatility);
-        chessGameRoomUI.getGameModel().getRemotePlayer().setRating(remoteRating);
+        chessGameRoomUI.getGameModel().getRemotePlayer().setLiveRating(remoteRating);
         chessGameRoomUI.getGameModel().getRemotePlayer().setRatingDeviation(remoteRD);
         chessGameRoomUI.getGameModel().getRemotePlayer().setVolatility(volatility);
         chessGameRoomUI.roomReady();
