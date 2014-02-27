@@ -39,7 +39,7 @@ public abstract class GameController {
 	
 	protected Activity activity;
 	
-	protected RealTimeGameClient realTimeGame;		
+	protected RealTimeGameClient realTimeGameClient;		
 	
 	public abstract void initialize(Activity activity,GameHelperListener listener);
 	
@@ -51,14 +51,14 @@ public abstract class GameController {
         RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(roomUpdatelistener);
         rtmConfigBuilder.addPlayersToInvite(new String[] {remotePlayer});
         rtmConfigBuilder.setVariant(gameVariant);
-        rtmConfigBuilder.setMessageReceivedListener(this.realTimeGame);
+        rtmConfigBuilder.setMessageReceivedListener(this.realTimeGameClient);
         rtmConfigBuilder.setRoomStatusUpdateListener(roomStatusUpdateListener);  
         mHelper.getGamesClient().createRoom(rtmConfigBuilder.build());        
 	}
 	
 	public void joinRoom(String invitationId){
 	    RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(roomUpdatelistener);
-        roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeGame).setRoomStatusUpdateListener(roomStatusUpdateListener);        
+        roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(this.realTimeGameClient).setRoomStatusUpdateListener(roomStatusUpdateListener);        
         getGamesClient().joinRoom(roomConfigBuilder.build());
     }
 	

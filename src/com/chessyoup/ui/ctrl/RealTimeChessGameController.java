@@ -2,9 +2,9 @@ package com.chessyoup.ui.ctrl;
 
 import android.util.Log;
 
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGameModel;
 import com.chessyoup.game.chess.ChessGameVariant;
+import com.chessyoup.game.chess.ChessRealTimeGameClient;
 import com.chessyoup.game.chess.ChessRealTimeGameClient.RealTimeChessGameListener;
 import com.chessyoup.model.Game;
 import com.chessyoup.model.Game.GameState;
@@ -15,27 +15,26 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     private final static String TAG = "RoomGameController";
 
     private ChessOnlinePlayGameUI chessGameRoomUI;
-    
+
+    private ChessRealTimeGameClient chessClient;
+
     private ChessGameController chessGameController = ChessGameController.getController();
-    
+
     public RealTimeChessGameController(ChessOnlinePlayGameUI chessGameRoomUI) {
         this.chessGameRoomUI = chessGameRoomUI;
-        
-        if( chessGameController.isInitilized() ){
-            chessGameController.getRealTimeGameClient().setListener(this);
-        }
+        this.chessClient = chessGameController.getChessClientByRoomId(chessGameRoomUI.getRoomId());
+        this.chessClient.setListener(this);
     }
 
     @Override
-    public void onChallangeRecevied(ChessGameVariant gameVariant,boolean isRematch) {
+    public void onChallangeRecevied(ChessGameVariant gameVariant, boolean isRematch) {
         Log.d(TAG, "onChallangeRecevied :: gameVariant=" + gameVariant);
-                
-        if( isRematch ){    
-            this.chessGameRoomUI.getGameModel().switchSides();            
-            chessGameController.getRealTimeGameClient().ready(chessGameController.getLocalPlayer());      
+
+        if (isRematch) {
+            this.chessGameRoomUI.getGameModel().switchSides();
+            this.chessClient.ready(chessGameController.getLocalPlayer());
             chessGameRoomUI.roomReady();
-        }
-        else{
+        } else {
             this.chessGameRoomUI.acceptChallange(gameVariant);
         }
     }
@@ -57,7 +56,7 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     @Override
     public void onMoveRecevied(String move, int thinkingTime) {
         Log.d(TAG, "onMoveRecevied :: move=" + move + ",thinkingTime=" + thinkingTime);
-        chessGameRoomUI.getChessboardController().makeRemoteMove(move,thinkingTime);
+        chessGameRoomUI.getChessboardController().makeRemoteMove(move, thinkingTime);
     }
 
     @Override
@@ -66,21 +65,20 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
         ChessGameModel model = this.chessGameRoomUI.getGameModel();
 
         if (model.getBlackPlayer().getPlayer().getPlayerId().equals(model.getRemotePlayer().getPlayer().getPlayerId())) {
-            this.chessGameRoomUI.getChessboardController().resignGameForBlack();            
+            this.chessGameRoomUI.getChessboardController().resignGameForBlack();
         } else {
             this.chessGameRoomUI.getChessboardController().resignGameForWhite();
         }
 
-        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" resigned!");        
+        this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() + " resigned!");
     }
 
     @Override
     public void onDrawRecevied() {
         Log.d(TAG, "onDrawRecevied ::");
-        if( chessGameRoomUI.getChessboardController().isDrawRequested() ){
+        if (chessGameRoomUI.getChessboardController().isDrawRequested()) {
             chessGameRoomUI.getChessboardController().drawGame();
-        }
-        else{
+        } else {
             chessGameRoomUI.displayShortMessage("Opponent ask for draw!");
             chessGameRoomUI.getChessboardController().setDrawRequested(true);
         }
@@ -96,11 +94,10 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     @Override
     public void onRematchRecevied() {
         Log.d(TAG, "onRematchRecevied ::");
-        
-        if( chessGameRoomUI.getChessboardController().isRemtachRequested() ){
+
+        if (chessGameRoomUI.getChessboardController().isRemtachRequested()) {
             chessGameRoomUI.rematchConfig();
-        }
-        else{
+        } else {
             chessGameRoomUI.displayShortMessage("Opponent ask for rematch!");
             chessGameRoomUI.getChessboardController().setRemtachRequested(true);
         }
@@ -109,34 +106,32 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
     @Override
     public void onAbortRecevied() {
         Log.d(TAG, "onAbortRecevied ::");
-        if( chessGameRoomUI.getChessboardController().isAbortRequested() ){
+        if (chessGameRoomUI.getChessboardController().isAbortRequested()) {
             chessGameRoomUI.getChessboardController().abortGame();
-        }
-        else{
+        } else {
             chessGameRoomUI.displayShortMessage("Opponent ask for aborting the game!");
             chessGameRoomUI.getChessboardController().setAbortRequested(true);
-        }    
+        }
     }
-    
+
     @Override
-    public void onExitRecevied() { 
+    public void onExitRecevied() {
         ChessGameModel model = this.chessGameRoomUI.getGameModel();
 
-        if( this.chessGameRoomUI.getChessboardController().getGame().getGameState() == GameState.ALIVE){
-            
+        if (this.chessGameRoomUI.getChessboardController().getGame().getGameState() == GameState.ALIVE) {
+
             if (model.getBlackPlayer().getPlayer().getPlayerId().equals(model.getRemotePlayer().getPlayer().getPlayerId())) {
-                this.chessGameRoomUI.getChessboardController().resignGameForBlack();            
+                this.chessGameRoomUI.getChessboardController().resignGameForBlack();
             } else {
                 this.chessGameRoomUI.getChessboardController().resignGameForWhite();
-            }                        
-            
-            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" has lost by disconect!");   
+            }
+
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() + " has lost by disconect!");
+        } else {
+            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() + " left the room!");
         }
-        else{
-            this.chessGameRoomUI.displayShortMessage(model.getRemotePlayer().getPlayer().getDisplayName() +" left the room!");            
-        }                           
     }
-    
+
     @Override
     public void onException(String message) {
         Log.d(TAG, "onException :: message" + message);
@@ -257,5 +252,5 @@ public class RealTimeChessGameController implements RealTimeChessGameListener {
 
     }
 
-   
+
 }

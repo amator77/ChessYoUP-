@@ -3,29 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:layout_gravity="top" >
-
-    <!-- SIGN-IN SCREEN -->
-
-    <LinearLayout
-        android:id="@+id/screen_sign_in"
-        style="@style/LLScreen"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent" >
-
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/button_sign_in"
-            style="@style/SignInButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
-    <!-- MAIN SCREEN -->
+    android:layout_gravity="top" >   
 
     <RelativeLayout
         android:id="@+id/screen_main"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_gravity="top" 
         android:layout_alignParentTop="true" >
 
         <include            
@@ -35,14 +19,10 @@
         <android.support.v4.view.ViewPager
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/main_pager"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
+            android:layout_alignLeft="@+id/player_view"
             android:layout_below="@+id/player_view" >
-                        
         </android.support.v4.view.ViewPager>
 
     </RelativeLayout>

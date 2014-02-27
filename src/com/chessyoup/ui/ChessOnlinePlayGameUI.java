@@ -3,7 +3,6 @@ package com.chessyoup.ui;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -24,13 +23,14 @@ import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardController;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.game.Util;
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGameModel;
 import com.chessyoup.game.chess.ChessGameVariant;
+import com.chessyoup.game.chess.ChessRealTimeGameClient;
 import com.chessyoup.game.view.ChessBoardPlayView;
 import com.chessyoup.game.view.PgnScreenTextView;
 import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.pgn.PGNOptions;
+import com.chessyoup.ui.ctrl.ChessGameController;
 import com.chessyoup.ui.ctrl.ChessboardUIController;
 import com.chessyoup.ui.ctrl.RealTimeChessGameController;
 import com.chessyoup.ui.fragment.FragmentAdapter;
@@ -49,7 +49,9 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     private ChessGameController chessGameController;
 
     private ChessboardUIController gameUIController;
-
+    
+    private ChessRealTimeGameClient chessClient;
+    
     private RealTimeChessGameController roomGameController;
     
     private ChessBoardPlayView chessBoardPlayView;
@@ -111,7 +113,8 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
                 if (chessGameModel != null) {
                     Log.d(TAG, "onStart :: send ready message to remote : " + chessGameModel.getRemotePlayer());
-                    chessGameController.getRealTimeGameClient().ready(chessGameController.getLocalPlayer());
+                    chessClient =  chessGameController.getChessClientByRoomId(chessGameModel.getRoom().getRoomId());
+                    chessClient.ready(chessGameController.getLocalPlayer());
                     updateChessboard();
                     updateRemotePlayerView(true);
                     updateLocalPlayerView(true);
@@ -238,7 +241,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
         if (this.chessGameModel != null) {
             ChessGameVariant gameVariant = this.chessGameModel.getGameVariant();
             gameVariant.setWhite(gameVariant.isWhite() ? false : true);
-            chessGameController.getRealTimeGameClient().sendChallange(Util.gameVariantToInt(gameVariant), true);
+            chessClient.sendChallange(Util.gameVariantToInt(gameVariant), true);
         }
     }
 
@@ -389,7 +392,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     private void handleAbortAction() {
 
         if (chessboardController.isAbortRequested()) {
-            chessGameController.getRealTimeGameClient().abort();
+            chessClient.abort();
             chessboardController.abortGame();
         } else {
 
@@ -397,7 +400,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
                 @Override
                 public void run() {
-                    chessGameController.getRealTimeGameClient().abort();
+                    chessClient.abort();
                     chessboardController.setAbortRequested(true);
                     displayShortMessage(getString(R.string.abort_request_message));
                 }
@@ -407,11 +410,11 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
     private void handleDrawAction() {
         if (chessboardController.isDrawRequested()) {
-            chessGameController.getRealTimeGameClient().draw();
+            chessClient.draw();
             chessboardController.drawGame();
         } else {
 
-            chessGameController.getRealTimeGameClient().draw();
+            chessClient.draw();
             chessboardController.setDrawRequested(true);
 
             displayShortMessage(getString(R.string.draw_request_message));
@@ -422,7 +425,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
         if (this.chessboardController.isRemtachRequested()) {
             this.rematchConfig();
         } else {
-            chessGameController.getRealTimeGameClient().rematch();            
+            chessClient.rematch();            
             displayShortMessage(getString(R.string.remtach_request_message));
         }
     }
@@ -432,7 +435,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
             @Override
             public void run() {
-                chessGameController.getRealTimeGameClient().resign();                
+                chessClient.resign();                
                 chessboardController.resignGame();
             }
         }).show();
@@ -564,5 +567,9 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     public void acceptChallange(ChessGameVariant gameVariant) {
         // TODO accept new challange
 
+    }
+
+    public String getRoomId() {
+        return chessGameModel.getRoom().getRoomId();
     }
 }

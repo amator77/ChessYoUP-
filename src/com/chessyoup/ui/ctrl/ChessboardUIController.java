@@ -13,7 +13,6 @@ import android.view.MotionEvent;
 import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardStatus;
 import com.chessyoup.chessboard.ChessboardUIInterface;
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.model.Game.GameState;
 import com.chessyoup.model.Move;
 import com.chessyoup.model.Position;
@@ -195,13 +194,13 @@ public class ChessboardUIController extends GestureDetector.SimpleOnGestureListe
             if( chessGameRoomUI.getChessboardController().getGame().currPos().whiteMove ){
                 if( wTime <= 0 ){
                     chessGameRoomUI.getChessboardController().resignGame();
-                    ChessGameController.getController().getRealTimeGameClient().flag();
+                    ChessGameController.getController().getChessClientByRoomId(chessGameRoomUI.getRoomId()).flag();
                 }
             }
             else{
                 if( bTime <= 0 ){
                     chessGameRoomUI.getChessboardController().resignGame();
-                    ChessGameController.getController().getRealTimeGameClient().flag();
+                    ChessGameController.getController().getChessClientByRoomId(chessGameRoomUI.getRoomId()).flag();
                 }
             }
         }
@@ -242,9 +241,9 @@ public class ChessboardUIController extends GestureDetector.SimpleOnGestureListe
     @Override
     public void localMoveMade(Move m) {
         Log.d(TAG, "localMoveMade :: m=" + m +" , thinking time :"+chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed()+" ms");
-                
-        if( ChessGameController.getController().isInitilized()){
-            ChessGameController.getController().getRealTimeGameClient().move(TextIO.moveToUCIString(m), (int)chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed());
+       
+        if( chessGameRoomUI.getGameModel() != null && chessGameRoomUI.getGameModel().getGame().getGameState() == GameState.ALIVE ){
+            ChessGameController.getController().getChessClientByRoomId(chessGameRoomUI.getRoomId()).move(TextIO.moveToUCIString(m), (int)chessGameRoomUI.getChessboardController().getGame().timeController.getLocalElapsed());
         }
     }
 

@@ -16,8 +16,8 @@ import android.widget.TextView;
 
 import com.chessyoup.R;
 import com.chessyoup.game.Util;
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGameVariant;
+import com.chessyoup.ui.ctrl.ChessGameController;
 import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.Room;

@@ -15,12 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.chessyoup.R;
 import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.chessyoup.game.Util;
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGamePlayer;
+import com.chessyoup.ui.ctrl.ChessGameController;
+import com.chessyoup.ui.ctrl.GoogleAPIController;
 import com.chessyoup.ui.ctrl.RoomController;
 import com.chessyoup.ui.dialogs.NewGameDialog;
 import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
@@ -30,31 +32,31 @@ import com.chessyoup.ui.fragment.InvitationsAdapter;
 import com.chessyoup.ui.fragment.OutgoingInvitationFragment;
 import com.chessyoup.ui.fragment.RoomsAdapter;
 import com.google.android.gms.appstate.OnStateLoadedListener;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.images.ImageManager;
+import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesClient;
-import com.google.android.gms.games.leaderboard.LeaderboardScore;
 import com.google.android.gms.games.leaderboard.LeaderboardVariant;
-import com.google.android.gms.games.leaderboard.OnPlayerLeaderboardScoreLoadedListener;
+import com.google.android.gms.games.leaderboard.Leaderboards;
+import com.google.android.gms.games.leaderboard.Leaderboards.LoadPlayerScoreResult;
 import com.google.android.gms.games.multiplayer.Invitation;
 
-public class ChessYoUpActivity extends FragmentActivity implements View.OnClickListener, NewGameDialogListener, OnStateLoadedListener, GameHelperListener {
+public class ChessYoUpActivity extends FragmentActivity implements NewGameDialogListener, OnStateLoadedListener, GameHelperListener {
 
     private final static String TAG = "ChessYoUpActivity";
+
+    private GoogleAPIController apiController;
+
     private final static int RC_SELECT_PLAYERS = 10000;
 
     public static final String ROOM_ID_EXTRA = "roomId";
-    
-    private final static int[] SCREENS = {R.id.screen_main, R.id.screen_sign_in};
-
-    private int mCurScreen = -1;
 
     private FragmentAdapter adapter;
 
     private ViewPager viewPager;
 
     private ChessGameController chessGameController;
-
-    private Invitation incomingInvitationId;
 
     private InvitationsAdapter invitationsAdapter;
 
@@ -65,7 +67,13 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     private OutgoingInvitationFragment outgoingFragment;
 
     private IncomingInvitationsFragment incomingFragment;
-
+    
+    private TextView playerName;
+    
+    private TextView playerRating;
+    
+    private ImageView playerAvatar;
+    
     // *********************************************************************
     // *********************************************************************
     // Activity methods
@@ -74,14 +82,16 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findViewById(R.id.button_sign_in).setOnClickListener(this);
+        this.playerName =  ((TextView) findViewById(R.id.playerName));
+        this.playerRating =  ((TextView) findViewById(R.id.playerRating));
+        this.playerAvatar = (ImageView) findViewById(R.id.playerAvatar);
         roomController = new RoomController(this);
+        apiController = GoogleAPIController.getInstance(this);
         chessGameController = ChessGameController.getController();
-        ChessGameController.getController().initialize(this, this);
-        ChessGameController.getController().setRoomStatusUpdateListener(roomController);
-        ChessGameController.getController().setRoomUpdatelistener(roomController);
+        chessGameController.setRoomController(roomController);
         adapter = new FragmentAdapter(this.getSupportFragmentManager());
         invitationsAdapter = new InvitationsAdapter(getApplicationContext());
         this.roomsAdapter = new RoomsAdapter(getApplicationContext());
@@ -104,8 +114,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     @Override
     public void onStart() {
         super.onStart();
-        chessGameController.start();
-        switchToScreen(R.id.screen_main);
+        apiController.connect();
     }
 
     @Override
@@ -118,7 +127,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     public void onDestroy() {
         Log.d(TAG, "**** got onDestroy");
         super.onStop();
-        chessGameController.stop();
+        apiController.diconnect();
     }
 
     @Override
@@ -156,26 +165,20 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
         return true;
     }
 
-
-    @Override
-    public void onClick(View v) {
-
-        switch (v.getId()) {
-            case R.id.button_sign_in:
-                chessGameController.beginUserInitiatedSignIn();
-                break;
-        }
-    }
-
     @Override
     public void onActivityResult(int requestCode, int responseCode, Intent intent) {
         super.onActivityResult(requestCode, responseCode, intent);
-        chessGameController.onActivityResult(requestCode, responseCode, intent);
 
         switch (requestCode) {
             case RC_SELECT_PLAYERS:
                 handleSelectPlayersResult(responseCode, intent);
                 break;
+            case GoogleAPIController.REQUEST_RESOLVE_ERROR: {
+                GoogleAPIController.mResolvingError = false;
+                if (requestCode == RESULT_OK) {
+                    GoogleAPIController.getInstance(this).connect();
+                }
+            }
         }
     }
 
@@ -196,14 +199,6 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
         return super.onKeyDown(keyCode, e);
     }
 
-
-
-    // *********************************************************************
-    // *********************************************************************
-    // GameHelperListener methods
-    // *********************************************************************
-    // *********************************************************************
-
     public InvitationsAdapter getInvitationsAdapter() {
         return invitationsAdapter;
     }
@@ -215,212 +210,15 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     @Override
     public void onSignInFailed() {
         Log.d(TAG, "Sign-in failed.");
-        switchToScreen(R.id.screen_sign_in);
+        
     }
 
     @Override
     public void onSignInSucceeded() {
-        Log.d(TAG, "Sign-in succeeded.");
-
-        chessGameController.getGamesClient().registerInvitationListener(this.roomController);
-        switchToMainScreen();
-
+        Log.d(TAG, "Sign-in succeeded.");        
+        Games.Invitations.registerInvitationListener(apiController.getApiClient(), this.roomController);
         this.loadPlayerRating();
-
-        // chessGameController.getAppStateClient().loadState(this, 0);
-
-        // Invitation invitation = chessGameController.getInvitation();
-        //
-        // if (invitation != null) {
-        // acceptInviteToRoom(invitation);
-        // return;
-        // }
     }
-
-    // *********************************************************************
-    // *********************************************************************
-    // RealTimeChessGameListener methods
-    // *********************************************************************
-    // *********************************************************************
-
-    // @Override
-    // public void onChallangeRecevied(GameVariant gameVariant, String whiteId,
-    // String blackId) {
-    //
-    // showNewGameRequestDialog(whiteId, blackId, gameVariant.isRated(),
-    // gameVariant.getTime(), gameVariant.getIncrement());
-    // }
-
-    // @Override
-    // public void onStartRecevied() {
-    // if (gameState.getGameVariant() != null) {
-    // startGame();
-    // } else {
-    // Log.d(TAG,
-    // "Invalid game state! There is no previous start request!");
-    // Log.d(TAG, gameState.toString());
-    // }
-    // }
-    //
-    // @Override
-    // public void onReadyRecevied(double remoteRating, double remoteRD,
-    // double volatility) {
-    // gameState.setRemoteRating(remoteRating, remoteRD, volatility);
-    //
-    // dismissWaitingRoom();
-    // displayShortMessage("Ready to play!");
-    // Log.d(TAG, "onReadyRecevied :: " + gameState.toString());
-    //
-    // if (!gameState.isReady()) {
-    // gameState.setReady(true);
-    // realTimeChessGame.ready();
-    // }
-    //
-    // this.startGame();
-    // }
-    //
-    // @Override
-    // public void onMoveRecevied(String move, int thinkingTime) {
-    // this.chessTableUI.getCtrl().makeRemoteMove(move);
-    // }
-    //
-    // @Override
-    // public void onResignRecevied() {
-    // Log.d(TAG, "Remote resigned!");
-    //
-    // if (gameState.getWhitePlayerId().equals(gameState.getRemoteId())) {
-    // this.chessTableUI.getCtrl().resignGameForWhite();
-    // } else {
-    // this.chessTableUI.getCtrl().resignGameForBlack();
-    // }
-    //
-    // displayShortMessage(gameState.getRemoteDisplayName() + " resigned!");
-    // }
-    //
-    // @Override
-    // public void onDrawRecevied() {
-    // Log.d(TAG, "Draw requested!");
-    //
-    // if (this.chessTableUI.getCtrl().isDrawRequested()) {
-    // this.chessTableUI.getCtrl().drawGame();
-    // displayShortMessage("Draw by mutual agreement!");
-    // } else {
-    // this.chessTableUI.getCtrl().setDrawRequested(true);
-    // displayShortMessage(gameState.getRemoteDisplayName()
-    // + " is requesting draw!");
-    // }
-    // }
-    //
-    // @Override
-    // public void onFlagRecevied() {
-    // Log.d(TAG, "Remote flaged!");
-    // this.chessTableUI.getCtrl().resignGame();
-    // displayShortMessage(gameState.getRemoteDisplayName()
-    // + " is out of time!!!");
-    // }
-    //
-    // @Override
-    // public void onRematchRecevied() {
-    // if (!gameState.isLocalPlayerRoomOwner()) {
-    // displayShortMessage(gameState.getRemoteDisplayName()
-    // + " is requesting rematch!");
-    // }
-    // }
-    //
-    // @Override
-    // public void onAbortRecevied() {
-    // Log.d(TAG, "Abort requested!");
-    //
-    // if (this.chessTableUI.getCtrl().isAbortRequested()) {
-    // this.chessTableUI.getCtrl().abortGame();
-    // displayShortMessage("Game aborted!");
-    // } else {
-    // this.chessTableUI.getCtrl().setAbortRequested(true);
-    // displayShortMessage(gameState.getRemoteDisplayName()
-    // + " is requesting to abort the game!");
-    // }
-    // }
-    //
-    // @Override
-    // public void onException(String message) {
-    // displayShortMessage(message);
-    // }
-
-    // *********************************************************************
-    // *********************************************************************
-    // ChessTableUIListener methods
-    // *********************************************************************
-    // *********************************************************************
-
-    // @Override
-    // public void onChat(String chatMessage) {
-    // realTimeChessGame.sendChatMessage(chatMessage);
-    // }
-    //
-    // @Override
-    // public void onMove(String move) {
-    // this.realTimeChessGame.move(move, 0);
-    // }
-    //
-    // @Override
-    // public void onDrawRequest() {
-    // this.realTimeChessGame.draw();
-    // }
-    //
-    // @Override
-    // public void onResign() {
-    //
-    // if (gameState.getWhitePlayerId().equals(
-    // gameState.getRoom().getCreatorId())) {
-    // this.chessTableUI.getCtrl().resignGameForWhite();
-    // } else {
-    // this.chessTableUI.getCtrl().resignGameForBlack();
-    // }
-    //
-    // this.realTimeChessGame.resign();
-    // }
-    //
-    // @Override
-    // public void onFlag() {
-    // this.realTimeChessGame.flag();
-    // }
-    //
-    // @Override
-    // public void onAbortRequest() {
-    // this.realTimeChessGame.abort();
-    // }
-    //
-    // @Override
-    // public void onRematchRequest() {
-    //
-    // if (gameState.isLocalPlayerRoomOwner()) {
-    // showNewGameDialog();
-    // } else {
-    // this.realTimeChessGame.rematch();
-    // }
-    // }
-    //
-    // @Override
-    // public void onChatReceived(String message) {
-    // this.chessTableUI.appendChatMesssage(message);
-    // }
-    //
-    // @Override
-    // public void onTableExit() {
-    // leaveRoom();
-    // }
-    //
-    // @Override
-    // public void onGameFinished(Game g) {
-    // this.handleGameFinished(g, gameState.getWhitePlayerId(),
-    // gameState.getBlackPlayerId());
-    // }
-
-    // *********************************************************************
-    // *********************************************************************
-    // NewGameDialogListener
-    // *********************************************************************
-    // *********************************************************************
 
     @Override
     public void onNewGameRejected() {
@@ -431,7 +229,9 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     public void onNewGameCreated(String color, boolean isRated, int timeControll, int increment) {
         Log.d(TAG, "onNewGameCreated :: color :" + color + " , isRated :" + isRated + " , timeControll" + timeControll);
 
-        chessGameController.getRealTimeGameClient().sendChallange(1, getTimeControllValue(timeControll / 1000), getIncrementValue(increment / 1000), 0, isRated, color.equals("white"));
+        // chessGameController.getRealTimeGameClient().sendChallange(1,
+        // getTimeControllValue(timeControll / 1000), getIncrementValue(increment / 1000), 0,
+        // isRated, color.equals("white"));
     }
 
     // *********************************************************************
@@ -459,8 +259,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     // "Invite friends" button. We react by creating a room with those players.
     private void handleSelectPlayersResult(int response, final Intent data) {
         if (response != Activity.RESULT_OK) {
-            Log.w(TAG, "*** select players UI cancelled, " + response);
-            switchToMainScreen();
+            Log.w(TAG, "*** select players UI cancelled, " + response);            
             return;
         }
 
@@ -471,8 +270,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 
             @Override
             public void onNewGameRejected() {
-                Log.d(TAG, "Invitation is canceled!");
-                switchToMainScreen();
+                Log.d(TAG, "Invitation is canceled!");               
             }
 
             @Override
@@ -484,31 +282,11 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
                 final ArrayList<String> invitees = data.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
                 Log.d(TAG, "Invitee count: " + invitees.size());
                 Log.d(TAG, "Invitee: " + invitees.toString());
-
-                ChessGameController.getController().createRoom(invitees.get(0), gameVariant);
-                //
-                // Intent chessRoomUIIntent = new Intent(ChessYoUpActivity.this,
-                // ChessOnlinePlayGameUI.class);
-                // chessRoomUIIntent.putExtra(REMOTE_PLAYER_EXTRA, invitees.get(0));
-                // chessRoomUIIntent.putExtra(GAME_VARIANT_EXTRA, gameVariant);
-                // chessRoomUIIntent.putExtra(IS_CHALANGER_EXTRA, true);
-                // startActivity(chessRoomUIIntent);
+                chessGameController.createRoom(invitees.get(0), gameVariant);
             }
         });
 
         d.show(this.getSupportFragmentManager(), TAG);
-    }
-
-
-    private void switchToScreen(int screenId) {
-        for (int id : SCREENS) {
-            findViewById(id).setVisibility(screenId == id ? View.VISIBLE : View.GONE);
-        }
-        mCurScreen = screenId;      
-    }
-
-    private void switchToMainScreen() {
-        switchToScreen(chessGameController.isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
     }
 
     public void setSelectedTab(int i) {
@@ -517,57 +295,56 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 
     private void loadPlayerRating() {
         // load top score
-        chessGameController.getGamesClient().loadCurrentPlayerLeaderboardScore(new OnPlayerLeaderboardScoreLoadedListener() {
+
+        PendingResult<Leaderboards.LoadPlayerScoreResult> topResult =
+                        Games.Leaderboards.loadCurrentPlayerLeaderboardScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_top_rating),
+                                        LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
+        topResult.setResultCallback(new ResultCallback<Leaderboards.LoadPlayerScoreResult>() {
 
             @Override
-            public void onPlayerLeaderboardScoreLoaded(int statusCode, LeaderboardScore topCcore) {
-                Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: top score :: statusCode" + statusCode + ", , score :" + topCcore);
+            public void onResult(LoadPlayerScoreResult result) {
+                Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: top score :: statusCode" + result.getStatus() + ", , score :" + result.getScore());
 
-                if (statusCode == GamesClient.STATUS_OK) {
+                final ChessGamePlayer localPlayer = new ChessGamePlayer();
 
-                    final ChessGamePlayer localPlayer = new ChessGamePlayer();
-
-                    if (topCcore == null) {
-                        Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial top score");
-                        chessGameController.getGamesClient().submitScore(getResources().getString(R.string.leaderboard_top_rating), Util.TOP_RATING_BASE);
-                    } else {
-                        localPlayer.setTopScore(topCcore.getRawScore());
-                    }
-
-                    // load low score
-                    chessGameController.getGamesClient().loadCurrentPlayerLeaderboardScore(new OnPlayerLeaderboardScoreLoadedListener() {
-
-                        @Override
-                        public void onPlayerLeaderboardScoreLoaded(int statusCode, LeaderboardScore lowScore) {
-                            Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: low score :: statusCode" + statusCode + ", , score :" + lowScore);
-
-                            if (statusCode == GamesClient.STATUS_OK) {
-                                
-                                if (lowScore == null) {
-                                    Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial low score");
-                                    chessGameController.getGamesClient().submitScore(getResources().getString(R.string.leaderboard_low_rating), Util.LOW_RATING_BASE);
-                                } else {
-                                    localPlayer.setLowScore(lowScore.getRawScore());
-                                }
-                                                                                               
-                                chessGameController.setLocalPlayer(localPlayer);
-                                localPlayer.setPlayer(chessGameController.getGamesClient().getCurrentPlayer());
-                                updatePlayerStateView(localPlayer);
-                            }
-
-                        }
-                    }, getResources().getString(R.string.leaderboard_low_rating), LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
+                if (result.getScore() == null) {
+                    Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial top score");
+                    Games.Leaderboards.submitScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_top_rating), Util.TOP_RATING_BASE);
+                } else {
+                    localPlayer.setTopScore(result.getScore().getRawScore());
                 }
 
+
+                PendingResult<Leaderboards.LoadPlayerScoreResult> lowResult =
+                                Games.Leaderboards.loadCurrentPlayerLeaderboardScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_low_rating),
+                                                LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
+                lowResult.setResultCallback(new ResultCallback<Leaderboards.LoadPlayerScoreResult>() {
+
+                    @Override
+                    public void onResult(LoadPlayerScoreResult result) {
+                        Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: low score :: statusCode" + result.getStatus() + ", , score :" + result.getScore());
+
+
+                        if (result.getScore() == null) {
+                            Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial low score");
+                            Games.Leaderboards.submitScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_low_rating), Util.LOW_RATING_BASE);
+                        } else {
+                            localPlayer.setLowScore(result.getScore().getRawScore());
+                        }
+
+                        chessGameController.setLocalPlayer(localPlayer);
+                        localPlayer.setPlayer(Games.Players.getCurrentPlayer(apiController.getApiClient()));
+                        updatePlayerStateView(localPlayer);
+                    }
+                });
             }
-        }, getResources().getString(R.string.leaderboard_top_rating), LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
+        });
     }
 
-    private void updatePlayerStateView(ChessGamePlayer player) {
-        System.out.println("aici" + player.getPlayer().getDisplayName());
-        ((TextView) findViewById(R.id.playerName)).setText(player.getPlayer().getDisplayName());
-        ((TextView) findViewById(R.id.playerRating)).setText("Rating: " + Math.round(player.getRating()));
-        ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.playerAvatar), chessGameController.getGamesClient().getCurrentPlayer().getIconImageUri());
+    private void updatePlayerStateView(final ChessGamePlayer player) { 
+        this.playerName.setText(player.getPlayer().getDisplayName());
+        this.playerRating.setText("Rating: " + Math.round(player.getRating()));
+        ImageManager.create(getApplicationContext()).loadImage(playerAvatar, Games.Players.getCurrentPlayer(apiController.getApiClient()).getIconImageUri());        
     }
 
     private void installListeners() {
@@ -583,7 +360,7 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 
             @Override
             public void run() {
-                chessGameController.joinRoom(incomingFragment.getSelectedInvitation().getInvitationId());                
+                chessGameController.joinRoom(incomingFragment.getSelectedInvitation().getInvitationId());
                 incomingFragment.getInvitationsAdapter().removeInvitation(incomingFragment.getSelectedInvitation());
             }
         });
@@ -592,7 +369,8 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
 
             @Override
             public void run() {
-                ChessGameController.getController().getGamesClient().declineRoomInvitation(incomingFragment.getSelectedInvitation().getInvitationId());
+                System.out.println("decline "+incomingFragment.getSelectedInvitation().getInvitationId());
+                Games.RealTimeMultiplayer.declineInvitation(apiController.getApiClient(), incomingFragment.getSelectedInvitation().getInvitationId());
                 incomingFragment.getInvitationsAdapter().removeInvitation(incomingFragment.getSelectedInvitation());
             }
         });
@@ -604,18 +382,21 @@ public class ChessYoUpActivity extends FragmentActivity implements View.OnClickL
     }
 
     private void handleInviteActiom() {
-        Intent intent = chessGameController.getGamesClient().getSelectPlayersIntent(1, 1);
+        Intent intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(apiController.getApiClient(), 1, 1, false);
         startActivityForResult(intent, RC_SELECT_PLAYERS);
     }
 
     private void handleLogoutAction() {
-        chessGameController.getGamesClient().signOut();
-        switchToScreen(R.id.screen_sign_in);
+        apiController.diconnect();
+        finish();
     }
 
     private void handleExitAction() {
+        finish();
+    }
+
+    public void showGameError(String string, String string2) {
         // TODO Auto-generated method stub
 
     }
-
 }

@@ -7,7 +7,7 @@ import android.util.Log;
 
 import com.chessyoup.game.RealTimeGameClient;
 import com.chessyoup.game.Util;
-import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 public class ChessRealTimeGameClient extends RealTimeGameClient {
 
@@ -61,7 +61,7 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
         public void onChatReceived(String message);
     }
 
-    public ChessRealTimeGameClient(GamesClient client) {
+    public ChessRealTimeGameClient( GoogleApiClient client) {
         super(client);
     }
 

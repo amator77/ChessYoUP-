@@ -1,14 +1,15 @@
 package com.chessyoup.ui.ctrl;
 
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import android.content.Intent;
 import android.util.Log;
 
 import com.chessyoup.R;
-import com.chessyoup.game.Util;
-import com.chessyoup.game.chess.ChessGameController;
 import com.chessyoup.game.chess.ChessGamePlayer;
+import com.chessyoup.game.chess.ChessRealTimeGameClient;
 import com.chessyoup.ui.ChessOnlinePlayGameUI;
 import com.chessyoup.ui.ChessYoUpActivity;
 import com.chessyoup.ui.util.UIUtil;
@@ -26,9 +27,12 @@ public class RoomController implements RoomUpdateListener,
 	private final static String TAG = "RoomController";
 
 	private ChessYoUpActivity chessYoUpActivity;
-
+	
+	private Queue<ChessRealTimeGameClient> chessClients;
+	
 	public RoomController(ChessYoUpActivity chessYoUpActivity) {
 		this.chessYoUpActivity = chessYoUpActivity;		
+		this.chessClients = new LinkedBlockingQueue<ChessRealTimeGameClient>();
 	}
 
 	@Override
@@ -51,14 +55,17 @@ public class RoomController implements RoomUpdateListener,
 				
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomConnected, status " + statusCode);
-			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
+			chessYoUpActivity.showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
 			return;
 		}
-				
-		ChessGameController.getController().getRealTimeGameClient().setRoom(room);
+		
+		chessYoUpActivity.getRoomsAdapter().removeRoom(room.getRoomId());
+		ChessRealTimeGameClient chessClient = this.removeChessClient();
+		chessClient.setRoom(room);
+		ChessGameController.getController().setRoomChessClientByRoomId(room.getRoomId(), chessClient);
 		ChessGameController.getController().newChessGameModel(room, getRemotePlayer(room), isLocalPlayerRoomCreator(room));
 		Intent chessRoomUIIntent = new Intent(chessYoUpActivity, ChessOnlinePlayGameUI.class);
-        chessRoomUIIntent.putExtra(ChessYoUpActivity.ROOM_ID_EXTRA, room.getRoomId());        
+        chessRoomUIIntent.putExtra(ChessYoUpActivity.ROOM_ID_EXTRA, room.getRoomId());
         chessYoUpActivity.startActivity(chessRoomUIIntent);
 	}
 
@@ -70,9 +77,9 @@ public class RoomController implements RoomUpdateListener,
 		
 		if (statusCode != GamesClient.STATUS_OK) {
 			Log.e(TAG, "*** Error: onRoomCreated, status " + statusCode);
-			ChessGameController.getController().showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
+			chessYoUpActivity.showGameError(chessYoUpActivity.getString(R.string.error), chessYoUpActivity.getString(R.string.game_problem));			
 			return;
-		}		
+		}
 		
 		chessYoUpActivity.setSelectedTab(1);
 		chessYoUpActivity.getRoomsAdapter().addRoom(room);		
@@ -105,7 +112,7 @@ public class RoomController implements RoomUpdateListener,
 		Log.d(TAG, "onPeerDeclined :: "+arg1);
 		printRoom(room);
 						
-		chessYoUpActivity.getRoomsAdapter().removeRoom(room);
+		chessYoUpActivity.getRoomsAdapter().removeRoom(room.getRoomId());
 		
 		for(String pid : arg1){
 		    for(Participant p : room.getParticipants()){
@@ -134,7 +141,7 @@ public class RoomController implements RoomUpdateListener,
 		Log.d(TAG, "onPeerLeft :: "+arg1);
 		printRoom(room);
 				 
-		ChessGameController.getController().getRealTimeGameClient().remoteLeft();						
+		ChessGameController.getController().getChessClientByRoomId(room.getRoomId()).remoteLeft();						
 	}
 
 	@Override
@@ -203,5 +210,13 @@ public class RoomController implements RoomUpdateListener,
 
     private boolean isLocalPlayerRoomCreator(Room room) {        
         return room.getCreatorId().equals(ChessGameController.getController().getLocalPlayer().getPlayer().getPlayerId());              
+    }
+
+    public void registerChessClient(ChessRealTimeGameClient chessClient) {
+        this.chessClients.add(chessClient);        
+    }
+    
+    public ChessRealTimeGameClient removeChessClient() {
+        return this.chessClients.poll(); 
     }
 }

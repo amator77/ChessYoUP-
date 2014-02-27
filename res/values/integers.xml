@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="google_play_services_version">4132500</integer>
+    <integer name="google_play_services_version">4242000</integer>
     <integer name="leaderboard_top_rating_base_start">1500</integer>
 	<integer name="leaderboard_low_rating_base_start">2000000000</integer>
 	<integer name="default_rating_deviation">150</integer>
