@@ -12,13 +12,15 @@ import com.chessyoup.game.chess.ChessGameModel;
 import com.chessyoup.game.chess.ChessGamePlayer;
 import com.chessyoup.game.chess.ChessGameVariant;
 import com.chessyoup.game.chess.ChessRealTimeGameClient;
+import com.chessyoup.ui.ChessYoUpActivity;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 
 public class ChessGameController{
-    
+            
     private static ChessGameController instance = new ChessGameController();
     
     private List<ChessGameModel> models;
@@ -31,11 +33,20 @@ public class ChessGameController{
     
     private RoomStatusUpdateListener roomStatusUpdateListener;        
     
+    private ChessYoUpActivity mainActivity; 
+        
+    private GoogleApiClient apiClient;
+    
     private ChessGameController(){
         this.models = new LinkedList<ChessGameModel>();
         this.chessClients = new HashMap<String, ChessRealTimeGameClient>();
     }
-              
+    
+    public void setMainActivity(ChessYoUpActivity activity){
+        this.mainActivity = activity;
+        this.apiClient = this.mainActivity.getGameHelper().getApiClient(); 
+    }
+    
     public ChessGameModel newChessGameModel(Room gameRoom, ChessGamePlayer remotePlayer , boolean isOwner){
         ChessGameModel model = new ChessGameModel();
         ChessGameVariant gameVariant = Util.getGameVariant(gameRoom.getVariant());
@@ -70,24 +81,24 @@ public class ChessGameController{
         RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(roomController);
         rtmConfigBuilder.addPlayersToInvite(new String[] {remotePlayer});
         rtmConfigBuilder.setVariant(gameVariant);
-        ChessRealTimeGameClient chessClient = new ChessRealTimeGameClient(GoogleAPIController.getInstance(null).getApiClient());
+        ChessRealTimeGameClient chessClient = new ChessRealTimeGameClient(this.apiClient);
         roomController.registerChessClient(chessClient);
         rtmConfigBuilder.setMessageReceivedListener(chessClient);
         rtmConfigBuilder.setRoomStatusUpdateListener(roomStatusUpdateListener);
-        Games.RealTimeMultiplayer.create(GoogleAPIController.getInstance(null).getApiClient(), rtmConfigBuilder.build());               
+        Games.RealTimeMultiplayer.create(this.apiClient, rtmConfigBuilder.build());               
     }
     
     public void joinRoom(String invitationId){
         RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(roomController);
-        ChessRealTimeGameClient chessClient = new ChessRealTimeGameClient(GoogleAPIController.getInstance(null).getApiClient());
+        ChessRealTimeGameClient chessClient = new ChessRealTimeGameClient(this.apiClient);
         roomController.registerChessClient(chessClient);
         roomConfigBuilder.setInvitationIdToAccept(invitationId).setMessageReceivedListener(chessClient).setRoomStatusUpdateListener(roomStatusUpdateListener);
-        Games.RealTimeMultiplayer.join(GoogleAPIController.getInstance(null).getApiClient(), roomConfigBuilder.build());        
+        Games.RealTimeMultiplayer.join(this.apiClient, roomConfigBuilder.build());        
     }
     
     public void leaveRoom(String roomId){
         Log.d("", "leaveRoom ::"+roomId);
-        Games.RealTimeMultiplayer.leave(GoogleAPIController.getInstance(null).getApiClient(),roomController,roomId);        
+        Games.RealTimeMultiplayer.leave(this.apiClient,roomController,roomId);        
     }
     
     public ChessGameModel findChessModelByRoomId(String roomId){

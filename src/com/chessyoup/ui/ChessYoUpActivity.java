@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -15,14 +14,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.chessyoup.R;
-import com.chessyoup.game.GameHelper.GameHelperListener;
 import com.chessyoup.game.Util;
 import com.chessyoup.game.chess.ChessGamePlayer;
 import com.chessyoup.ui.ctrl.ChessGameController;
-import com.chessyoup.ui.ctrl.GoogleAPIController;
 import com.chessyoup.ui.ctrl.RoomController;
 import com.chessyoup.ui.dialogs.NewGameDialog;
 import com.chessyoup.ui.dialogs.NewGameDialog.NewGameDialogListener;
@@ -34,19 +30,22 @@ import com.chessyoup.ui.fragment.RoomsAdapter;
 import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.data.DataHolder;
 import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesClient;
+import com.google.android.gms.games.PageDirection;
+import com.google.android.gms.games.leaderboard.LeaderboardScoreBuffer;
 import com.google.android.gms.games.leaderboard.LeaderboardVariant;
 import com.google.android.gms.games.leaderboard.Leaderboards;
 import com.google.android.gms.games.leaderboard.Leaderboards.LoadPlayerScoreResult;
-import com.google.android.gms.games.multiplayer.Invitation;
+import com.google.android.gms.games.leaderboard.Leaderboards.LoadScoresResult;
+import com.google.example.games.basegameutils.BaseGameActivity;
+import com.google.example.games.basegameutils.GameHelper.GameHelperListener;
 
-public class ChessYoUpActivity extends FragmentActivity implements NewGameDialogListener, OnStateLoadedListener, GameHelperListener {
+public class ChessYoUpActivity extends BaseGameActivity implements NewGameDialogListener, OnStateLoadedListener, GameHelperListener {
 
     private final static String TAG = "ChessYoUpActivity";
-
-    private GoogleAPIController apiController;
 
     private final static int RC_SELECT_PLAYERS = 10000;
 
@@ -74,6 +73,10 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
     
     private ImageView playerAvatar;
     
+    public ChessYoUpActivity(){
+        super(CLIENT_ALL);
+    }
+    
     // *********************************************************************
     // *********************************************************************
     // Activity methods
@@ -88,33 +91,32 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
         this.playerName =  ((TextView) findViewById(R.id.playerName));
         this.playerRating =  ((TextView) findViewById(R.id.playerRating));
         this.playerAvatar = (ImageView) findViewById(R.id.playerAvatar);
-        roomController = new RoomController(this);
-        apiController = GoogleAPIController.getInstance(this);
-        chessGameController = ChessGameController.getController();
-        chessGameController.setRoomController(roomController);
-        adapter = new FragmentAdapter(this.getSupportFragmentManager());
-        invitationsAdapter = new InvitationsAdapter(getApplicationContext());
+        this.roomController = new RoomController(this);
+        this.chessGameController = ChessGameController.getController();
+        this.chessGameController.setRoomController(roomController);
+        this.adapter = new FragmentAdapter(this.getSupportFragmentManager());
+        this.invitationsAdapter = new InvitationsAdapter(getApplicationContext());
         this.roomsAdapter = new RoomsAdapter(getApplicationContext());
-        incomingFragment = new IncomingInvitationsFragment();
-        incomingFragment.setInvitationsAdapter(invitationsAdapter);
-        outgoingFragment = new OutgoingInvitationFragment();
-        outgoingFragment.setRoomsAdapter(roomsAdapter);
-        adapter.addFragment(incomingFragment);
-        adapter.addFragment(outgoingFragment);
-        viewPager = (ViewPager) findViewById(R.id.main_pager);
-        viewPager.setAdapter(adapter);
+        this.incomingFragment = new IncomingInvitationsFragment();
+        this.incomingFragment.setInvitationsAdapter(invitationsAdapter);
+        this.outgoingFragment = new OutgoingInvitationFragment();
+        this.outgoingFragment.setRoomsAdapter(roomsAdapter);
+        this.adapter.addFragment(incomingFragment);
+        this.adapter.addFragment(outgoingFragment);
+        this.viewPager = (ViewPager) findViewById(R.id.main_pager);
+        this.viewPager.setAdapter(adapter);
         Util.TOP_RATING_BASE = getResources().getInteger(R.integer.leaderboard_top_rating_base_start);
         Util.LOW_RATING_BASE = getResources().getInteger(R.integer.leaderboard_low_rating_base_start);
         Util.DEFAULT_RATING_DEVIATION = getResources().getInteger(R.integer.default_rating_deviation);
         Util.DEFAULT_RATING_VOLATILITY = getResources().getInteger(R.integer.default_rating_volatility);
-
-        installListeners();
+        switchToMainScreen(false);
+        this.installListeners();
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        apiController.connect();
+        
     }
 
     @Override
@@ -126,8 +128,8 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
     @Override
     public void onDestroy() {
         Log.d(TAG, "**** got onDestroy");
-        super.onStop();
-        apiController.diconnect();
+        super.onDestroy();
+        mHelper.onStop();
     }
 
     @Override
@@ -172,13 +174,7 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
         switch (requestCode) {
             case RC_SELECT_PLAYERS:
                 handleSelectPlayersResult(responseCode, intent);
-                break;
-            case GoogleAPIController.REQUEST_RESOLVE_ERROR: {
-                GoogleAPIController.mResolvingError = false;
-                if (requestCode == RESULT_OK) {
-                    GoogleAPIController.getInstance(this).connect();
-                }
-            }
+                break;            
         }
     }
 
@@ -210,14 +206,16 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
     @Override
     public void onSignInFailed() {
         Log.d(TAG, "Sign-in failed.");
-        
+        switchToMainScreen(false);
     }
 
     @Override
     public void onSignInSucceeded() {
-        Log.d(TAG, "Sign-in succeeded.");        
-        Games.Invitations.registerInvitationListener(apiController.getApiClient(), this.roomController);
+        Log.d(TAG, "Sign-in succeeded.");
+        switchToMainScreen(true);
+        Games.Invitations.registerInvitationListener(mHelper.getApiClient(), this.roomController);
         this.loadPlayerRating();
+        this.loadPlayersRating();
     }
 
     @Override
@@ -293,11 +291,40 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
         this.viewPager.setCurrentItem(i);
     }
 
+    private void loadPlayersRating() {
+        
+        
+        PendingResult<Leaderboards.LoadScoresResult> scores =
+                        Games.Leaderboards.loadPlayerCenteredScores(mHelper.getApiClient(), getResources().getString(R.string.leaderboard_top_rating),
+                                        LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC,25);
+        
+        
+        scores.setResultCallback(new ResultCallback<Leaderboards.LoadScoresResult>() {
+            
+            @Override
+            public void onResult(LoadScoresResult result) {
+                
+                if( result.getStatus().isSuccess()){
+                    System.out.println(result.getLeaderboard());
+                    LeaderboardScoreBuffer buffer = result.getScores();
+                    
+                    for( int i = 0 ; i< buffer.getCount() ; i++){
+                        System.out.println(buffer.get(i));
+                    }                    
+                }                                 
+                else{
+                    System.out.println("nasol");
+                }
+                
+            }
+        });
+    }
+    
     private void loadPlayerRating() {
         // load top score
 
         PendingResult<Leaderboards.LoadPlayerScoreResult> topResult =
-                        Games.Leaderboards.loadCurrentPlayerLeaderboardScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_top_rating),
+                        Games.Leaderboards.loadCurrentPlayerLeaderboardScore(mHelper.getApiClient(), getResources().getString(R.string.leaderboard_top_rating),
                                         LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
         topResult.setResultCallback(new ResultCallback<Leaderboards.LoadPlayerScoreResult>() {
 
@@ -309,31 +336,31 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
 
                 if (result.getScore() == null) {
                     Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial top score");
-                    Games.Leaderboards.submitScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_top_rating), Util.TOP_RATING_BASE);
+                    Games.Leaderboards.submitScore(mHelper.getApiClient(), getResources().getString(R.string.leaderboard_top_rating), Util.TOP_RATING_BASE);
                 } else {
                     localPlayer.setTopScore(result.getScore().getRawScore());
                 }
 
 
                 PendingResult<Leaderboards.LoadPlayerScoreResult> lowResult =
-                                Games.Leaderboards.loadCurrentPlayerLeaderboardScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_low_rating),
+                                Games.Leaderboards.loadCurrentPlayerLeaderboardScore(mHelper.getApiClient(), getResources().getString(R.string.leaderboard_low_rating),
                                                 LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC);
                 lowResult.setResultCallback(new ResultCallback<Leaderboards.LoadPlayerScoreResult>() {
 
                     @Override
                     public void onResult(LoadPlayerScoreResult result) {
                         Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: low score :: statusCode" + result.getStatus() + ", , score :" + result.getScore());
-
+                       
 
                         if (result.getScore() == null) {
                             Log.d(TAG, "onPlayerLeaderboardScoreLoaded :: save initial low score");
-                            Games.Leaderboards.submitScore(apiController.getApiClient(), getResources().getString(R.string.leaderboard_low_rating), Util.LOW_RATING_BASE);
+                            Games.Leaderboards.submitScore(mHelper.getApiClient(), getResources().getString(R.string.leaderboard_low_rating), Util.LOW_RATING_BASE);
                         } else {
                             localPlayer.setLowScore(result.getScore().getRawScore());
                         }
 
                         chessGameController.setLocalPlayer(localPlayer);
-                        localPlayer.setPlayer(Games.Players.getCurrentPlayer(apiController.getApiClient()));
+                        localPlayer.setPlayer(Games.Players.getCurrentPlayer(mHelper.getApiClient()));
                         updatePlayerStateView(localPlayer);
                     }
                 });
@@ -344,7 +371,7 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
     private void updatePlayerStateView(final ChessGamePlayer player) { 
         this.playerName.setText(player.getPlayer().getDisplayName());
         this.playerRating.setText("Rating: " + Math.round(player.getRating()));
-        ImageManager.create(getApplicationContext()).loadImage(playerAvatar, Games.Players.getCurrentPlayer(apiController.getApiClient()).getIconImageUri());        
+        ImageManager.create(getApplicationContext()).loadImage(playerAvatar, Games.Players.getCurrentPlayer(mHelper.getApiClient()).getIconImageUri());        
     }
 
     private void installListeners() {
@@ -370,8 +397,16 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
             @Override
             public void run() {
                 System.out.println("decline "+incomingFragment.getSelectedInvitation().getInvitationId());
-                Games.RealTimeMultiplayer.declineInvitation(apiController.getApiClient(), incomingFragment.getSelectedInvitation().getInvitationId());
+                Games.RealTimeMultiplayer.declineInvitation(mHelper.getApiClient(), incomingFragment.getSelectedInvitation().getInvitationId());
                 incomingFragment.getInvitationsAdapter().removeInvitation(incomingFragment.getSelectedInvitation());
+            }
+        });
+        
+        ((View)findViewById(R.id.button_sign_in)).setOnClickListener(new View.OnClickListener() {
+            
+            @Override
+            public void onClick(View v) {
+                beginUserInitiatedSignIn();                
             }
         });
     }
@@ -382,21 +417,25 @@ public class ChessYoUpActivity extends FragmentActivity implements NewGameDialog
     }
 
     private void handleInviteActiom() {
-        Intent intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(apiController.getApiClient(), 1, 1, false);
+        Intent intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(mHelper.getApiClient(), 1, 1, false);
         startActivityForResult(intent, RC_SELECT_PLAYERS);
     }
 
     private void handleLogoutAction() {
-        apiController.diconnect();
-        finish();
+        this.mHelper.signOut();    
+        switchToMainScreen(false);
     }
-
+        
     private void handleExitAction() {
         finish();
     }
 
     public void showGameError(String string, String string2) {
-        // TODO Auto-generated method stub
-
+        mHelper.makeSimpleDialog(string, string2);
+    }
+    
+    void switchToMainScreen(boolean b) {
+        findViewById(R.id.screen_main).setVisibility( b ? View.VISIBLE : View.GONE);
+        findViewById(R.id.screen_sign_in).setVisibility(!b ? View.VISIBLE : View.GONE);                
     }
 }

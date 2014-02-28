@@ -4,7 +4,14 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:layout_gravity="top" >   
-
+	
+    <!-- SIGN-IN SCREEN -->
+    <LinearLayout android:id="@+id/screen_sign_in" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <com.google.android.gms.common.SignInButton android:id="@+id/button_sign_in"
+            style="@style/SignInButton" />
+    </LinearLayout>
+    
+    <!-- MAIN SCREEN -->
     <RelativeLayout
         android:id="@+id/screen_main"
         android:layout_width="fill_parent"
