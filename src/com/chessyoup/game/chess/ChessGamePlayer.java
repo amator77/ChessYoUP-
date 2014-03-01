@@ -26,7 +26,7 @@ public class ChessGamePlayer extends GamePlayer {
     
     private int ratingChange;
         
-    public ChessGamePlayer(){  
+    public ChessGamePlayer(){    	
         this.topScore = Util.TOP_RATING_BASE;
         this.lowScore = Util.LOW_RATING_BASE;
         this.ratingDeviation = Util.DEFAULT_RATING_DEVIATION;        
@@ -145,9 +145,13 @@ public class ChessGamePlayer extends GamePlayer {
         this.ratingChange = ratingChange;
     }
 
-    @Override
-    public String toString() {
-        return "ChessGamePlayer [topScore=" + topScore + ", lowScore=" + lowScore + ", liveRating=" + liveRating + ", ratingDeviation=" + ratingDeviation + ", volatility=" + volatility + ", wins="
-                        + wins + ", draws=" + draws + ", loses=" + loses + ", ratingChange=" + ratingChange + "]";
-    }  
+	@Override
+	public String toString() {
+		return "ChessGamePlayer [ratingDeviation=" + ratingDeviation
+				+ ", volatility=" + volatility + ", ratingChange="
+				+ ratingChange + ", getRating()=" + getRating()
+				+ ", getPlayer()=" + getPlayer() + "]";
+	}
+
+    
 }

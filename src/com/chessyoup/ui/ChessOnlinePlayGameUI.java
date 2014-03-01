@@ -23,9 +23,9 @@ import com.chessyoup.R;
 import com.chessyoup.chessboard.ChessboardController;
 import com.chessyoup.chessboard.ChessboardMode;
 import com.chessyoup.game.Util;
-import com.chessyoup.game.chess.ChessGameModel;
+import com.chessyoup.game.chess.ChessGameState;
 import com.chessyoup.game.chess.ChessGameVariant;
-import com.chessyoup.game.chess.ChessRealTimeGameClient;
+import com.chessyoup.game.chess.ChessGameTransport;
 import com.chessyoup.game.view.ChessBoardPlayView;
 import com.chessyoup.game.view.PgnScreenTextView;
 import com.chessyoup.model.Game.GameState;
@@ -44,13 +44,13 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
     private final static String TAG = "ChessGameRoomUI";
 
-    private ChessGameModel chessGameModel;
+    private ChessGameState chessGameModel;
 
     private ChessGameController chessGameController;
 
     private ChessboardUIController gameUIController;
     
-    private ChessRealTimeGameClient chessClient;
+    private ChessGameTransport gameTransport;
     
     private RealTimeChessGameController roomGameController;
     
@@ -113,11 +113,22 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
                 if (chessGameModel != null) {
                     Log.d(TAG, "onStart :: send ready message to remote : " + chessGameModel.getRemotePlayer());
-                    chessClient =  chessGameController.getChessClientByRoomId(chessGameModel.getRoom().getRoomId());
-                    chessClient.ready(chessGameController.getLocalPlayer());
+                    gameTransport =  chessGameModel.getGameTransport();
+                    ChessGameVariant gv =  chessGameModel.getGameVariant();
+                    
+                    if( chessGameModel.isLocalPlayerRoomCreator() ){
+                    	chessboardController.newGame(chessGameModel.getGame(), gv.white ? new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE) : new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE));
+                    }
+                    else{
+                    	chessboardController.newGame(chessGameModel.getGame(), gv.white ? new ChessboardMode(ChessboardMode.TWO_PLAYERS_WHITE_REMOTE) : new ChessboardMode(ChessboardMode.TWO_PLAYERS_BLACK_REMOTE));
+                    }
+                                        
                     updateChessboard();
                     updateRemotePlayerView(true);
                     updateLocalPlayerView(true);
+                    
+                    gameTransport.ready(chessGameController.getLocalPlayer());
+                    
                 } else {
                     chessboardController.newGame(new ChessboardMode(ChessboardMode.ANALYSIS),false);
                     displayShortMessage("Empty board!");
@@ -160,7 +171,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
         if (this.chessGameModel.getRoom() != null) {
             if (this.chessGameModel != null && this.chessGameModel.getRoom() != null) {
-                chessGameController.leaveRoom(this.chessGameModel.getRoom().getRoomId());
+                chessGameController.leaveRoom(this.chessGameModel.getRoom().getRoomId(),null);
             }
         }
     }
@@ -239,9 +250,9 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     public void rematchConfig() {
 
         if (this.chessGameModel != null) {
-            ChessGameVariant gameVariant = this.chessGameModel.getGameVariant();
-            gameVariant.setWhite(gameVariant.isWhite() ? false : true);
-            chessClient.sendChallange(Util.gameVariantToInt(gameVariant), true);
+        	
+        	this.chessGameModel.switchSides();           
+            gameTransport.sendChallange(Util.gameVariantToInt(this.chessGameModel.getGameVariant()), true);
         }
     }
 
@@ -280,7 +291,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
             ImageManager.create(this.getApplicationContext()).loadImage((ImageView) findViewById(R.id.remotePlayerAvatarView), chessGameModel.getRemotePlayer().getPlayer().getIconImageUri());
         }
 
-        StringBuffer sb = new StringBuffer(chessGameModel.getRemotePlayer().getPlayer().getDisplayName());
+        StringBuffer sb = new StringBuffer(chessGameModel.getRemotePlayer().getPlayer().getPlayerId());
         sb.append(" (").append(Math.round(chessGameModel.getRemotePlayer().getRating())).append(")");
         this.remotePlayerView.setText(sb.toString());
     }
@@ -292,12 +303,12 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
         }
 
-        StringBuffer sb = new StringBuffer(chessGameController.getLocalPlayer().getPlayer().getDisplayName());
+        StringBuffer sb = new StringBuffer(chessGameController.getLocalPlayer().getPlayer().getPlayerId());
         sb.append(" (").append(Math.round(chessGameController.getLocalPlayer().getRating())).append(")");
         this.localPlayerView.setText(sb.toString());
     }
 
-    public void updateChessboard() {
+    public void updateChessboard() {    	    	    	
         chessBoardPlayView.setFlipped(chessGameModel.getBlackPlayer().getPlayer().getPlayerId().equals(chessGameController.getLocalPlayer().getPlayer().getPlayerId()));
         ChessGameVariant gv = chessGameModel.getGameVariant();
         chessboardController.setTimeLimit(gv.getTime() * 1000, gv.getMoves(), gv.getIncrement() * 1000);
@@ -310,7 +321,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     // *********************************************************************
     // *********************************************************************
 
-    public ChessGameModel getGameModel() {
+    public ChessGameState getGameModel() {
         return this.chessGameModel;
     }
 
@@ -392,7 +403,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
     private void handleAbortAction() {
 
         if (chessboardController.isAbortRequested()) {
-            chessClient.abort();
+            gameTransport.abort();
             chessboardController.abortGame();
         } else {
 
@@ -400,7 +411,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
                 @Override
                 public void run() {
-                    chessClient.abort();
+                    gameTransport.abort();
                     chessboardController.setAbortRequested(true);
                     displayShortMessage(getString(R.string.abort_request_message));
                 }
@@ -410,11 +421,11 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
     private void handleDrawAction() {
         if (chessboardController.isDrawRequested()) {
-            chessClient.draw();
+            gameTransport.draw();
             chessboardController.drawGame();
         } else {
 
-            chessClient.draw();
+            gameTransport.draw();
             chessboardController.setDrawRequested(true);
 
             displayShortMessage(getString(R.string.draw_request_message));
@@ -425,7 +436,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
         if (this.chessboardController.isRemtachRequested()) {
             this.rematchConfig();
         } else {
-            chessClient.rematch();            
+            gameTransport.rematch();            
             displayShortMessage(getString(R.string.remtach_request_message));
         }
     }
@@ -435,7 +446,7 @@ public class ChessOnlinePlayGameUI extends FragmentActivity {
 
             @Override
             public void run() {
-                chessClient.resign();                
+                gameTransport.resign();                
                 chessboardController.resignGame();
             }
         }).show();

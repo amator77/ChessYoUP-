@@ -5,13 +5,13 @@ import org.json.JSONObject;
 
 import android.util.Log;
 
-import com.chessyoup.game.RealTimeGameClient;
+import com.chessyoup.game.GameTransport;
 import com.chessyoup.game.Util;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-public class ChessRealTimeGameClient extends RealTimeGameClient {
+public class ChessGameTransport extends GameTransport {
 
-    private static final String TAG = "ChessRealTimeGame";
+    private static final String TAG = "ChessGameTransport";
 
     private static final byte READY = 0;
     private static final byte START = 1;
@@ -60,12 +60,37 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
 
         public void onChatReceived(String message);
     }
-
-    public ChessRealTimeGameClient( GoogleApiClient client) {
+    
+    private String roomId;
+    
+    private String remoteId;
+    
+    public ChessGameTransport( GoogleApiClient client) {
         super(client);
     }
+    
+    public void configure(String roomId,String remoteId){
+    	this.roomId = roomId;
+    	this.remoteId = remoteId;
+    }
+    
+    public String getRoomId() {
+		return roomId;
+	}
 
-    @Override
+	public void setRoomId(String roomId) {
+		this.roomId = roomId;
+	}
+
+	public String getRemoteId() {
+		return remoteId;
+	}
+
+	public void setRemoteId(String remoteId) {
+		this.remoteId = remoteId;
+	}
+
+	@Override
     protected void handleMessageReceived(String senderId, byte[] messageData) {
         Log.d(TAG, "handleMessageReceived ::" + parseMessage(messageData));
 
@@ -221,7 +246,7 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
             message[i] = payload[i - 1];
         }
 
-        this.sendMessage(message);
+        this.sendMessage(this.roomId,this.remoteId, message);
     }
 
     private JSONObject getPayloadJSON(byte[] payload) {
@@ -390,4 +415,10 @@ public class ChessRealTimeGameClient extends RealTimeGameClient {
 
         return cmd + " , paylaod:" + jsonPayload.toString();
     }
+
+	@Override
+	public String toString() {
+		return "ChessGameTransport [listener=" + listener + ", roomId="
+				+ roomId + ", remoteId=" + remoteId + "]";
+	}
 }
