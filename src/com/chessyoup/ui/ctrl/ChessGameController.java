@@ -175,7 +175,9 @@ public class ChessGameController {
 
             @Override
             public void onResult(LoadScoresResult result) {
-
+                
+                Log.d(TAG, "onResult topScores :: " + result.getStatus().toString() +" , count :"+ (result.getScores() !=null ? result.getScores().getCount() : "null") );
+                
                 if (result.getStatus().isSuccess()) {
                     LeaderboardScoreBuffer buffer = result.getScores();
 
@@ -199,7 +201,8 @@ public class ChessGameController {
 
                                     @Override
                                     public void onResult(LoadScoresResult result) {
-
+                                        Log.d(TAG, "onResult lowScores :: " + result.getStatus().toString() +" , count :"+ (result.getScores() !=null ? result.getScores().getCount() : "null") );
+                                        
                                         if (result.getStatus().isSuccess()) {
                                             LeaderboardScoreBuffer buffer = result.getScores();
 
@@ -217,12 +220,15 @@ public class ChessGameController {
                                                     }
                                                 });
                                             }
+                                            
+                                            Log.d(TAG, "loadPlayersRating lowScoreFinish :: " + knownPlayers);   
                                         }
                                     }
                                 });
                             }
                         });
                     }
+                    Log.d(TAG, "loadPlayersRating topScoreFinish :: " + knownPlayers);                    
                 }
             }
         });
