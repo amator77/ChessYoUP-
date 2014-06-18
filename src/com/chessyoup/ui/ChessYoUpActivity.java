@@ -27,12 +27,10 @@ import com.chessyoup.ui.fragment.IncomingInvitationsFragment;
 import com.chessyoup.ui.fragment.InvitationsAdapter;
 import com.chessyoup.ui.fragment.OutgoingInvitationFragment;
 import com.chessyoup.ui.fragment.RoomsAdapter;
-import com.google.android.gms.appstate.OnStateLoadedListener;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.images.ImageManager;
 import com.google.android.gms.games.Games;
-import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.Player;
 import com.google.android.gms.games.leaderboard.LeaderboardScoreBuffer;
 import com.google.android.gms.games.leaderboard.LeaderboardVariant;
@@ -42,13 +40,13 @@ import com.google.android.gms.games.leaderboard.Leaderboards.LoadScoresResult;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 import com.google.android.gms.plus.People;
-import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.People.LoadPeopleResult;
+import com.google.android.gms.plus.Plus;
 import com.google.android.gms.plus.model.people.Person;
 import com.google.example.games.basegameutils.BaseGameActivity;
 import com.google.example.games.basegameutils.GameHelper.GameHelperListener;
 
-public class ChessYoUpActivity extends BaseGameActivity implements NewGameDialogListener, OnStateLoadedListener, GameHelperListener, OnInvitationReceivedListener {
+public class ChessYoUpActivity extends BaseGameActivity implements NewGameDialogListener, GameHelperListener, OnInvitationReceivedListener {
 
     private final static String TAG = "ChessYoUpActivity";
 
@@ -181,18 +179,6 @@ public class ChessYoUpActivity extends BaseGameActivity implements NewGameDialog
     }
 
     @Override
-    public void onStateConflict(int stateKey, String resolvedVersion, byte[] localData, byte[] serverData) {
-
-        Log.d(TAG, "onStateConflict :: stateKey:" + stateKey + " , resolvedVersion:" + resolvedVersion + " localData:" + new String(localData) + " , serverData" + new String(serverData));
-    }
-
-    @Override
-    public void onStateLoaded(int statusCode, int stateKey, byte[] localData) {
-        Log.d(TAG, "onStateLoaded :: statusCode:" + statusCode + " , stateKey:" + stateKey + " localData:" + (localData != null ? new String(localData) : "null data"));
-
-    }
-
-    @Override
     public boolean onKeyDown(int keyCode, KeyEvent e) {
         return super.onKeyDown(keyCode, e);
     }
@@ -276,7 +262,7 @@ public class ChessYoUpActivity extends BaseGameActivity implements NewGameDialog
         }
 
         Log.d(TAG, "Select players UI succeeded.");
-        final ArrayList<String> invitees = data.getStringArrayListExtra(GamesClient.EXTRA_PLAYERS);
+        final ArrayList<String> invitees = data.getStringArrayListExtra(Games.EXTRA_PLAYER_IDS);
         Log.d(TAG, "Invitee: " + invitees.toString());
 
         PendingResult<People.LoadPeopleResult> results = Plus.PeopleApi.load(mHelper.getApiClient(), invitees);
